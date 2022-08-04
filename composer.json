@@ -12,15 +12,6 @@
 			"pnpm run build"
 		]
 	},
-	"repositories": [
-		{
-			"type": "path",
-			"url": "../../packages/*",
-			"options": {
-				"monorepo": true
-			}
-		}
-	],
 	"extra": {
 		"autotagger": {
 			"major": true
