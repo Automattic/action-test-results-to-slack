@@ -8774,7 +8774,7 @@ function localstorage() {
 	}
 }
 
-module.exports = __nccwpck_require__(8888)(exports);
+module.exports = __nccwpck_require__(2977)(exports);
 
 const {formatters} = module.exports;
 
@@ -8793,7 +8793,7 @@ formatters.j = function (v) {
 
 /***/ }),
 
-/***/ 8888:
+/***/ 2977:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 
@@ -9333,7 +9333,7 @@ function init(debug) {
 	}
 }
 
-module.exports = __nccwpck_require__(8888)(exports);
+module.exports = __nccwpck_require__(2977)(exports);
 
 const {formatters} = module.exports;
 
@@ -15305,7 +15305,7 @@ exports.implementation = class URLImpl {
 
 
 const conversions = __nccwpck_require__(2753);
-const utils = __nccwpck_require__(2977);
+const utils = __nccwpck_require__(8338);
 const Impl = __nccwpck_require__(4161);
 
 const impl = utils.implSymbol;
@@ -16826,7 +16826,7 @@ module.exports.parseURL = function (input, options) {
 
 /***/ }),
 
-/***/ 2977:
+/***/ 8338:
 /***/ ((module) => {
 
 "use strict";
@@ -16890,6 +16890,62 @@ function wrappy (fn, cb) {
     return ret
   }
 }
+
+
+/***/ }),
+
+/***/ 286:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const github = __nccwpck_require__( 8025 );
+
+/**
+ * Decides if the current workflow failed
+ *
+ * @param {string} token - GitHub token
+ */
+async function isWorkflowFailed( token ) {
+	// eslint-disable-next-line new-cap
+	const octokit = new github.getOctokit( token );
+
+	// Get the list of jobs for the current workflow run
+	const response = await octokit.rest.actions.listJobsForWorkflowRun( {
+		owner: github.context.payload.repository.owner.login,
+		repo: github.context.payload.repository.name,
+		run_id: github.context.runId,
+	} );
+
+	// Get unique list of conclusions of completed jobs
+	const conclusions = [
+		...new Set(
+			response.data.jobs.filter( job => job.status === 'completed' ).map( job => job.conclusion )
+		),
+	];
+
+	// Decide if any we'll treat this run as failed
+	return !! conclusions.some( conclusion => conclusion !== 'success' );
+}
+
+/**
+ * Creates the notification message text
+ *
+ * @param {boolean} isFailure - whether the workflow is failed or not
+ */
+async function getNotificationText( isFailure ) {
+	let event = github.context.sha;
+
+	if ( github.context.eventName === 'pull_request' ) {
+		const { html_url, number, title } = github.context.payload.pull_request;
+		event = `PR <${ html_url }|${ number }: ${ title }>`;
+	}
+	if ( github.context.eventName === 'push' || github.context.eventName === 'schedule' ) {
+		const { url, id } = github.context.payload.head_commit;
+		event = `commit <${ url }|${ id }> on branch *${ github.context.ref.substring( 11 ) }*`;
+	}
+	return `Tests ${ isFailure ? 'failed' : 'passed' } for ${ event }`;
+}
+
+module.exports = { isWorkflowFailed, getNotificationText };
 
 
 /***/ }),
@@ -17094,8 +17150,8 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const { setFailed, getInput } = __nccwpck_require__( 6379 );
-const { context, getOctokit } = __nccwpck_require__( 8025 );
-const { WebClient, retryPolicies, LogLevel } = __nccwpck_require__( 7956 );
+const { WebClient } = __nccwpck_require__( 7956 );
+const { isWorkflowFailed, getNotificationText } = __nccwpck_require__( 286 );
 
 ( async function main() {
 	const ghToken = getInput( 'github_token' );
@@ -17104,8 +17160,8 @@ const { WebClient, retryPolicies, LogLevel } = __nccwpck_require__( 7956 );
 		return;
 	}
 
-	const token = getInput( 'slack_token' );
-	if ( ! token ) {
+	const slackToken = getInput( 'slack_token' );
+	if ( ! slackToken ) {
 		setFailed( 'Input `slack_token` is required' );
 		return;
 	}
@@ -17127,54 +17183,13 @@ const { WebClient, retryPolicies, LogLevel } = __nccwpck_require__( 7956 );
 		setFailed( 'Input `slack_icon_emoji` is required' );
 		return;
 	}
-
 	const isFailure = await isWorkflowFailed( ghToken );
-
-	const status = isFailure ? 'failed' : 'passed';
 	icon_emoji = isFailure ? ':red_circle:' : ':green_circle:';
-	let event = context.sha;
 
-	if ( context.eventName === 'pull_request' ) {
-		const { pull_request } = context.payload;
-		event = `PR <${ pull_request.html_url }|${ pull_request.number }: ${ pull_request.title }>`;
-	}
-	if ( context.eventName === 'push' ) {
-		event = `commit <${ context.payload.head_commit.url }|${
-			context.sha
-		}> on branch *${ context.ref.substring( 11 ) }*`;
-	}
+	const text = await getNotificationText( isFailure );
 
-	const text = `Tests ${ status } for ${ event }`;
-
-	await sendSlackMessage( token, text, [], channel, username, icon_emoji );
+	await sendSlackMessage( slackToken, text, [], channel, username, icon_emoji );
 } )();
-
-/**
- * Decides if the current workflow failed
- *
- * @param {string} token - GitHub token
- */
-async function isWorkflowFailed( token ) {
-	// eslint-disable-next-line new-cap
-	const octokit = new getOctokit( token );
-
-	// Get the list of jobs for the current workflow run
-	const response = await octokit.rest.actions.listJobsForWorkflowRun( {
-		owner: context.payload.repository.owner.login,
-		repo: context.payload.repository.name,
-		run_id: context.runId,
-	} );
-
-	// Get unique list of conclusions of completed jobs
-	const conclusions = [
-		...new Set(
-			response.data.jobs.filter( job => job.status === 'completed' ).map( job => job.conclusion )
-		),
-	];
-
-	// Decide if any we'll treat this run as failed
-	return !! conclusions.some( conclusion => conclusion !== 'success' );
-}
 
 /**
  * Sends a Slack message
@@ -17187,11 +17202,7 @@ async function isWorkflowFailed( token ) {
  * @param {string} icon_emoji - icon emoji
  */
 async function sendSlackMessage( token, text, blocks, channel, username, icon_emoji ) {
-	const client = new WebClient( token, {
-		retryConfig: retryPolicies.rapidRetryPolicy,
-		logLevel: LogLevel.ERROR,
-	} );
-
+	const client = new WebClient( token );
 	await client.chat.postMessage( {
 		text,
 		channel,
