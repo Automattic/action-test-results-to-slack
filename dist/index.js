@@ -17184,6 +17184,12 @@ const { isWorkflowFailed, getNotificationText } = __nccwpck_require__( 286 );
 		return;
 	}
 	const isFailure = await isWorkflowFailed( ghToken );
+
+	if ( ! isFailure ) {
+		// this is only temporary. In the future: it will send notification for success if the previous run was failed.
+		return;
+	}
+
 	icon_emoji = isFailure ? ':red_circle:' : ':green_circle:';
 
 	const text = await getNotificationText( isFailure );

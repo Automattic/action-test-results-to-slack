@@ -12,3 +12,6 @@ This is an alpha version! The changes listed here are not final.
 ### Added
 - Add tests
 - Initial release
+
+### Changed
+- Only send notifications for failures
