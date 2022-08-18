@@ -15,6 +15,7 @@ This is an alpha version! The changes listed here are not final.
 
 ### Changed
 - Only send notifications for failures
+- Updated package dependencies.
 
 ### Fixed
 - Fixed notifications for schedule event
