@@ -18622,10 +18622,46 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 286:
+/***/ 5585:
+/***/ ((module) => {
+
+/**
+ * Prints a debug message to STDOUT in non-testing environments.
+ *
+ * @param {string} message - The message to print.
+ */
+function debug( message ) {
+	if ( process.env.NODE_ENV !== 'test' ) {
+		process.stdout.write( message + '\n' );
+	}
+}
+
+module.exports = debug;
+
+
+/***/ }),
+
+/***/ 5414:
+/***/ ((module) => {
+
+const extras = {
+	runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+	refType: process.env.GITHUB_REF_TYPE,
+	refName: process.env.GITHUB_REF_NAME,
+	repository: process.env.GITHUB_REPOSITORY,
+	triggeringActor: process.env.GITHUB_TRIGGERING_ACTOR,
+};
+
+module.exports = extras;
+
+
+/***/ }),
+
+/***/ 6308:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const github = __nccwpck_require__( 8025 );
+const extras = __nccwpck_require__( 5414 );
 
 /**
  * Decides if the current workflow failed
@@ -18635,12 +18671,16 @@ const github = __nccwpck_require__( 8025 );
 async function isWorkflowFailed( token ) {
 	// eslint-disable-next-line new-cap
 	const octokit = new github.getOctokit( token );
+	const {
+		payload: { repository },
+		runId,
+	} = github.context;
 
 	// Get the list of jobs for the current workflow run
 	const response = await octokit.rest.actions.listJobsForWorkflowRun( {
-		owner: github.context.payload.repository.owner.login,
-		repo: github.context.payload.repository.name,
-		run_id: github.context.runId,
+		owner: repository.owner.login,
+		repo: repository.name,
+		run_id: runId,
 	} );
 
 	// Get unique list of conclusions of completed jobs
@@ -18655,34 +18695,265 @@ async function isWorkflowFailed( token ) {
 }
 
 /**
- * Creates the notification message text
+ * Returns an object with notification data.
+ * Properties: `text` for notification's text and `id` for a unique identifier for the message.
+ * that can be used later on to find this message and update it or send replies.
  *
  * @param {boolean} isFailure - whether the workflow is failed or not
  */
-async function getNotificationText( isFailure ) {
+async function getNotificationData( isFailure ) {
 	const {
-		context: { eventName, sha, ref_type, ref_name, payload },
+		context: { eventName, sha, payload, runId, actor, serverUrl },
 	} = github;
-	let event = sha;
+	const { refType, refName, runAttempt, triggeringActor, repository } = extras;
+	let target = `for ${ sha }`;
+	let msgId;
+	const contextElements = [];
+	const buttons = [];
+	const style = isFailure ? 'danger' : 'primary';
 
 	if ( eventName === 'pull_request' ) {
 		const { html_url, number, title } = payload.pull_request;
-		event = `PR <${ html_url }|${ number }: ${ title }>`;
+		target = `for pull request *#${ number }*`;
+		msgId = `pr-${ number }`;
+
+		contextElements.push(
+			{
+				type: 'plain_text',
+				text: `Title: ${ title }`,
+				emoji: false,
+			},
+			{
+				type: 'plain_text',
+				text: `Actor: ${ actor }`,
+				emoji: false,
+			},
+			{
+				type: 'plain_text',
+				text: `Last run: attempt ${ runAttempt } of run ${ runId }, triggered by ${ triggeringActor }`,
+				emoji: false,
+			}
+		);
+
+		buttons.push(
+			{
+				type: 'button',
+				text: {
+					type: 'plain_text',
+					text: `Last run`,
+				},
+				url: getRunUrl(),
+				style,
+			},
+			{
+				type: 'button',
+				text: {
+					type: 'plain_text',
+					text: `PR #${ number }`,
+				},
+				url: html_url,
+				style,
+			}
+		);
 	}
 
 	if ( eventName === 'push' ) {
-		const { url, id } = payload.head_commit;
-		event = `commit <${ url }|${ id }> on ${ ref_type } *${ ref_name }*`;
+		const { url, id, message } = payload.head_commit;
+		target = `on ${ refType } *${ refName }*`;
+		msgId = `commit-${ id }`;
+
+		contextElements.push(
+			{
+				type: 'plain_text',
+				text: `Commit: ${ id.substring( 0, 8 ) } ${ message }`,
+				emoji: false,
+			},
+			{
+				type: 'plain_text',
+				text: `Actor: ${ actor }`,
+				emoji: false,
+			},
+			{
+				type: 'plain_text',
+				text: `Last run: attempt ${ runAttempt } of run ${ runId }, triggered by ${ triggeringActor }`,
+				emoji: false,
+			}
+		);
+
+		buttons.push(
+			{
+				type: 'button',
+				text: {
+					type: 'plain_text',
+					text: `Last run`,
+				},
+				url: getRunUrl(),
+				style,
+			},
+			{
+				type: 'button',
+				text: {
+					type: 'plain_text',
+					text: `Commit ${ id.substring( 0, 8 ) }`,
+				},
+				url,
+				style,
+			}
+		);
 	}
 
 	if ( eventName === 'schedule' ) {
-		event = `scheduled run on ${ ref_type } *${ ref_name }*`;
+		target = `for scheduled run on ${ refType } *${ refName }*`;
+		// we return a timestamp because we don't ever want to group messages with schedule event
+		// this way, we'll never be able to compute this same id later and cannot find this message
+		msgId = `sched-${ Date.now() }`;
+		const commitUrl = `${ serverUrl }/${ repository }/commit/${ sha }`;
+
+		contextElements.push(
+			{
+				type: 'plain_text',
+				text: `Last commit: ${ sha.substring( 0, 8 ) }`,
+				emoji: false,
+			},
+			{
+				type: 'plain_text',
+				text: `Last run: attempt ${ runAttempt } of run ${ runId }, triggered by ${ triggeringActor }`,
+				emoji: false,
+			}
+		);
+
+		buttons.push(
+			{
+				type: 'button',
+				text: {
+					type: 'plain_text',
+					text: `Last run`,
+				},
+				url: getRunUrl(),
+				style,
+			},
+			{
+				type: 'button',
+				text: {
+					type: 'plain_text',
+					text: `Commit ${ sha.substring( 0, 8 ) }`,
+				},
+				url: commitUrl,
+				style,
+			}
+		);
 	}
 
-	return `Tests ${ isFailure ? 'failed' : 'passed' } for ${ event }`;
+	const text = `Tests ${ isFailure ? 'failed' : 'passed' } ${ target }`;
+	const mainMsgBlocks = [
+		{
+			type: 'section',
+			text: {
+				type: 'mrkdwn',
+				text,
+			},
+		},
+		{
+			type: 'context',
+			elements: contextElements,
+		},
+		{
+			type: 'actions',
+			elements: buttons,
+		},
+	];
+
+	const detailsMsgBlocks = [
+		{
+			type: 'section',
+			text: {
+				type: 'mrkdwn',
+				text: `<${ getRunUrl() } | New ${
+					isFailure ? 'failed' : 'passed'
+				} tests in run ${ runId }, attempt ${ runAttempt }>`,
+			},
+		},
+	];
+
+	return { text, id: msgId, mainMsgBlocks, detailsMsgBlocks };
 }
 
-module.exports = { isWorkflowFailed, getNotificationText };
+/**
+ * Creates and returns a run url
+ *
+ * @returns {string} the run url
+ */
+function getRunUrl() {
+	const { serverUrl, runId } = github.context;
+	const { repository, runAttempt } = extras;
+	return `${ serverUrl }/${ repository }/actions/runs/${ runId }/attempts/${ runAttempt }`;
+}
+
+module.exports = { isWorkflowFailed, getNotificationData };
+
+
+/***/ }),
+
+/***/ 2165:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const debug = __nccwpck_require__( 5585 );
+
+/**
+ * Sends a Slack message.
+ *
+ * @param {Object} client - Slack client
+ * @param {boolean} update - if it should update a message. For true, it will update an existing message based on `ts`, false will send a new message.
+ * @param {Object} options - options
+ */
+async function sendMessage( client, update, options ) {
+	const { text, blocks = [], channel, username, icon_emoji, ts, thread_ts } = options;
+
+	const method = update ? 'update' : 'postMessage';
+	return await client.chat[ method ]( {
+		text,
+		blocks,
+		channel,
+		ts,
+		thread_ts,
+		username,
+		icon_emoji,
+		unfurl_links: false,
+		unfurl_media: false,
+	} );
+}
+
+/**
+ * Finds and returns a Slack message that contains a given string in its text (not in blocks!)
+ *
+ * @param {Object} client - the Slack client
+ * @param {string} channelId - the channel id
+ * @param {string} identifier - the string to search for in the messages text
+ * @returns {Promise<*|null>} the message Object
+ */
+async function getMessage( client, channelId, identifier ) {
+	debug( `Looking for ${ identifier }` );
+	let message;
+	// Get the messages in the channel. It only returns parent messages in case of threads.
+	// If the message has a `thread_ts` defined we have a thread
+	// If `thread_ts === ts` we have a parent message
+	const result = await client.conversations.history( {
+		channel: channelId,
+		limit: 200,
+	} );
+
+	if ( result.ok && result.messages ) {
+		// should not find more than one message, but, just in case
+		// the first message found should be the most recent
+		message = result.messages.filter( m => m.text.includes( identifier ) )[ 0 ];
+	}
+
+	message ? debug( 'Message found' ) : debug( 'Message not found' );
+
+	return message;
+}
+
+module.exports = { getMessage, sendMessage };
 
 
 /***/ }),
@@ -18894,14 +19165,19 @@ module.exports = require("zlib");;
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const { setFailed, getInput } = __nccwpck_require__( 8817 );
+const { setFailed, getInput, startGroup, endGroup } = __nccwpck_require__( 8817 );
 const { WebClient } = __nccwpck_require__( 7956 );
-const { isWorkflowFailed, getNotificationText } = __nccwpck_require__( 286 );
+const debug = __nccwpck_require__( 5585 );
+const { isWorkflowFailed, getNotificationData } = __nccwpck_require__( 6308 );
+const { getMessage, sendMessage } = __nccwpck_require__( 2165 );
 
 ( async function main() {
+	startGroup( 'Send results to Slack' );
+
+	//region validate input
 	const ghToken = getInput( 'github_token' );
 	if ( ! ghToken ) {
-		setFailed( 'main: Input `github_token` is required' );
+		setFailed( 'Input `github_token` is required' );
 		return;
 	}
 
@@ -18922,47 +19198,76 @@ const { isWorkflowFailed, getNotificationText } = __nccwpck_require__( 286 );
 		setFailed( 'Input `slack_username` is required' );
 		return;
 	}
+	//endregion
+
+	const client = new WebClient( slackToken );
+
+	const isFailure = await isWorkflowFailed( ghToken );
+	const { text, id, mainMsgBlocks, detailsMsgBlocks } = await getNotificationData( isFailure );
+	const existingMessage = await getMessage( client, channel, id );
+	let mainMessageTS = existingMessage ? existingMessage.ts : undefined;
 
 	let icon_emoji = getInput( 'slack_icon_emoji' );
 	if ( ! icon_emoji ) {
-		setFailed( 'Input `slack_icon_emoji` is required' );
-		return;
-	}
-	const isFailure = await isWorkflowFailed( ghToken );
-
-	if ( ! isFailure ) {
-		// this is only temporary. In the future: it will send notification for success if the previous run was failed.
-		return;
+		icon_emoji = isFailure ? ':red_circle:' : ':green_circle:';
 	}
 
-	icon_emoji = isFailure ? ':red_circle:' : ':green_circle:';
+	if ( existingMessage ) {
+		debug( 'Main message found' );
+		debug( 'Updating the main message' );
+		// Update the existing message
+		await sendMessage( client, true, {
+			text: `${ text }\n${ id }`,
+			blocks: mainMsgBlocks,
+			channel,
+			username,
+			icon_emoji,
+			ts: mainMessageTS,
+		} );
 
-	const text = await getNotificationText( isFailure );
+		if ( isFailure ) {
+			debug( 'Sending new reply to main message with failure details' );
+			// Send a reply to the main message with the current failure result
+			await sendMessage( client, false, {
+				text,
+				blocks: detailsMsgBlocks,
+				channel,
+				username,
+				icon_emoji,
+				thread_ts: mainMessageTS,
+			} );
+		}
+	} else {
+		debug( 'Main message not found' );
+		if ( isFailure ) {
+			debug( 'Sending new main message' );
+			// Send a new main message
+			const response = await sendMessage( client, false, {
+				text: `${ text }\n${ id }`,
+				blocks: mainMsgBlocks,
+				channel,
+				username,
+				icon_emoji,
+			} );
+			mainMessageTS = response.ts;
 
-	await sendSlackMessage( slackToken, text, [], channel, username, icon_emoji );
+			debug( 'Sending new reply to main message with failure details' );
+			// Send a reply to the main message with the current failure result
+			await sendMessage( client, false, {
+				text,
+				blocks: detailsMsgBlocks,
+				channel,
+				username,
+				icon_emoji,
+				thread_ts: mainMessageTS,
+			} );
+		} else {
+			debug( 'No previous failure found, no notification needed for success' );
+		}
+	}
+
+	endGroup();
 } )();
-
-/**
- * Sends a Slack message
- *
- * @param {string} token - slack token
- * @param {string} text - message text
- * @param {string} blocks - message blocks
- * @param {string} channel - slack channel
- * @param {string} username - slack bot username
- * @param {string} icon_emoji - icon emoji
- */
-async function sendSlackMessage( token, text, blocks, channel, username, icon_emoji ) {
-	const client = new WebClient( token );
-	await client.chat.postMessage( {
-		text,
-		channel,
-		username,
-		icon_emoji,
-		unfurl_links: false,
-		unfurl_media: false,
-	} );
-}
 
 })();
 

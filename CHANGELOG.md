@@ -14,6 +14,7 @@ This is an alpha version! The changes listed here are not final.
 - Initial release
 
 ### Changed
+- Group notifications
 - Only send notifications for failures
 - Updated package dependencies.
 
