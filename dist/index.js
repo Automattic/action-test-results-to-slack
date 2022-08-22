@@ -18710,7 +18710,6 @@ async function getNotificationData( isFailure ) {
 	let msgId;
 	const contextElements = [];
 	const buttons = [];
-	const style = isFailure ? 'danger' : 'primary';
 
 	if ( eventName === 'pull_request' ) {
 		const { html_url, number, title } = payload.pull_request;
@@ -18742,8 +18741,7 @@ async function getNotificationData( isFailure ) {
 					type: 'plain_text',
 					text: `Last run`,
 				},
-				url: getRunUrl(),
-				style,
+				url: getRunUrl( false ),
 			},
 			{
 				type: 'button',
@@ -18752,7 +18750,6 @@ async function getNotificationData( isFailure ) {
 					text: `PR #${ number }`,
 				},
 				url: html_url,
-				style,
 			}
 		);
 	}
@@ -18787,8 +18784,7 @@ async function getNotificationData( isFailure ) {
 					type: 'plain_text',
 					text: `Last run`,
 				},
-				url: getRunUrl(),
-				style,
+				url: getRunUrl( false ),
 			},
 			{
 				type: 'button',
@@ -18797,7 +18793,6 @@ async function getNotificationData( isFailure ) {
 					text: `Commit ${ id.substring( 0, 8 ) }`,
 				},
 				url,
-				style,
 			}
 		);
 	}
@@ -18829,8 +18824,7 @@ async function getNotificationData( isFailure ) {
 					type: 'plain_text',
 					text: `Last run`,
 				},
-				url: getRunUrl(),
-				style,
+				url: getRunUrl( false ),
 			},
 			{
 				type: 'button',
@@ -18839,12 +18833,13 @@ async function getNotificationData( isFailure ) {
 					text: `Commit ${ sha.substring( 0, 8 ) }`,
 				},
 				url: commitUrl,
-				style,
 			}
 		);
 	}
 
-	const text = `Tests ${ isFailure ? 'failed' : 'passed' } ${ target }`;
+	const text = `${ isFailure ? ':x:' : ':white_check_mark:' } Tests ${
+		isFailure ? 'failed' : 'passed'
+	} ${ target }`;
 	const mainMsgBlocks = [
 		{
 			type: 'section',
@@ -18881,12 +18876,15 @@ async function getNotificationData( isFailure ) {
 /**
  * Creates and returns a run url
  *
+ * @param {boolean} withAttempt - whether to include the run attempt in the url
  * @returns {string} the run url
  */
-function getRunUrl() {
+function getRunUrl( withAttempt = true ) {
 	const { serverUrl, runId } = github.context;
 	const { repository, runAttempt } = extras;
-	return `${ serverUrl }/${ repository }/actions/runs/${ runId }/attempts/${ runAttempt }`;
+	return `${ serverUrl }/${ repository }/actions/runs/${ runId }/${
+		withAttempt ? `attempts/${ runAttempt }` : ''
+	}`;
 }
 
 module.exports = { isWorkflowFailed, getNotificationData };
@@ -19206,11 +19204,7 @@ const { getMessage, sendMessage } = __nccwpck_require__( 2165 );
 	const { text, id, mainMsgBlocks, detailsMsgBlocks } = await getNotificationData( isFailure );
 	const existingMessage = await getMessage( client, channel, id );
 	let mainMessageTS = existingMessage ? existingMessage.ts : undefined;
-
-	let icon_emoji = getInput( 'slack_icon_emoji' );
-	if ( ! icon_emoji ) {
-		icon_emoji = isFailure ? ':red_circle:' : ':green_circle:';
-	}
+	const icon_emoji = getInput( 'slack_icon_emoji' );
 
 	if ( existingMessage ) {
 		debug( 'Main message found' );
@@ -19221,7 +19215,6 @@ const { getMessage, sendMessage } = __nccwpck_require__( 2165 );
 			blocks: mainMsgBlocks,
 			channel,
 			username,
-			icon_emoji,
 			ts: mainMessageTS,
 		} );
 
