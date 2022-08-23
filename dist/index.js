@@ -18050,6 +18050,7 @@ module.exports = extras;
 /***/ 6308:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
+const { getInput } = __nccwpck_require__( 8817 );
 const github = __nccwpck_require__( 2062 );
 const extras = __nccwpck_require__( 5414 );
 
@@ -18146,7 +18147,7 @@ async function getNotificationData( isFailure ) {
 
 	if ( eventName === 'push' ) {
 		const { url, id, message } = payload.head_commit;
-		target = `on ${ refType } *${ refName }*`;
+		target = `on ${ refType } _*${ refName }*_`;
 		msgId = `commit-${ id }`;
 
 		contextElements.push(
@@ -18188,7 +18189,7 @@ async function getNotificationData( isFailure ) {
 	}
 
 	if ( eventName === 'schedule' ) {
-		target = `for scheduled run on ${ refType } *${ refName }*`;
+		target = `for scheduled run on ${ refType } _*${ refName }*_`;
 		// we return a timestamp because we don't ever want to group messages with schedule event
 		// this way, we'll never be able to compute this same id later and cannot find this message
 		msgId = `sched-${ Date.now() }`;
@@ -18227,9 +18228,12 @@ async function getNotificationData( isFailure ) {
 		);
 	}
 
-	const text = `${ isFailure ? ':x:' : ':white_check_mark:' } Tests ${
-		isFailure ? 'failed' : 'passed'
-	} ${ target }`;
+	const statusIcon = `${ isFailure ? ':x:' : ':white_check_mark:' }`;
+	const statusText = `${ isFailure ? 'failed' : 'passed' }`;
+	const suite = getInput( 'suite_name' );
+	const suiteText = suite ? `_*${ suite }*_ tests` : 'Tests';
+	const text = `${ statusIcon }	${ suiteText } ${ statusText } ${ target }`;
+
 	const mainMsgBlocks = [
 		{
 			type: 'section',
