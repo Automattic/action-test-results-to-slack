@@ -18,6 +18,7 @@ This is an alpha version! The changes listed here are not final.
 - Group notifications
 - Only send notifications for failures
 - Style notifications
+- Truncate long commit messages
 - Updated package dependencies.
 
 ### Fixed
