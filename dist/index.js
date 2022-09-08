@@ -21532,6 +21532,17 @@ function getPlaywrightBlocks() {
 								],
 							}
 						);
+
+						r.attachments.forEach( attachment => {
+							if ( attachment.contentType === 'image/png' ) {
+								// this is not a valid Slack block, but a hacky way to send images further to be uploaded
+								// when detected further down, it should upload the file and then discard this "block"
+								failureDetailsBlocks.push( {
+									type: 'file',
+									path: attachment.path,
+								} );
+							}
+						} );
 					} );
 				} );
 			}
@@ -21707,6 +21718,7 @@ module.exports = { getChannels };
 /***/ 2165:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
+const fs = __nccwpck_require__( 5747 );
 const { debug, error } = __nccwpck_require__( 5585 );
 
 /**
@@ -21723,24 +21735,44 @@ async function postOrUpdateMessage( client, update, options ) {
 	const method = update ? 'update' : 'postMessage';
 	let response;
 
-	// Sending message will fail for more than 50 blocks
-	const chunks = blocks.length > 50 ? getBlocksChunks( blocks, 50 ) : [ blocks ];
+	// Split the blocks into chunks:
+	// - blocks with type 'file' are separate chunks. 'file' type is not a valid block, and when we have one we need to call files.upload instead of chat.postMessage.
+	// - chunk max size is 50 blocks, Slack API will fail if we send more
+	const chunks = getBlocksChunks( blocks, 50, 'file' );
 
 	for ( const chunk of chunks ) {
-		try {
-			response = await client.chat[ method ]( {
-				text,
-				blocks: chunk,
-				channel,
-				ts,
-				thread_ts,
-				username,
-				icon_emoji,
-				unfurl_links: false,
-				unfurl_media: false,
-			} );
-		} catch ( err ) {
-			error( err );
+		// The expectation is that chunks with files will only have one element
+		if ( chunk[ 0 ].type === 'file' ) {
+			if ( ! fs.existsSync( chunk[ 0 ].path ) ) {
+				error( 'File not found: ' + chunk[ 0 ].path );
+				continue;
+			}
+
+			try {
+				response = await client.files.upload( {
+					file: fs.createReadStream( chunk[ 0 ].path ),
+					channels: channel,
+					thread_ts: thread_ts,
+				} );
+			} catch ( err ) {
+				error( err );
+			}
+		} else {
+			try {
+				response = await client.chat[ method ]( {
+					text,
+					blocks: chunk,
+					channel,
+					ts,
+					thread_ts,
+					username,
+					icon_emoji,
+					unfurl_links: false,
+					unfurl_media: false,
+				} );
+			} catch ( err ) {
+				error( err );
+			}
 		}
 	}
 
@@ -21754,12 +21786,63 @@ async function postOrUpdateMessage( client, update, options ) {
  * @param {number} chunkSize - the maximum size of each chunk
  * @returns {[object]} the array of chunks
  */
-function getBlocksChunks( blocks, chunkSize ) {
+function getBlocksChunksBySize( blocks, chunkSize ) {
 	const chunks = [];
 	for ( let i = 0; i < blocks.length; i += chunkSize ) {
 		const chunk = blocks.slice( i, i + chunkSize );
 		chunks.push( chunk );
 	}
+	return chunks;
+}
+
+/**
+ * Split an array of blocks into chunks based on a given type property as delimiter
+ * E.g. if the array is [ {type: 'context'}, {type: 'context'}, {type: 'file'}, {type: 'context'} ] and the delimiter is 'file'
+ * the result will be [ [ {type: 'context'}, {type: 'context'} ], [ {type: 'file'} ], [ {type: 'context'} ] ]
+ *
+ * @param {[object]} blocks - the array to be split
+ * @param {string} type - the type property to use as delimiter
+ * @returns {[object]} the array of chunks
+ */
+function getBlocksChunksByType( blocks, type ) {
+	const chunks = [];
+	let nextIndex = 0;
+
+	for ( let i = 0; i < blocks.length; i++ ) {
+		if ( blocks[ i ].type === type ) {
+			if ( nextIndex < i ) {
+				chunks.push( blocks.slice( nextIndex, i ) );
+			}
+			chunks.push( blocks.slice( i, i + 1 ) );
+			nextIndex = i + 1;
+		}
+	}
+
+	if ( nextIndex < blocks.length ) {
+		chunks.push( blocks.slice( nextIndex ) );
+	}
+
+	return chunks;
+}
+
+/**
+ * Split an array of blocks into chunks based on a given type property as delimiter and a max size
+ *
+ * @param {[object]} blocks - the array to be split
+ * @param {number} maxSize - the maximum size of each chunk
+ * @param {string} typeDelimiter - the type property to use as delimiter
+ * @returns {[object]} the array of chunks
+ */
+function getBlocksChunks( blocks, maxSize, typeDelimiter ) {
+	const chunksByType = getBlocksChunksByType( blocks, typeDelimiter );
+	const chunks = [];
+
+	for ( const chunk of chunksByType ) {
+		chunk.length > maxSize
+			? chunks.push( ...getBlocksChunksBySize( chunk, maxSize ) )
+			: chunks.push( chunk );
+	}
+
 	return chunks;
 }
 
@@ -21793,7 +21876,11 @@ async function getMessage( client, channelId, identifier ) {
 	return message;
 }
 
-module.exports = { getMessage, postOrUpdateMessage };
+module.exports = {
+	getMessage,
+	postOrUpdateMessage,
+	getBlocksChunks,
+};
 
 
 /***/ }),

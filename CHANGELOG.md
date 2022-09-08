@@ -16,6 +16,7 @@ This is an alpha version! The changes listed here are not final.
 - Add tests
 - Initial release
 - Tooling: enable automatic GitHub releases when a new version of the action is tagged, so the new version can be made available in the GitHub Actions marketplace.
+- Upload screenshots from Playwright
 
 ### Changed
 - Group notifications
