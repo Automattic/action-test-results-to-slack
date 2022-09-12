@@ -21651,10 +21651,11 @@ module.exports = { getPlaywrightBlocks };
 /***/ 8268:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
+const fs = __nccwpck_require__( 5747 );
 const { getInput } = __nccwpck_require__( 8817 );
+const minimatch = __nccwpck_require__( 6174 );
 const { debug } = __nccwpck_require__( 5585 );
 const extras = __nccwpck_require__( 5414 );
-
 /**
  * Returns a list o Slack channel ids, based on context and rules configuration.
  *
@@ -21671,13 +21672,15 @@ function getChannels() {
 		debug( 'No rules configuration found, returning only the default channel' );
 		channels.push( defaultChannel );
 	} else {
-		const rulesConfiguration = require( rulesConfigurationPath );
+		const rulesConfiguration = JSON.parse(
+			fs.readFileSync( rulesConfigurationPath, { encoding: 'utf8' } )
+		);
 		const { refs, suites } = rulesConfiguration;
 		const { refType, refName } = extras;
 
 		if ( refs ) {
 			for ( const rule of refs ) {
-				if ( rule.type === refType && rule.name === refName ) {
+				if ( rule.type === refType && minimatch( refName, rule.name ) ) {
 					channels.push( ...rule.channels );
 				}
 
