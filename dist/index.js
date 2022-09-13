@@ -21506,7 +21506,6 @@ function getPlaywrightBlocks() {
 		// Expected structure spec: {tests: [{results: [{}]}]}
 		specsCount += specs.length;
 		specs.forEach( spec => {
-			debug( `Spec: ${ spec.title }` );
 			if ( ! spec.ok ) {
 				failedTests.push( `- ${ spec.title }` );
 
@@ -21539,7 +21538,7 @@ function getPlaywrightBlocks() {
 								// when detected further down, it should upload the file and then discard this "block"
 								failureDetailsBlocks.push( {
 									type: 'file',
-									path: attachment.path,
+									path: getAttachmentPath( report.config.projects[ 0 ].outputDir, attachment.path ),
 								} );
 							}
 						} );
@@ -21626,6 +21625,34 @@ function getPlaywrightReportsPaths() {
 }
 
 /**
+ * Creates the final path to attachments.
+ *
+ * @param {string} outputPath - the output root path, as defined in the Playwright report
+ * @param {string} attachmentPath - the original path to the attachment, as defined in the Playwright report
+ * @returns {string} the final path to the attachment
+ */
+function getAttachmentPath( outputPath, attachmentPath ) {
+	const resultsPath = getInput( 'playwright_output_dir' );
+
+	if ( resultsPath ) {
+		const globPath = attachmentPath.replace( outputPath, resultsPath );
+		debug( `Converting attachment path: ${ attachmentPath }` );
+
+		const resolvedPaths = glob.sync( globPath );
+
+		if ( resolvedPaths.length > 0 ) {
+			attachmentPath = resolvedPaths[ 0 ];
+		}
+
+		if ( resolvedPaths.length > 1 ) {
+			debug( `WARN: More files were found for path: ${ globPath }` );
+			debug( `WARN: Resolved paths: ${ resolvedPaths }` );
+		}
+	}
+	return attachmentPath;
+}
+
+/**
  * Flattens the suites in a Playwright report.
  *
  * @param {[object]} suites - an array of nested suites from a Playwright test report
@@ -21643,7 +21670,7 @@ function flattenSuites( suites ) {
 	}, [] );
 }
 
-module.exports = { getPlaywrightBlocks };
+module.exports = { getPlaywrightBlocks, getAttachmentPath };
 
 
 /***/ }),
