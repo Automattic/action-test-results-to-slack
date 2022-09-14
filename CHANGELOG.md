@@ -21,6 +21,7 @@ This is an alpha version! The changes listed here are not final.
 
 ### Changed
 - Group notifications
+- Improved tests
 - Only send notifications for failures
 - Style notifications
 - Truncate long commit messages

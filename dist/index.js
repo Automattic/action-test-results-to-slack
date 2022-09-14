@@ -21263,6 +21263,10 @@ const extras = __nccwpck_require__( 5414 );
 const { isWorkflowFailed, getRunUrl } = __nccwpck_require__( 6308 );
 const { getPlaywrightBlocks } = __nccwpck_require__( 5588 );
 const { getMessage, postOrUpdateMessage } = __nccwpck_require__( 2165 );
+const {
+	context: { eventName, sha, payload, runId, actor, serverUrl },
+} = github;
+const { refType, refName, runAttempt, triggeringActor, repository } = extras;
 
 /**
  * Returns an object with notification data.
@@ -21272,10 +21276,6 @@ const { getMessage, postOrUpdateMessage } = __nccwpck_require__( 2165 );
  * @param {boolean} isFailure - whether the workflow is failed or not
  */
 async function createMessage( isFailure ) {
-	const {
-		context: { eventName, sha, payload, runId, actor, serverUrl },
-	} = github;
-	const { refType, refName, runAttempt, triggeringActor, repository } = extras;
 	let target = `for ${ sha }`;
 	let msgId;
 	const contextElements = [];
