@@ -21298,9 +21298,9 @@ async function createMessage( isFailure ) {
 		buttons.push( getButton( `PR #${ number }`, html_url ) );
 	}
 
-	if ( eventName === 'push' || eventName === 'workflow_run' ) {
+	if ( eventName === 'push' ) {
 		const { url, id, message } = payload.head_commit;
-		target = `on ${ refType } _*${ refName }*_ (${ eventName })`;
+		target = `on ${ refType } _*${ refName }*_`;
 		msgId = `${ eventName }-${ id }`;
 		const truncatedMessage = message.length > 50 ? message.substring( 0, 48 ) + '...' : message;
 
@@ -21310,6 +21310,20 @@ async function createMessage( isFailure ) {
 		);
 
 		buttons.push( lastRunButtonBlock, getButton( `Commit ${ id.substring( 0, 8 ) }`, url ) );
+	}
+
+	if ( eventName === 'workflow_run' ) {
+		const { id, message } = payload.workflow_run.head_commit;
+		target = `on ${ refType } _*${ refName }*_ (${ eventName })`;
+		msgId = `${ eventName }-${ id }`;
+		const truncatedMessage = message.length > 50 ? message.substring( 0, 48 ) + '...' : message;
+
+		contextElements.push(
+			getTextContextElement( `Commit: ${ id.substring( 0, 8 ) } ${ truncatedMessage }` ),
+			actorBlock
+		);
+
+		buttons.push( lastRunButtonBlock );
 	}
 
 	if ( eventName === 'schedule' ) {
