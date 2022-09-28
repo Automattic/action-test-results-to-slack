@@ -32,3 +32,4 @@ This is an alpha version! The changes listed here are not final.
 - Fixed notifications for event of type schedule
 - Fixed notifications for schedule event
 - Fix empty blocks for unsupported events. Add support for workflow_run event.
+- Remove duplicated last run button for workflow_run events
