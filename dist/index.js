@@ -9,7 +9,7 @@ module.exports = JSON.parse('{"name":"@slack/web-api","version":"6.7.2","descrip
 
 /***/ }),
 
-/***/ 4204:
+/***/ 1196:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -36,7 +36,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.issue = exports.issueCommand = void 0;
 const os = __importStar(__nccwpck_require__(2087));
-const utils_1 = __nccwpck_require__(3372);
+const utils_1 = __nccwpck_require__(1913);
 /**
  * Commands
  *
@@ -108,7 +108,7 @@ function escapeProperty(s) {
 
 /***/ }),
 
-/***/ 8817:
+/***/ 1321:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -143,13 +143,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
-const command_1 = __nccwpck_require__(4204);
-const file_command_1 = __nccwpck_require__(2968);
-const utils_1 = __nccwpck_require__(3372);
+const command_1 = __nccwpck_require__(1196);
+const file_command_1 = __nccwpck_require__(6157);
+const utils_1 = __nccwpck_require__(1913);
 const os = __importStar(__nccwpck_require__(2087));
 const path = __importStar(__nccwpck_require__(5622));
-const uuid_1 = __nccwpck_require__(3771);
-const oidc_utils_1 = __nccwpck_require__(747);
+const oidc_utils_1 = __nccwpck_require__(1365);
 /**
  * The code to exit an action
  */
@@ -178,20 +177,9 @@ function exportVariable(name, val) {
     process.env[name] = convertedVal;
     const filePath = process.env['GITHUB_ENV'] || '';
     if (filePath) {
-        const delimiter = `ghadelimiter_${uuid_1.v4()}`;
-        // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
-        if (name.includes(delimiter)) {
-            throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
-        }
-        if (convertedVal.includes(delimiter)) {
-            throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
-        }
-        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
-        file_command_1.issueCommand('ENV', commandValue);
+        return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val));
     }
-    else {
-        command_1.issueCommand('set-env', { name }, convertedVal);
-    }
+    command_1.issueCommand('set-env', { name }, convertedVal);
 }
 exports.exportVariable = exportVariable;
 /**
@@ -209,7 +197,7 @@ exports.setSecret = setSecret;
 function addPath(inputPath) {
     const filePath = process.env['GITHUB_PATH'] || '';
     if (filePath) {
-        file_command_1.issueCommand('PATH', inputPath);
+        file_command_1.issueFileCommand('PATH', inputPath);
     }
     else {
         command_1.issueCommand('add-path', {}, inputPath);
@@ -249,7 +237,10 @@ function getMultilineInput(name, options) {
     const inputs = getInput(name, options)
         .split('\n')
         .filter(x => x !== '');
-    return inputs;
+    if (options && options.trimWhitespace === false) {
+        return inputs;
+    }
+    return inputs.map(input => input.trim());
 }
 exports.getMultilineInput = getMultilineInput;
 /**
@@ -282,8 +273,12 @@ exports.getBooleanInput = getBooleanInput;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setOutput(name, value) {
+    const filePath = process.env['GITHUB_OUTPUT'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('OUTPUT', file_command_1.prepareKeyValueMessage(name, value));
+    }
     process.stdout.write(os.EOL);
-    command_1.issueCommand('set-output', { name }, value);
+    command_1.issueCommand('set-output', { name }, utils_1.toCommandValue(value));
 }
 exports.setOutput = setOutput;
 /**
@@ -412,7 +407,11 @@ exports.group = group;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function saveState(name, value) {
-    command_1.issueCommand('save-state', { name }, value);
+    const filePath = process.env['GITHUB_STATE'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('STATE', file_command_1.prepareKeyValueMessage(name, value));
+    }
+    command_1.issueCommand('save-state', { name }, utils_1.toCommandValue(value));
 }
 exports.saveState = saveState;
 /**
@@ -434,17 +433,17 @@ exports.getIDToken = getIDToken;
 /**
  * Summary exports
  */
-var summary_1 = __nccwpck_require__(6534);
+var summary_1 = __nccwpck_require__(8943);
 Object.defineProperty(exports, "summary", ({ enumerable: true, get: function () { return summary_1.summary; } }));
 /**
  * @deprecated use core.summary
  */
-var summary_2 = __nccwpck_require__(6534);
+var summary_2 = __nccwpck_require__(8943);
 Object.defineProperty(exports, "markdownSummary", ({ enumerable: true, get: function () { return summary_2.markdownSummary; } }));
 /**
  * Path exports
  */
-var path_utils_1 = __nccwpck_require__(211);
+var path_utils_1 = __nccwpck_require__(8825);
 Object.defineProperty(exports, "toPosixPath", ({ enumerable: true, get: function () { return path_utils_1.toPosixPath; } }));
 Object.defineProperty(exports, "toWin32Path", ({ enumerable: true, get: function () { return path_utils_1.toWin32Path; } }));
 Object.defineProperty(exports, "toPlatformPath", ({ enumerable: true, get: function () { return path_utils_1.toPlatformPath; } }));
@@ -452,7 +451,7 @@ Object.defineProperty(exports, "toPlatformPath", ({ enumerable: true, get: funct
 
 /***/ }),
 
-/***/ 2968:
+/***/ 6157:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -478,13 +477,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.issueCommand = void 0;
+exports.prepareKeyValueMessage = exports.issueFileCommand = void 0;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__nccwpck_require__(5747));
 const os = __importStar(__nccwpck_require__(2087));
-const utils_1 = __nccwpck_require__(3372);
-function issueCommand(command, message) {
+const uuid_1 = __nccwpck_require__(3771);
+const utils_1 = __nccwpck_require__(1913);
+function issueFileCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
@@ -496,12 +496,27 @@ function issueCommand(command, message) {
         encoding: 'utf8'
     });
 }
-exports.issueCommand = issueCommand;
+exports.issueFileCommand = issueFileCommand;
+function prepareKeyValueMessage(key, value) {
+    const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+    const convertedValue = utils_1.toCommandValue(value);
+    // These should realistically never happen, but just in case someone finds a
+    // way to exploit uuid generation let's not allow keys or values that contain
+    // the delimiter.
+    if (key.includes(delimiter)) {
+        throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+    }
+    if (convertedValue.includes(delimiter)) {
+        throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+    }
+    return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
+}
+exports.prepareKeyValueMessage = prepareKeyValueMessage;
 //# sourceMappingURL=file-command.js.map
 
 /***/ }),
 
-/***/ 747:
+/***/ 1365:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -519,7 +534,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.OidcClient = void 0;
 const http_client_1 = __nccwpck_require__(5401);
 const auth_1 = __nccwpck_require__(6162);
-const core_1 = __nccwpck_require__(8817);
+const core_1 = __nccwpck_require__(1321);
 class OidcClient {
     static createHttpClient(allowRetry = true, maxRetry = 10) {
         const requestOptions = {
@@ -585,7 +600,7 @@ exports.OidcClient = OidcClient;
 
 /***/ }),
 
-/***/ 211:
+/***/ 8825:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -650,7 +665,7 @@ exports.toPlatformPath = toPlatformPath;
 
 /***/ }),
 
-/***/ 6534:
+/***/ 8943:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -940,7 +955,7 @@ exports.summary = _summary;
 
 /***/ }),
 
-/***/ 3372:
+/***/ 1913:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -987,7 +1002,7 @@ exports.toCommandProperties = toCommandProperties;
 
 /***/ }),
 
-/***/ 7061:
+/***/ 140:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -1048,7 +1063,7 @@ exports.Context = Context;
 
 /***/ }),
 
-/***/ 2062:
+/***/ 2740:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -1074,8 +1089,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getOctokit = exports.context = void 0;
-const Context = __importStar(__nccwpck_require__(7061));
-const utils_1 = __nccwpck_require__(2571);
+const Context = __importStar(__nccwpck_require__(140));
+const utils_1 = __nccwpck_require__(606);
 exports.context = new Context.Context();
 /**
  * Returns a hydrated octokit ready to use for GitHub Actions
@@ -1083,15 +1098,16 @@ exports.context = new Context.Context();
  * @param     token    the repo PAT or GITHUB_TOKEN
  * @param     options  other options to set
  */
-function getOctokit(token, options) {
-    return new utils_1.GitHub(utils_1.getOctokitOptions(token, options));
+function getOctokit(token, options, ...additionalPlugins) {
+    const GitHubWithPlugins = utils_1.GitHub.plugin(...additionalPlugins);
+    return new GitHubWithPlugins(utils_1.getOctokitOptions(token, options));
 }
 exports.getOctokit = getOctokit;
 //# sourceMappingURL=github.js.map
 
 /***/ }),
 
-/***/ 6416:
+/***/ 5862:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -1141,7 +1157,7 @@ exports.getApiBaseUrl = getApiBaseUrl;
 
 /***/ }),
 
-/***/ 2571:
+/***/ 606:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -1166,22 +1182,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getOctokitOptions = exports.GitHub = exports.context = void 0;
-const Context = __importStar(__nccwpck_require__(7061));
-const Utils = __importStar(__nccwpck_require__(6416));
+exports.getOctokitOptions = exports.GitHub = exports.defaults = exports.context = void 0;
+const Context = __importStar(__nccwpck_require__(140));
+const Utils = __importStar(__nccwpck_require__(5862));
 // octokit + plugins
 const core_1 = __nccwpck_require__(9170);
 const plugin_rest_endpoint_methods_1 = __nccwpck_require__(8248);
 const plugin_paginate_rest_1 = __nccwpck_require__(9752);
 exports.context = new Context.Context();
 const baseUrl = Utils.getApiBaseUrl();
-const defaults = {
+exports.defaults = {
     baseUrl,
     request: {
         agent: Utils.getProxyAgent(baseUrl)
     }
 };
-exports.GitHub = core_1.Octokit.plugin(plugin_rest_endpoint_methods_1.restEndpointMethods, plugin_paginate_rest_1.paginateRest).defaults(defaults);
+exports.GitHub = core_1.Octokit.plugin(plugin_rest_endpoint_methods_1.restEndpointMethods, plugin_paginate_rest_1.paginateRest).defaults(exports.defaults);
 /**
  * Convience function to correctly format Octokit Options to pass into the constructor.
  *
@@ -22239,7 +22255,7 @@ module.exports = extras;
 /***/ 6308:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-const github = __nccwpck_require__( 2062 );
+const github = __nccwpck_require__( 2740 );
 const extras = __nccwpck_require__( 5414 );
 
 /**
@@ -22295,8 +22311,8 @@ module.exports = { isWorkflowFailed, getRunUrl };
 /***/ 985:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-const { getInput } = __nccwpck_require__( 8817 );
-const github = __nccwpck_require__( 2062 );
+const { getInput } = __nccwpck_require__( 1321 );
+const github = __nccwpck_require__( 2740 );
 const { WebClient } = __nccwpck_require__( 7527 );
 const { debug } = __nccwpck_require__( 5585 );
 const extras = __nccwpck_require__( 5414 );
@@ -22528,7 +22544,7 @@ module.exports = { sendMessage, createMessage };
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const fs = __nccwpck_require__( 5747 );
-const { getInput } = __nccwpck_require__( 8817 );
+const { getInput } = __nccwpck_require__( 1321 );
 const glob = __nccwpck_require__( 5261 );
 const { debug } = __nccwpck_require__( 5585 );
 
@@ -22727,7 +22743,7 @@ module.exports = { getPlaywrightBlocks, getAttachmentPath };
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const fs = __nccwpck_require__( 5747 );
-const { getInput } = __nccwpck_require__( 8817 );
+const { getInput } = __nccwpck_require__( 1321 );
 const minimatch = __nccwpck_require__( 6174 );
 const { debug } = __nccwpck_require__( 5585 );
 const extras = __nccwpck_require__( 5414 );
@@ -23170,7 +23186,7 @@ module.exports = require("zlib");;
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-const { setFailed, getInput, startGroup, endGroup } = __nccwpck_require__( 8817 );
+const { setFailed, getInput, startGroup, endGroup } = __nccwpck_require__( 1321 );
 const { sendMessage } = __nccwpck_require__( 985 );
 const { getChannels } = __nccwpck_require__( 8268 );
 
