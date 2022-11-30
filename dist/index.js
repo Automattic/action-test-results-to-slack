@@ -22802,7 +22802,7 @@ function getChannels() {
 
 		if ( suites ) {
 			for ( const rule of suites ) {
-				if ( rule.name === suiteName ) {
+				if ( minimatch( suiteName, rule.name ) ) {
 					channels.push( ...rule.channels );
 				}
 

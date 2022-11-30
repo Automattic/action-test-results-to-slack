@@ -12,6 +12,9 @@ This is an alpha version! The changes listed here are not final.
 ### Added
 - Added support for repository_dispatch event
 
+### Changed
+- Notification rules for suites: match a partial suite name
+
 ## 0.1.0 - 2022-11-01
 ### Added
 - Add failure details from Playwright test runner JSON report
