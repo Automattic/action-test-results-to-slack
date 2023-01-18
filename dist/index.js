@@ -22837,9 +22837,9 @@ const { debug, error } = __nccwpck_require__( 5585 );
 /**
  * Sends a Slack message.
  *
- * @param {Object} client - Slack client
+ * @param {object} client - Slack client
  * @param {boolean} update - if it should update a message. For true, it will update an existing message based on `ts`, false will send a new message.
- * @param {Object} options - options
+ * @param {object} options - options
  * @returns {Promise<*>} the response from the Slack API. In case when multiple messages are sent due to the blocks length the last message response is returned.
  */
 async function postOrUpdateMessage( client, update, options ) {
@@ -22962,7 +22962,7 @@ function getBlocksChunks( blocks, maxSize, typeDelimiter ) {
 /**
  * Finds and returns a Slack message that contains a given string in its text (not in blocks!)
  *
- * @param {Object} client - the Slack client
+ * @param {object} client - the Slack client
  * @param {string} channelId - the channel id
  * @param {string} identifier - the string to search for in the messages text
  * @returns {Promise<*|null>} the message Object
