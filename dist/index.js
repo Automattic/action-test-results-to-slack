@@ -21275,6 +21275,7 @@ const extras = __nccwpck_require__( 7437 );
  * Decides if the current workflow failed
  *
  * @param {string} token - GitHub token
+ * @returns {boolean} Whether it failed.
  */
 async function isWorkflowFailed( token ) {
 	// eslint-disable-next-line new-cap
@@ -21343,6 +21344,7 @@ const { refType, refName, runAttempt, triggeringActor, repository } = extras;
  * that can be used later on to find this message and update it or send replies.
  *
  * @param {boolean} isFailure - whether the workflow is failed or not
+ * @returns {object} Notificaton data as described
  */
 async function createMessage( isFailure ) {
 	let target = `for ${ sha }`;
