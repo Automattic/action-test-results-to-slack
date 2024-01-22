@@ -11,6 +11,7 @@ This is an alpha version! The changes listed here are not final.
 
 ### Changed
 - Update doc example to use `actions/upload-artifact@v4`.
+- Updated package dependencies.
 
 ## [0.2.1] - 2023-04-07
 ### Changed
