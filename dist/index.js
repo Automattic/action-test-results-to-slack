@@ -4699,7 +4699,7 @@ const util_1 = __nccwpck_require__(3837);
 const is_stream_1 = __importDefault(__nccwpck_require__(4277));
 const p_queue_1 = __importDefault(__nccwpck_require__(9173));
 const p_retry_1 = __importStar(__nccwpck_require__(547));
-const axios_1 = __importDefault(__nccwpck_require__(4889));
+const axios_1 = __importDefault(__nccwpck_require__(2603));
 const form_data_1 = __importDefault(__nccwpck_require__(554));
 const is_electron_1 = __importDefault(__nccwpck_require__(7316));
 const methods_1 = __nccwpck_require__(1545);
@@ -8522,7 +8522,7 @@ if (true) {
 
 /***/ }),
 
-/***/ 6328:
+/***/ 1593:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var debug;
@@ -8544,7 +8544,7 @@ module.exports = function () {
 
 /***/ }),
 
-/***/ 3239:
+/***/ 3196:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var url = __nccwpck_require__(7310);
@@ -8553,7 +8553,7 @@ var http = __nccwpck_require__(3685);
 var https = __nccwpck_require__(5687);
 var Writable = (__nccwpck_require__(2781).Writable);
 var assert = __nccwpck_require__(9491);
-var debug = __nccwpck_require__(6328);
+var debug = __nccwpck_require__(1593);
 
 // Whether to use the native URL object or the legacy url module
 var useNativeURL = false;
@@ -9010,7 +9010,7 @@ RedirectableRequest.prototype._processResponse = function (response) {
      redirectUrl.protocol !== "https:" ||
      redirectUrl.host !== currentHost &&
      !isSubdomain(redirectUrl.host, currentHost)) {
-    removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
+    removeMatchingHeaders(/^(?:(?:proxy-)?authorization|cookie)$/i, this._options.headers);
   }
 
   // Evaluate the beforeRedirect callback
@@ -43982,11 +43982,11 @@ module.exports = parseParams
 
 /***/ }),
 
-/***/ 4889:
+/***/ 2603:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
-// Axios v1.6.2 Copyright (c) 2023 Matt Zabriskie and contributors
+// Axios v1.6.8 Copyright (c) 2024 Matt Zabriskie and contributors
 
 
 const FormData$1 = __nccwpck_require__(1425);
@@ -43995,10 +43995,10 @@ const proxyFromEnv = __nccwpck_require__(3969);
 const http = __nccwpck_require__(3685);
 const https = __nccwpck_require__(5687);
 const util = __nccwpck_require__(3837);
-const followRedirects = __nccwpck_require__(3239);
+const followRedirects = __nccwpck_require__(3196);
 const zlib = __nccwpck_require__(9796);
 const stream = __nccwpck_require__(2781);
-const EventEmitter = __nccwpck_require__(2361);
+const events = __nccwpck_require__(2361);
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -44010,7 +44010,6 @@ const util__default = /*#__PURE__*/_interopDefaultLegacy(util);
 const followRedirects__default = /*#__PURE__*/_interopDefaultLegacy(followRedirects);
 const zlib__default = /*#__PURE__*/_interopDefaultLegacy(zlib);
 const stream__default = /*#__PURE__*/_interopDefaultLegacy(stream);
-const EventEmitter__default = /*#__PURE__*/_interopDefaultLegacy(EventEmitter);
 
 function bind(fn, thisArg) {
   return function wrap() {
@@ -45356,6 +45355,9 @@ function arrayToObject(arr) {
 function formDataToJSON(formData) {
   function buildPath(path, value, target, index) {
     let name = path[index++];
+
+    if (name === '__proto__') return true;
+
     const isNumericKey = Number.isFinite(+name);
     const isLast = index >= path.length;
     name = !name && utils$1.isArray(target) ? target.length : name;
@@ -45439,9 +45441,6 @@ const defaults = {
     const isFormData = utils$1.isFormData(data);
 
     if (isFormData) {
-      if (!hasJSONContentType) {
-        return data;
-      }
       return hasJSONContentType ? JSON.stringify(formDataToJSON(data)) : data;
     }
 
@@ -45986,7 +45985,7 @@ function isAbsoluteURL(url) {
  */
 function combineURLs(baseURL, relativeURL) {
   return relativeURL
-    ? baseURL.replace(/\/+$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+    ? baseURL.replace(/\/?\/$/, '') + '/' + relativeURL.replace(/^\/+/, '')
     : baseURL;
 }
 
@@ -46007,7 +46006,7 @@ function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 }
 
-const VERSION = "1.6.2";
+const VERSION = "1.6.8";
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -46520,12 +46519,12 @@ const supportedProtocols = platform.protocols.map(protocol => {
  *
  * @returns {Object<string, any>}
  */
-function dispatchBeforeRedirect(options) {
+function dispatchBeforeRedirect(options, responseDetails) {
   if (options.beforeRedirects.proxy) {
     options.beforeRedirects.proxy(options);
   }
   if (options.beforeRedirects.config) {
-    options.beforeRedirects.config(options);
+    options.beforeRedirects.config(options, responseDetails);
   }
 }
 
@@ -46638,6 +46637,10 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
       // hotfix to support opt.all option which is required for node 20.x
       lookup = (hostname, opt, cb) => {
         _lookup(hostname, opt, (err, arg0, arg1) => {
+          if (err) {
+            return cb(err);
+          }
+
           const addresses = utils$1.isArray(arg0) ? arg0.map(addr => buildAddressEntry(addr)) : [buildAddressEntry(arg0, arg1)];
 
           opt.all ? cb(err, addresses) : cb(err, addresses[0].address, addresses[0].family);
@@ -46646,7 +46649,7 @@ const httpAdapter = isHttpAdapterSupported && function httpAdapter(config) {
     }
 
     // temporary internal emitter until the AxiosRequest class will be implemented
-    const emitter = new EventEmitter__default["default"]();
+    const emitter = new events.EventEmitter();
 
     const onFinished = () => {
       if (config.cancelToken) {
@@ -47636,7 +47639,7 @@ function dispatchRequest(config) {
   });
 }
 
-const headersToObject = (thing) => thing instanceof AxiosHeaders$1 ? thing.toJSON() : thing;
+const headersToObject = (thing) => thing instanceof AxiosHeaders$1 ? { ...thing } : thing;
 
 /**
  * Config-specific merge-function which creates a new config-object
@@ -47851,7 +47854,31 @@ class Axios {
    *
    * @returns {Promise} The Promise to be fulfilled
    */
-  request(configOrUrl, config) {
+  async request(configOrUrl, config) {
+    try {
+      return await this._request(configOrUrl, config);
+    } catch (err) {
+      if (err instanceof Error) {
+        let dummy;
+
+        Error.captureStackTrace ? Error.captureStackTrace(dummy = {}) : (dummy = new Error());
+
+        // slice off the Error: ... line
+        const stack = dummy.stack ? dummy.stack.replace(/^.+\n/, '') : '';
+
+        if (!err.stack) {
+          err.stack = stack;
+          // match without the 2 top stack lines
+        } else if (stack && !String(err.stack).endsWith(stack.replace(/^.+\n.+\n/, ''))) {
+          err.stack += '\n' + stack;
+        }
+      }
+
+      throw err;
+    }
+  }
+
+  _request(configOrUrl, config) {
     /*eslint no-param-reassign:0*/
     // Allow for axios('example/url'[, config]) a la fetch API
     if (typeof configOrUrl === 'string') {
