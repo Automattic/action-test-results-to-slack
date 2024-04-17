@@ -12,6 +12,9 @@ This is an alpha version! The changes listed here are not final.
 ### Changed
 - Updated package dependencies.
 
+### Fixed
+- Update version of `actions/download-artifact` in documentation.
+
 ## [0.3.0] - 2024-02-07
 ### Changed
 - Update doc example to use `actions/upload-artifact@v4`. [#34997]
