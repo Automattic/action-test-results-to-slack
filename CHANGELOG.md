@@ -13,6 +13,7 @@ This is an alpha version! The changes listed here are not final.
 - Updated package dependencies.
 
 ### Fixed
+- Lossless image optimization for images (should improve performance with no visible changes).
 - Update version of `actions/download-artifact` in documentation.
 
 ## [0.3.0] - 2024-02-07
