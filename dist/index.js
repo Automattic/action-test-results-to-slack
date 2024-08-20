@@ -37536,7 +37536,7 @@ const extras = __nccwpck_require__( 7437 );
  * Decides if the current workflow failed
  *
  * @param {string} token - GitHub token
- * @returns {boolean} Whether it failed.
+ * @return {boolean} Whether it failed.
  */
 async function isWorkflowFailed( token ) {
 	// eslint-disable-next-line new-cap
@@ -37568,7 +37568,7 @@ async function isWorkflowFailed( token ) {
  * Creates and returns a run url
  *
  * @param {boolean} withAttempt - whether to include the run attempt in the url
- * @returns {string} the run url
+ * @return {string} the run url
  */
 function getRunUrl( withAttempt = true ) {
 	const { serverUrl, runId } = github.context;
@@ -37605,7 +37605,7 @@ const { refType, refName, runAttempt, triggeringActor, repository } = extras;
  * that can be used later on to find this message and update it or send replies.
  *
  * @param {boolean} isFailure - whether the workflow is failed or not
- * @returns {object} Notificaton data as described
+ * @return {object} Notificaton data as described
  */
 async function createMessage( isFailure ) {
 	let target = `for ${ sha }`;
@@ -37731,7 +37731,7 @@ async function createMessage( isFailure ) {
  * Returns a Slack context block element with a given text.
  *
  * @param {string} text - the text of the element
- * @returns {object} - the block element
+ * @return {object} - the block element
  */
 function getTextContextElement( text ) {
 	return {
@@ -37745,8 +37745,8 @@ function getTextContextElement( text ) {
  * Returns a Slack button element with a given text and url.
  *
  * @param {string} text - the text of the button
- * @param {string} url - the url of the button
- * @returns {object} - the button element
+ * @param {string} url  - the url of the button
+ * @return {object} - the button element
  */
 function getButton( text, url ) {
 	return {
@@ -37763,9 +37763,9 @@ function getButton( text, url ) {
  * Creates the message and sends it if the rules are met.
  *
  * @param {string} slackToken - the Slack token
- * @param {string} ghToken - the GitHub token
- * @param {string} channel - the id of the channel to send the message to
- * @param {string} username - the username to use when sending the message
+ * @param {string} ghToken    - the GitHub token
+ * @param {string} channel    - the id of the channel to send the message to
+ * @param {string} username   - the username to use when sending the message
  */
 async function sendMessage( slackToken, ghToken, channel, username ) {
 	const client = new WebClient( slackToken );
@@ -37846,7 +37846,7 @@ const { debug } = __nccwpck_require__( 2551 );
 /**
  * Parses multiple Playwright JSON reports and returns details about the failed tests.
  *
- * @returns {object} an array of Slack blocks with test failure details.
+ * @return {object} an array of Slack blocks with test failure details.
  */
 function getPlaywrightBlocks() {
 	const blocks = [];
@@ -37941,7 +37941,7 @@ function getPlaywrightBlocks() {
 /**
  * Parses multiple Playwright JSON reports and returns their content as an array of objects.
  *
- * @returns {object} an array of Playwright reports.
+ * @return {object} an array of Playwright reports.
  */
 function getPlaywrightReports() {
 	let parseError = false;
@@ -37964,7 +37964,7 @@ function getPlaywrightReports() {
 /**
  * Parses the 'playwright_report_path' input and finds matching files.
  *
- * @returns {Array} an array of matching paths.
+ * @return {Array} an array of matching paths.
  */
 function getPlaywrightReportsPaths() {
 	const playwrightReportPath = getInput( 'playwright_report_path' );
@@ -37986,9 +37986,9 @@ function getPlaywrightReportsPaths() {
 /**
  * Creates the final path to attachments.
  *
- * @param {string} outputPath - the output root path, as defined in the Playwright report
+ * @param {string} outputPath     - the output root path, as defined in the Playwright report
  * @param {string} attachmentPath - the original path to the attachment, as defined in the Playwright report
- * @returns {string} the final path to the attachment
+ * @return {string} the final path to the attachment
  */
 function getAttachmentPath( outputPath, attachmentPath ) {
 	const resultsPath = getInput( 'playwright_output_dir' );
@@ -38015,7 +38015,7 @@ function getAttachmentPath( outputPath, attachmentPath ) {
  * Flattens the suites in a Playwright report.
  *
  * @param {[object]} suites - an array of nested suites from a Playwright test report
- * @returns {[object]} an array of flattened suites
+ * @return {[object]} an array of flattened suites
  */
 function flattenSuites( suites ) {
 	return suites.reduce( ( all, curr ) => {
@@ -38045,7 +38045,7 @@ const extras = __nccwpck_require__( 7437 );
 /**
  * Returns a list o Slack channel ids, based on context and rules configuration.
  *
- * @returns {string[]} an array of channels ids
+ * @return {string[]} an array of channels ids
  */
 function getChannels() {
 	const channels = [];
@@ -38113,10 +38113,10 @@ const { debug, error } = __nccwpck_require__( 2551 );
 /**
  * Sends a Slack message.
  *
- * @param {object} client - Slack client
- * @param {boolean} update - if it should update a message. For true, it will update an existing message based on `ts`, false will send a new message.
- * @param {object} options - options
- * @returns {Promise<*>} the response from the Slack API. In case when multiple messages are sent due to the blocks length the last message response is returned.
+ * @param {object}  client  - Slack client
+ * @param {boolean} update  - if it should update a message. For true, it will update an existing message based on `ts`, false will send a new message.
+ * @param {object}  options - options
+ * @return {Promise<*>} the response from the Slack API. In case when multiple messages are sent due to the blocks length the last message response is returned.
  */
 async function postOrUpdateMessage( client, update, options ) {
 	const { text, blocks = [], channel, username, icon_emoji, ts, thread_ts } = options;
@@ -38171,9 +38171,9 @@ async function postOrUpdateMessage( client, update, options ) {
 /**
  * Split an array of blocks into chunks of a given size
  *
- * @param {[object]} blocks - the array to be split
- * @param {number} chunkSize - the maximum size of each chunk
- * @returns {[object]} the array of chunks
+ * @param {[object]} blocks    - the array to be split
+ * @param {number}   chunkSize - the maximum size of each chunk
+ * @return {[object]} the array of chunks
  */
 function getBlocksChunksBySize( blocks, chunkSize ) {
 	const chunks = [];
@@ -38190,8 +38190,8 @@ function getBlocksChunksBySize( blocks, chunkSize ) {
  * the result will be [ [ {type: 'context'}, {type: 'context'} ], [ {type: 'file'} ], [ {type: 'context'} ] ]
  *
  * @param {[object]} blocks - the array to be split
- * @param {string} type - the type property to use as delimiter
- * @returns {[object]} the array of chunks
+ * @param {string}   type   - the type property to use as delimiter
+ * @return {[object]} the array of chunks
  */
 function getBlocksChunksByType( blocks, type ) {
 	const chunks = [];
@@ -38217,10 +38217,10 @@ function getBlocksChunksByType( blocks, type ) {
 /**
  * Split an array of blocks into chunks based on a given type property as delimiter and a max size
  *
- * @param {[object]} blocks - the array to be split
- * @param {number} maxSize - the maximum size of each chunk
- * @param {string} typeDelimiter - the type property to use as delimiter
- * @returns {[object]} the array of chunks
+ * @param {[object]} blocks        - the array to be split
+ * @param {number}   maxSize       - the maximum size of each chunk
+ * @param {string}   typeDelimiter - the type property to use as delimiter
+ * @return {[object]} the array of chunks
  */
 function getBlocksChunks( blocks, maxSize, typeDelimiter ) {
 	const chunksByType = getBlocksChunksByType( blocks, typeDelimiter );
@@ -38238,10 +38238,10 @@ function getBlocksChunks( blocks, maxSize, typeDelimiter ) {
 /**
  * Finds and returns a Slack message that contains a given string in its text (not in blocks!)
  *
- * @param {object} client - the Slack client
- * @param {string} channelId - the channel id
+ * @param {object} client     - the Slack client
+ * @param {string} channelId  - the channel id
  * @param {string} identifier - the string to search for in the messages text
- * @returns {Promise<*|null>} the message Object
+ * @return {Promise<*|null>} the message Object
  */
 async function getMessage( client, channelId, identifier ) {
 	debug( `Looking for ${ identifier }` );
