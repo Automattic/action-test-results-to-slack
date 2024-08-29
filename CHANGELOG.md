@@ -5,16 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.1-alpha] - unreleased
-
-This is an alpha version! The changes listed here are not final.
-
+## [0.3.1] - 2024-08-29
 ### Changed
-- Updated package dependencies.
+- Updated package dependencies. [#36097] [#36757] [#37706] [#38864]
 
 ### Fixed
-- Lossless image optimization for images (should improve performance with no visible changes).
-- Update version of `actions/download-artifact` in documentation.
+- Lossless image optimization for images (should improve performance with no visible changes). [#38750]
+- Update version of `actions/download-artifact` in documentation. [#36949]
 
 ## [0.3.0] - 2024-02-07
 ### Changed
@@ -66,7 +63,7 @@ This is an alpha version! The changes listed here are not final.
 - Remove duplicated last run button for scheduled event notification
 - Remove duplicated last run button for workflow_run events
 
-[0.3.1-alpha]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.3.0...v0.3.1-alpha
+[0.3.1]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.1.0...v0.2.0
