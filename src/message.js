@@ -96,6 +96,10 @@ async function createMessage( isFailure ) {
 		}
 	}
 
+	if ( eventName === 'workflow_dispatch' ) {
+		msgId = `workflow_dispatch-${ Date.now() }`;
+	}
+
 	contextElements.push( lastRunBlock );
 
 	const statusIcon = `${ isFailure ? ':x:' : ':white_check_mark:' }`;
