@@ -39200,15 +39200,15 @@ async function createMessage( isFailure ) {
 	if ( eventName === 'workflow_dispatch' ) {
 		target = `for event _*${ payload.action }*_`;
 
-		if ( payload.client_payload?.sha ) {
-			const upstreamSha = payload.client_payload.sha;
+		if ( payload.inputs?.sha ) {
+			const upstreamSha = payload.inputs.sha;
 			msgId = `workflow_dispatch-${ upstreamSha }`;
 			contextElements.push(
 				getTextContextElement( `Last commit: ${ upstreamSha.substring( 0, 8 ) }` )
 			);
 
-			if ( payload.client_payload?.repository ) {
-				const commitUrl = `${ serverUrl }/${ payload.client_payload.repository }/commit/${ upstreamSha }`;
+			if ( payload.inputs?.repository ) {
+				const commitUrl = `${ serverUrl }/${ payload.inputs.repository }/commit/${ upstreamSha }`;
 				buttons.push( getButton( `Commit ${ upstreamSha.substring( 0, 8 ) }`, commitUrl ) );
 			}
 		} else {
