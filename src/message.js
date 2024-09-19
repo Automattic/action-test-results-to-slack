@@ -98,7 +98,22 @@ async function createMessage( isFailure ) {
 	}
 
 	if ( eventName === 'workflow_dispatch' ) {
-		msgId = `workflow_dispatch-${ Date.now() }`;
+		target = `for event _*${ payload.action }*_`;
+
+		if ( payload.client_payload?.sha ) {
+			const upstreamSha = payload.client_payload.sha;
+			msgId = `workflow_dispatch-${ upstreamSha }`;
+			contextElements.push(
+				getTextContextElement( `Last commit: ${ upstreamSha.substring( 0, 8 ) }` )
+			);
+
+			if ( payload.client_payload?.repository ) {
+				const commitUrl = `${ serverUrl }/${ payload.client_payload.repository }/commit/${ upstreamSha }`;
+				buttons.push( getButton( `Commit ${ upstreamSha.substring( 0, 8 ) }`, commitUrl ) );
+			}
+		} else {
+			msgId = `workflow_dispatch-${ Date.now() }`;
+		}
 	}
 
 	contextElements.push( lastRunBlock );
@@ -193,32 +208,58 @@ async function sendMessage( slackToken, ghToken, channel, username ) {
 	const existingMessage = await getMessage( client, channel, id );
 	let mainMessageTS = existingMessage ? existingMessage.ts : undefined;
 
-	if ( isFailure ) {
-		debug( 'Sending new main message' );
-		// Send a new main message
-		const response = await postOrUpdateMessage( client, false, {
+	if ( existingMessage ) {
+		debug( 'Main message found' );
+		debug( 'Updating the main message' );
+		// Update the existing message
+		await postOrUpdateMessage( client, true, {
 			text: `${ text }\n${ id }`,
 			blocks: mainMsgBlocks,
 			channel,
 			username,
-			icon_emoji,
+			ts: mainMessageTS,
 		} );
-		mainMessageTS = response.ts;
 
-		debug( 'Sending new reply to main message with failure details' );
-		// Send replies to the main message with the current failure result
-		await postOrUpdateMessage( client, false, {
-			text,
-			blocks: detailsMsgBlocksChunks,
-			channel,
-			username,
-			icon_emoji,
-			thread_ts: mainMessageTS,
-		} );
+		if ( isFailure ) {
+			debug( 'Sending new reply to main message with failure details' );
+			// Send replies to the main message with the current failure result
+			await postOrUpdateMessage( client, false, {
+				text,
+				blocks: detailsMsgBlocksChunks,
+				channel,
+				username,
+				icon_emoji,
+				thread_ts: mainMessageTS,
+			} );
+		}
 	} else {
-		debug( 'No previous failure found, no notification needed for success' );
+		debug( 'Main message not found' );
+		if ( isFailure ) {
+			debug( 'Sending new main message' );
+			// Send a new main message
+			const response = await postOrUpdateMessage( client, false, {
+				text: `${ text }\n${ id }`,
+				blocks: mainMsgBlocks,
+				channel,
+				username,
+				icon_emoji,
+			} );
+			mainMessageTS = response.ts;
+
+			debug( 'Sending new reply to main message with failure details' );
+			// Send replies to the main message with the current failure result
+			await postOrUpdateMessage( client, false, {
+				text,
+				blocks: detailsMsgBlocksChunks,
+				channel,
+				username,
+				icon_emoji,
+				thread_ts: mainMessageTS,
+			} );
+		} else {
+			debug( 'No previous failure found, no notification needed for success' );
+		}
 	}
-	
 }
 
 module.exports = { sendMessage, createMessage };
