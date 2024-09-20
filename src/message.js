@@ -98,7 +98,7 @@ async function createMessage( isFailure ) {
 	}
 
 	if ( eventName === 'workflow_dispatch' ) {
-		target = `for manual run`;
+		target = `for manual run on ${ refType } _*${ refName }*_`;
 		
 		if ( payload.inputs?.sha ) {
 			const upstreamSha = payload.inputs.sha;
