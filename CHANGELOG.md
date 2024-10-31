@@ -11,6 +11,7 @@ This is an alpha version! The changes listed here are not final.
 
 ### Added
 - Document required Slack scopes.
+- Enable test coverage.
 
 ## [0.3.1] - 2024-08-29
 ### Changed
