@@ -6400,7 +6400,7 @@ const querystring_1 = __nccwpck_require__(3477);
 const util_1 = __nccwpck_require__(3837);
 const zlib_1 = __importDefault(__nccwpck_require__(9796));
 const axios_1 = __importDefault(__nccwpck_require__(7453));
-const form_data_1 = __importDefault(__nccwpck_require__(1425));
+const form_data_1 = __importDefault(__nccwpck_require__(5393));
 const is_electron_1 = __importDefault(__nccwpck_require__(7316));
 const is_stream_1 = __importDefault(__nccwpck_require__(2347));
 const p_queue_1 = __importDefault(__nccwpck_require__(9173));
@@ -11955,7 +11955,7 @@ module.exports.wrap = wrap;
 
 /***/ }),
 
-/***/ 1425:
+/***/ 5393:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var CombinedStream = __nccwpck_require__(1589);
@@ -11968,7 +11968,7 @@ var fs = __nccwpck_require__(7147);
 var Stream = (__nccwpck_require__(2781).Stream);
 var mime = __nccwpck_require__(3127);
 var asynckit = __nccwpck_require__(3798);
-var populate = __nccwpck_require__(5079);
+var populate = __nccwpck_require__(3219);
 
 // Public API
 module.exports = FormData;
@@ -12021,7 +12021,7 @@ FormData.prototype.append = function(field, value, options) {
   }
 
   // https://github.com/felixge/node-form-data/issues/38
-  if (util.isArray(value)) {
+  if (Array.isArray(value)) {
     // Please convert your array into string
     // the way web server expects it
     this._error(new Error('Arrays are not supported.'));
@@ -12463,7 +12463,7 @@ FormData.prototype.toString = function () {
 
 /***/ }),
 
-/***/ 5079:
+/***/ 3219:
 /***/ ((module) => {
 
 // populates missing values
@@ -48405,7 +48405,7 @@ exports.PathScurry = process.platform === 'win32' ? PathScurryWin32
 // Axios v1.7.4 Copyright (c) 2024 Matt Zabriskie and contributors
 
 
-const FormData$1 = __nccwpck_require__(1425);
+const FormData$1 = __nccwpck_require__(5393);
 const url = __nccwpck_require__(7310);
 const proxyFromEnv = __nccwpck_require__(3969);
 const http = __nccwpck_require__(3685);
