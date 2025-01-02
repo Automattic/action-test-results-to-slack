@@ -11,6 +11,7 @@ This is an alpha version! The changes listed here are not final.
 
 ### Changed
 - Update docs with permissions for GitHub Apps and fine-grained access tokens.
+- Updated package dependencies.
 
 ## [0.3.2] - 2024-12-04
 ### Added
