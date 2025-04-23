@@ -40236,6 +40236,7 @@ module.exports = { getChannels };
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const fs = __nccwpck_require__( 7147 );
+const path = __nccwpck_require__( 1017 );
 const { debug, error } = __nccwpck_require__( 2551 );
 
 /**
@@ -40266,10 +40267,11 @@ async function postOrUpdateMessage( client, update, options ) {
 			}
 
 			try {
-				response = await client.files.upload( {
-					file: fs.createReadStream( chunk[ 0 ].path ),
-					channels: channel,
-					thread_ts: thread_ts,
+				response = await client.filesUploadV2( {
+					channel_id: channel,
+					thread_ts,
+					file: chunk[ 0 ].path,
+					filename: path.basename( chunk[ 0 ].path ),
 				} );
 			} catch ( err ) {
 				error( err );
