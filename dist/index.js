@@ -7684,7 +7684,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3041:
+/***/ 9752:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -7746,35 +7746,46 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.buildThreadTsWarningMessage = exports.WebClient = exports.WebClientEvent = void 0;
-const path_1 = __nccwpck_require__(1017);
-const querystring_1 = __nccwpck_require__(3477);
-const util_1 = __nccwpck_require__(3837);
-const zlib_1 = __importDefault(__nccwpck_require__(9796));
-const axios_1 = __importDefault(__nccwpck_require__(1732));
+const node_path_1 = __nccwpck_require__(9411);
+const node_querystring_1 = __nccwpck_require__(9630);
+const node_util_1 = __nccwpck_require__(7261);
+const node_zlib_1 = __importDefault(__nccwpck_require__(5628));
+const axios_1 = __importDefault(__nccwpck_require__(3263));
 const form_data_1 = __importDefault(__nccwpck_require__(7174));
 const is_electron_1 = __importDefault(__nccwpck_require__(7316));
 const is_stream_1 = __importDefault(__nccwpck_require__(2347));
 const p_queue_1 = __importDefault(__nccwpck_require__(9173));
 const p_retry_1 = __importStar(__nccwpck_require__(547));
-const errors_1 = __nccwpck_require__(8351);
-const file_upload_1 = __nccwpck_require__(6696);
-const helpers_1 = __importDefault(__nccwpck_require__(2645));
-const instrument_1 = __nccwpck_require__(3081);
-const logger_1 = __nccwpck_require__(7490);
-const methods_1 = __nccwpck_require__(248);
-const retry_policies_1 = __nccwpck_require__(7736);
+const errors_1 = __nccwpck_require__(1454);
+const file_upload_1 = __nccwpck_require__(2292);
+const helpers_1 = __importDefault(__nccwpck_require__(7992));
+const instrument_1 = __nccwpck_require__(7824);
+const logger_1 = __nccwpck_require__(8685);
+const methods_1 = __nccwpck_require__(4447);
+const retry_policies_1 = __nccwpck_require__(8072);
 /*
  * Helpers
  */
 // Props on axios default headers object to ignore when retrieving full list of actual headers sent in any HTTP requests
-const axiosHeaderPropsToIgnore = ['delete', 'common', 'get', 'put', 'head', 'post', 'link', 'patch', 'purge', 'unlink', 'options'];
+const axiosHeaderPropsToIgnore = [
+    'delete',
+    'common',
+    'get',
+    'put',
+    'head',
+    'post',
+    'link',
+    'patch',
+    'purge',
+    'unlink',
+    'options',
+];
 const defaultFilename = 'Untitled';
 const defaultPageSize = 200;
 const noopPageReducer = () => undefined;
 var WebClientEvent;
 (function (WebClientEvent) {
     // TODO: safe to rename this to conform to PascalCase enum type naming convention?
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     WebClientEvent["RATE_LIMITED"] = "rate_limited";
 })(WebClientEvent || (exports.WebClientEvent = WebClientEvent = {}));
 /**
@@ -7786,18 +7797,21 @@ var WebClientEvent;
 class WebClient extends methods_1.Methods {
     /**
      * @param token - An API token to authenticate/authorize with Slack (usually start with `xoxp`, `xoxb`)
+     * @param {Object} [webClientOptions] - Configuration options.
+     * @param {Function} [webClientOptions.requestInterceptor] - An interceptor to mutate outgoing requests. See {@link https://axios-http.com/docs/interceptors Axios interceptors}
+     * @param {Function} [webClientOptions.adapter] - An adapter to allow custom handling of requests. Useful if you would like to use a pre-configured http client. See {@link https://github.com/axios/axios/blob/v1.x/README.md?plain=1#L586 Axios adapter}
      */
-    constructor(token, { slackApiUrl = 'https://slack.com/api/', logger = undefined, logLevel = undefined, maxRequestConcurrency = 100, retryConfig = retry_policies_1.tenRetriesInAboutThirtyMinutes, agent = undefined, tls = undefined, timeout = 0, rejectRateLimitedCalls = false, headers = {}, teamId = undefined, attachOriginalToWebAPIRequestError = true, } = {}) {
+    constructor(token, { slackApiUrl = 'https://slack.com/api/', logger = undefined, logLevel = undefined, maxRequestConcurrency = 100, retryConfig = retry_policies_1.tenRetriesInAboutThirtyMinutes, agent = undefined, tls = undefined, timeout = 0, rejectRateLimitedCalls = false, headers = {}, teamId = undefined, allowAbsoluteUrls = true, attachOriginalToWebAPIRequestError = true, requestInterceptor = undefined, adapter = undefined, } = {}) {
         super();
         this.token = token;
         this.slackApiUrl = slackApiUrl;
         this.retryConfig = retryConfig;
-        // eslint-disable-next-line new-cap
         this.requestQueue = new p_queue_1.default({ concurrency: maxRequestConcurrency });
         // NOTE: may want to filter the keys to only those acceptable for TLS options
         this.tlsConfig = tls !== undefined ? tls : {};
         this.rejectRateLimitedCalls = rejectRateLimitedCalls;
         this.teamId = teamId;
+        this.allowAbsoluteUrls = allowAbsoluteUrls;
         this.attachOriginalToWebAPIRequestError = attachOriginalToWebAPIRequestError;
         // Logging
         if (typeof logger !== 'undefined') {
@@ -7809,17 +7823,15 @@ class WebClient extends methods_1.Methods {
         else {
             this.logger = (0, logger_1.getLogger)(WebClient.loggerName, logLevel !== null && logLevel !== void 0 ? logLevel : logger_1.LogLevel.INFO, logger);
         }
-        // eslint-disable-next-line no-param-reassign
         if (this.token && !headers.Authorization)
             headers.Authorization = `Bearer ${this.token}`;
         this.axios = axios_1.default.create({
+            adapter: adapter ? (config) => adapter(Object.assign(Object.assign({}, config), { adapter: undefined })) : undefined,
             timeout,
             baseURL: slackApiUrl,
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             headers: (0, is_electron_1.default)() ? headers : Object.assign({ 'User-Agent': (0, instrument_1.getUserAgent)() }, headers),
             httpAgent: agent,
             httpsAgent: agent,
-            transformRequest: [this.serializeApiCallOptions.bind(this)],
             validateStatus: () => true, // all HTTP status codes should result in a resolved promise (as opposed to only 2xx)
             maxRedirects: 0,
             // disabling axios' automatic proxy support:
@@ -7828,8 +7840,14 @@ class WebClient extends methods_1.Methods {
             // protocols), users of this package should use the `agent` option to configure a proxy.
             proxy: false,
         });
-        // serializeApiCallOptions will always determine the appropriate content-type
-        delete this.axios.defaults.headers.post['Content-Type'];
+        // serializeApiCallData will always determine the appropriate content-type
+        this.axios.defaults.headers.post['Content-Type'] = undefined;
+        // request interceptors have reversed execution order
+        // see: https://github.com/axios/axios/blob/v1.x/test/specs/interceptors.spec.js#L88
+        if (requestInterceptor) {
+            this.axios.interceptors.request.use(requestInterceptor, null);
+        }
+        this.axios.interceptors.request.use(this.serializeApiCallData.bind(this), null);
         this.logger.debug('initialized');
     }
     /**
@@ -7847,14 +7865,14 @@ class WebClient extends methods_1.Methods {
                 throw new TypeError(`Expected an options argument but instead received a ${typeof options}`);
             }
             (0, file_upload_1.warnIfNotUsingFilesUploadV2)(method, this.logger);
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
+            // @ts-expect-error insufficient overlap between Record and FilesUploadV2Arguments
             if (method === 'files.uploadV2')
                 return this.filesUploadV2(options);
             const headers = {};
             if (options.token)
                 headers.Authorization = `Bearer ${options.token}`;
-            const response = yield this.makeRequest(method, Object.assign({ team_id: this.teamId }, options), headers);
+            const url = this.deriveRequestUrl(method);
+            const response = yield this.makeRequest(url, Object.assign({ team_id: this.teamId }, options), headers);
             const result = yield this.buildResult(response);
             this.logger.debug(`http request result: ${JSON.stringify(result)}`);
             // log warnings in response metadata
@@ -7864,7 +7882,7 @@ class WebClient extends methods_1.Methods {
             // log warnings and errors in response metadata messages
             // related to https://api.slack.com/changelog/2016-09-28-response-metadata-is-on-the-way
             if (result.response_metadata !== undefined && result.response_metadata.messages !== undefined) {
-                result.response_metadata.messages.forEach((msg) => {
+                for (const msg of result.response_metadata.messages) {
                     const errReg = /\[ERROR\](.*)/;
                     const warnReg = /\[WARN\](.*)/;
                     if (errReg.test(msg)) {
@@ -7879,15 +7897,15 @@ class WebClient extends methods_1.Methods {
                             this.logger.warn(warnMatch[1].trim());
                         }
                     }
-                });
+                }
             }
             // If result's content is gzip, "ok" property is not returned with successful response
             // TODO: look into simplifying this code block to only check for the second condition
             // if an { ok: false } body applies for all API errors
-            if (!result.ok && (response.headers['content-type'] !== 'application/gzip')) {
+            if (!result.ok && response.headers['content-type'] !== 'application/gzip') {
                 throw (0, errors_1.platformErrorFromResult)(result);
             }
-            else if ('ok' in result && result.ok === false) {
+            if ('ok' in result && result.ok === false) {
                 throw (0, errors_1.platformErrorFromResult)(result);
             }
             this.logger.debug(`apiCall('${method}') end`);
@@ -7898,8 +7916,7 @@ class WebClient extends methods_1.Methods {
         const pageSize = (() => {
             if (options !== undefined && typeof options.limit === 'number') {
                 const { limit } = options;
-                // eslint-disable-next-line no-param-reassign
-                delete options.limit;
+                options.limit = undefined;
                 return limit;
             }
             return defaultPageSize;
@@ -7917,7 +7934,6 @@ class WebClient extends methods_1.Methods {
                 }
                 // NOTE: test for the situation where you're resuming a pagination using and existing cursor
                 while (result === undefined || paginationOptions !== undefined) {
-                    // eslint-disable-next-line no-await-in-loop
                     result = yield __await(this.apiCall(method, Object.assign(options !== undefined ? options : {}, paginationOptions)));
                     yield yield __await(result);
                     paginationOptions = paginationOptionsForNextPage(result, pageSize);
@@ -7927,7 +7943,7 @@ class WebClient extends methods_1.Methods {
         if (shouldStop === undefined) {
             return generatePages.call(this);
         }
-        const pageReducer = (reduce !== undefined) ? reduce : noopPageReducer;
+        const pageReducer = reduce !== undefined ? reduce : noopPageReducer;
         let index = 0;
         return (() => __awaiter(this, void 0, void 0, function* () {
             // Unroll the first iteration of the iterator
@@ -7947,7 +7963,6 @@ class WebClient extends methods_1.Methods {
             }
             try {
                 // Continue iteration
-                // eslint-disable-next-line no-restricted-syntax
                 for (var _d = true, pageIterator_1 = __asyncValues(pageIterator), pageIterator_1_1; pageIterator_1_1 = yield pageIterator_1.next(), _a = pageIterator_1_1.done, !_a; _d = true) {
                     _c = pageIterator_1_1.value;
                     _d = false;
@@ -8009,7 +8024,6 @@ class WebClient extends methods_1.Methods {
     fetchAllUploadURLExternal(fileUploads) {
         return __awaiter(this, void 0, void 0, function* () {
             return Promise.all(fileUploads.map((upload) => {
-                /* eslint-disable @typescript-eslint/consistent-type-assertions */
                 const options = {
                     filename: upload.filename,
                     length: upload.length,
@@ -8088,9 +8102,8 @@ class WebClient extends methods_1.Methods {
         return __awaiter(this, void 0, void 0, function* () {
             // TODO: better input types - remove any
             const task = () => this.requestQueue.add(() => __awaiter(this, void 0, void 0, function* () {
-                const requestURL = (url.startsWith('https' || 0)) ? url : `${this.axios.getUri() + url}`;
                 try {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this
                     const config = Object.assign({ headers }, this.tlsConfig);
                     // admin.analytics.getFile returns a binary response
                     // To be able to parse it, it should be read as an ArrayBuffer
@@ -8100,14 +8113,12 @@ class WebClient extends methods_1.Methods {
                     // apps.event.authorizations.list will reject HTTP requests that send token in the body
                     // TODO: consider applying this change to all methods - though that will require thorough integration testing
                     if (url.endsWith('apps.event.authorizations.list')) {
-                        // eslint-disable-next-line no-param-reassign
-                        delete body.token;
+                        body.token = undefined;
                     }
-                    this.logger.debug(`http request url: ${requestURL}`);
+                    this.logger.debug(`http request url: ${url}`);
                     this.logger.debug(`http request body: ${JSON.stringify(redact(body))}`);
                     // compile all headers - some set by default under the hood by axios - that will be sent along
-                    let allHeaders = Object.keys(this.axios.defaults.headers)
-                        .reduce((acc, cur) => {
+                    let allHeaders = Object.keys(this.axios.defaults.headers).reduce((acc, cur) => {
                         if (!axiosHeaderPropsToIgnore.includes(cur)) {
                             acc[cur] = this.axios.defaults.headers[cur];
                         }
@@ -8139,10 +8150,8 @@ class WebClient extends methods_1.Methods {
                             // TODO: We may want to have more detailed info such as team_id, params except tokens, and so on.
                             throw new Error(`A rate limit was exceeded (url: ${url}, retry-after: ${retrySec})`);
                         }
-                        else {
-                            // TODO: turn this into some CodedError
-                            throw new p_retry_1.AbortError(new Error(`Retry header did not contain a valid timeout (url: ${url}, retry-after header: ${response.headers['retry-after']})`));
-                        }
+                        // TODO: turn this into some CodedError
+                        throw new p_retry_1.AbortError(new Error(`Retry header did not contain a valid timeout (url: ${url}, retry-after header: ${response.headers['retry-after']})`));
                     }
                     // Slack's Web API doesn't use meaningful status codes besides 429 and 200
                     if (response.status !== 200) {
@@ -8152,7 +8161,7 @@ class WebClient extends methods_1.Methods {
                 }
                 catch (error) {
                     // To make this compatible with tsd, casting here instead of `catch (error: any)`
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    // biome-ignore lint/suspicious/noExplicitAny: errors can be anything
                     const e = error;
                     this.logger.warn('http request failed', e.message);
                     if (e.request) {
@@ -8161,24 +8170,35 @@ class WebClient extends methods_1.Methods {
                     throw error;
                 }
             }));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // biome-ignore lint/suspicious/noExplicitAny: http responses can be anything
             return (0, p_retry_1.default)(task, this.retryConfig);
         });
+    }
+    /**
+     * Get the complete request URL for the provided URL.
+     * @param url - The resource to POST to. Either a Slack API method or absolute URL.
+     */
+    deriveRequestUrl(url) {
+        const isAbsoluteURL = url.startsWith('https://') || url.startsWith('http://');
+        if (isAbsoluteURL && this.allowAbsoluteUrls) {
+            return url;
+        }
+        return `${this.axios.getUri() + url}`;
     }
     /**
      * Transforms options (a simple key-value object) into an acceptable value for a body. This can be either
      * a string, used when posting with a content-type of url-encoded. Or, it can be a readable stream, used
      * when the options contain a binary (a stream or a buffer) and the upload should be done with content-type
      * multipart/form-data.
-     * @param options - arguments for the Web API method
-     * @param headers - a mutable object representing the HTTP headers for the outgoing request
+     * @param config - The Axios request configuration object
      */
-    serializeApiCallOptions(options, headers) {
+    serializeApiCallData(config) {
+        const { data, headers } = config;
         // The following operation both flattens complex objects into a JSON-encoded strings and searches the values for
         // binary content
         let containsBinaryData = false;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const flattened = Object.entries(options).map(([key, value]) => {
+        // biome-ignore lint/suspicious/noExplicitAny: HTTP request data can be anything
+        const flattened = Object.entries(data).map(([key, value]) => {
             if (value === undefined || value === null) {
                 return [];
             }
@@ -8204,13 +8224,13 @@ class WebClient extends methods_1.Methods {
                         // https://github.com/form-data/form-data/blob/028c21e0f93c5fefa46a7bbf1ba753e4f627ab7a/lib/form_data.js#L227-L230
                         // formidable and the browser add a name property
                         // fs- and request- streams have path property
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        // biome-ignore lint/suspicious/noExplicitAny: form values can be anything
                         const streamOrBuffer = value;
                         if (typeof streamOrBuffer.name === 'string') {
-                            return (0, path_1.basename)(streamOrBuffer.name);
+                            return (0, node_path_1.basename)(streamOrBuffer.name);
                         }
                         if (typeof streamOrBuffer.path === 'string') {
-                            return (0, path_1.basename)(streamOrBuffer.path);
+                            return (0, node_path_1.basename)(streamOrBuffer.path);
                         }
                         return defaultFilename;
                     })();
@@ -8224,32 +8244,33 @@ class WebClient extends methods_1.Methods {
             if (headers) {
                 // Copying FormData-generated headers into headers param
                 // not reassigning to headers param since it is passed by reference and behaves as an inout param
-                Object.entries(form.getHeaders()).forEach(([header, value]) => {
-                    // eslint-disable-next-line no-param-reassign
+                for (const [header, value] of Object.entries(form.getHeaders())) {
                     headers[header] = value;
-                });
+                }
             }
-            return form;
+            config.data = form;
+            config.headers = headers;
+            return config;
         }
         // Otherwise, a simple key-value object is returned
-        // eslint-disable-next-line no-param-reassign
         if (headers)
             headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // biome-ignore lint/suspicious/noExplicitAny: form values can be anything
         const initialValue = {};
-        return (0, querystring_1.stringify)(flattened.reduce((accumulator, [key, value]) => {
+        config.data = (0, node_querystring_1.stringify)(flattened.reduce((accumulator, [key, value]) => {
             if (key !== undefined && value !== undefined) {
                 accumulator[key] = value;
             }
             return accumulator;
         }, initialValue));
+        config.headers = headers;
+        return config;
     }
     /**
      * Processes an HTTP response into a WebAPICallResult by performing JSON parsing on the body and merging relevant
      * HTTP headers into the object.
      * @param response - an http response
      */
-    // eslint-disable-next-line class-methods-use-this
     buildResult(response) {
         return __awaiter(this, void 0, void 0, function* () {
             let { data } = response;
@@ -8259,23 +8280,24 @@ class WebClient extends methods_1.Methods {
                 // admin.analytics.getFile will return a Buffer that can be unzipped
                 try {
                     const unzippedData = yield new Promise((resolve, reject) => {
-                        zlib_1.default.unzip(data, (err, buf) => {
+                        node_zlib_1.default.unzip(data, (err, buf) => {
                             if (err) {
                                 return reject(err);
                             }
                             return resolve(buf.toString().split('\n'));
                         });
-                    }).then((res) => res)
+                    })
+                        .then((res) => res)
                         .catch((err) => {
                         throw err;
                     });
                     const fileData = [];
                     if (Array.isArray(unzippedData)) {
-                        unzippedData.forEach((dataset) => {
+                        for (const dataset of unzippedData) {
                             if (dataset && dataset.length > 0) {
                                 fileData.push(JSON.parse(dataset));
                             }
-                        });
+                        }
                     }
                     data = { file_data: fileData };
                 }
@@ -8286,7 +8308,7 @@ class WebClient extends methods_1.Methods {
             else if (!isGzipResponse && response.request.path === '/api/admin.analytics.getFile') {
                 // if it isn't a Gzip response but is from the admin.analytics.getFile request,
                 // decode the ArrayBuffer to JSON read the error
-                data = JSON.parse(new util_1.TextDecoder().decode(data));
+                data = JSON.parse(new node_util_1.TextDecoder().decode(data));
             }
             if (typeof data === 'string') {
                 // response.data can be a string, not an object for some reason
@@ -8306,7 +8328,9 @@ class WebClient extends methods_1.Methods {
                 data.response_metadata.scopes = response.headers['x-oauth-scopes'].trim().split(/\s*,\s*/);
             }
             if (response.headers['x-accepted-oauth-scopes'] !== undefined) {
-                data.response_metadata.acceptedScopes = response.headers['x-accepted-oauth-scopes'].trim().split(/\s*,\s*/);
+                data.response_metadata.acceptedScopes = response.headers['x-accepted-oauth-scopes']
+                    .trim()
+                    .split(/\s*,\s*/);
             }
             // add retry metadata from headers
             const retrySec = parseRetryHeaders(response);
@@ -8346,7 +8370,7 @@ function paginationOptionsForNextPage(previousResult, pageSize) {
  */
 function parseRetryHeaders(response) {
     if (response.headers['retry-after'] !== undefined) {
-        const retryAfter = parseInt(response.headers['retry-after'], 10);
+        const retryAfter = Number.parseInt(response.headers['retry-after'], 10);
         if (!Number.isNaN(retryAfter)) {
             return retryAfter;
         }
@@ -8381,13 +8405,8 @@ function warnIfFallbackIsMissing(method, logger, options) {
     const missingAttachmentFallbackDetected = (args) => Array.isArray(args.attachments) &&
         args.attachments.some((attachment) => !attachment.fallback || attachment.fallback.trim() === '');
     const isEmptyText = (args) => args.text === undefined || args.text === null || args.text === '';
-    const buildMissingTextWarning = () => `The top-level \`text\` argument is missing in the request payload for a ${method} call - ` +
-        'It\'s a best practice to always provide a `text` argument when posting a message. ' +
-        'The `text` is used in places where the content cannot be rendered such as: ' +
-        'system push notifications, assistive technology such as screen readers, etc.';
-    const buildMissingFallbackWarning = () => `Additionally, the attachment-level \`fallback\` argument is missing in the request payload for a ${method} call - ` +
-        'To avoid this warning, it is recommended to always provide a top-level `text` argument when posting a message. ' +
-        'Alternatively, you can provide an attachment-level `fallback` argument, though this is now considered a legacy field (see https://api.slack.com/reference/messaging/attachments#legacy_fields for more details).';
+    const buildMissingTextWarning = () => `The top-level \`text\` argument is missing in the request payload for a ${method} call - It's a best practice to always provide a \`text\` argument when posting a message. The \`text\` is used in places where the content cannot be rendered such as: system push notifications, assistive technology such as screen readers, etc.`;
+    const buildMissingFallbackWarning = () => `Additionally, the attachment-level \`fallback\` argument is missing in the request payload for a ${method} call - To avoid this warning, it is recommended to always provide a top-level \`text\` argument when posting a message. Alternatively, you can provide an attachment-level \`fallback\` argument, though this is now considered a legacy field (see https://api.slack.com/reference/messaging/attachments#legacy_fields for more details).`;
     if (isTargetMethod && typeof options === 'object') {
         if (hasAttachments(options)) {
             if (missingAttachmentFallbackDetected(options) && isEmptyText(options)) {
@@ -8423,7 +8442,7 @@ exports.buildThreadTsWarningMessage = buildThreadTsWarningMessage;
  * @returns
  */
 function redact(body) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: objects can be anything
     const flattened = Object.entries(body).map(([key, value]) => {
         // no value provided
         if (value === undefined || value === null) {
@@ -8456,7 +8475,7 @@ function redact(body) {
 
 /***/ }),
 
-/***/ 8351:
+/***/ 1454:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -8509,11 +8528,11 @@ function httpErrorFromResponse(response) {
     error.statusCode = response.status;
     error.statusMessage = response.statusText;
     const nonNullHeaders = {};
-    Object.keys(response.headers).forEach((k) => {
+    for (const k of Object.keys(response.headers)) {
         if (k && response.headers[k]) {
             nonNullHeaders[k] = response.headers[k];
         }
-    });
+    }
     error.headers = nonNullHeaders;
     error.body = response.data;
     return error;
@@ -8543,7 +8562,7 @@ exports.rateLimitedErrorWithDelay = rateLimitedErrorWithDelay;
 
 /***/ }),
 
-/***/ 6696:
+/***/ 2292:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -8559,9 +8578,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.buildInvalidFilesUploadParamError = exports.buildMultipleChannelsErrorMsg = exports.buildChannelsWarning = exports.buildFilesUploadMissingMessage = exports.buildGeneralFilesUploadWarning = exports.buildLegacyMethodWarning = exports.buildMissingExtensionWarning = exports.buildMissingFileNameWarning = exports.buildLegacyFileTypeWarning = exports.buildFileSizeErrorMsg = exports.buildMissingFileIdError = exports.warnIfLegacyFileType = exports.warnIfMissingOrInvalidFileNameAndDefault = exports.errorIfInvalidOrMissingFileData = exports.errorIfChannelsCsv = exports.warnIfChannels = exports.warnIfNotUsingFilesUploadV2 = exports.getAllFileUploadsToComplete = exports.getFileDataAsStream = exports.getFileDataLength = exports.getFileData = exports.getMultipleFileUploadJobs = exports.getFileUploadJob = void 0;
-const fs_1 = __nccwpck_require__(7147);
-const stream_1 = __nccwpck_require__(2781);
-const errors_1 = __nccwpck_require__(8351);
+const node_fs_1 = __nccwpck_require__(7561);
+const node_stream_1 = __nccwpck_require__(4492);
+const errors_1 = __nccwpck_require__(1454);
 function getFileUploadJob(options, logger) {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
@@ -8579,7 +8598,7 @@ function getFileUploadJob(options, logger) {
             filename: (_b = options.filename) !== null && _b !== void 0 ? _b : fileName,
             initial_comment: options.initial_comment,
             snippet_type: options.snippet_type,
-            title: (_c = options.title) !== null && _c !== void 0 ? _c : ((_d = options.filename) !== null && _d !== void 0 ? _d : fileName), // default title to filename unless otherwise specified
+            title: (_d = (_c = options.title) !== null && _c !== void 0 ? _c : options.filename) !== null && _d !== void 0 ? _d : fileName, // default title to filename unless otherwise specified
             // calculated
             data: fileData,
             length: fileDataBytesLength,
@@ -8624,7 +8643,7 @@ exports.getFileUploadJob = getFileUploadJob;
  * });
  * ```
  * @param options provided by user
-*/
+ */
 function getMultipleFileUploadJobs(options, logger) {
     return __awaiter(this, void 0, void 0, function* () {
         if ('file_uploads' in options) {
@@ -8677,7 +8696,7 @@ function getFileData(options) {
             if (typeof file === 'string') {
                 // try to read file as if the string was a file path
                 try {
-                    const dataBuffer = (0, fs_1.readFileSync)(file);
+                    const dataBuffer = (0, node_fs_1.readFileSync)(file);
                     return dataBuffer;
                 }
                 catch (error) {
@@ -8709,7 +8728,7 @@ function getFileDataAsStream(readable) {
         return new Promise((resolve, reject) => {
             readable.on('readable', () => {
                 let chunk;
-                /* eslint-disable no-cond-assign */
+                // biome-ignore lint/suspicious/noAssignInExpressions: being terse, this is OK
                 while ((chunk = readable.read()) !== null) {
                     chunks.push(chunk);
                 }
@@ -8738,7 +8757,7 @@ exports.getFileDataAsStream = getFileDataAsStream;
  */
 function getAllFileUploadsToComplete(fileUploads) {
     const toComplete = {};
-    fileUploads.forEach((upload) => {
+    for (const upload of fileUploads) {
         const { channel_id, thread_ts, initial_comment, file_id, title } = upload;
         if (file_id) {
             const compareString = `:::${channel_id}:::${thread_ts}:::${initial_comment}`;
@@ -8765,7 +8784,7 @@ function getAllFileUploadsToComplete(fileUploads) {
         else {
             throw new Error(buildMissingFileIdError());
         }
-    });
+    }
     return toComplete;
 }
 exports.getAllFileUploadsToComplete = getAllFileUploadsToComplete;
@@ -8775,7 +8794,7 @@ exports.getAllFileUploadsToComplete = getAllFileUploadsToComplete;
  * lower-level utilities.
  * @param method
  * @param logger
-*/
+ */
 function warnIfNotUsingFilesUploadV2(method, logger) {
     const targetMethods = ['files.upload'];
     const isTargetMethod = targetMethods.includes(method);
@@ -8819,10 +8838,9 @@ function errorIfInvalidOrMissingFileData(options) {
     if (!(hasFile || hasContent) || (hasFile && hasContent)) {
         throw (0, errors_1.errorWithCode)(new Error('Either a file or content field is required for valid file upload. You cannot supply both'), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
     }
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     if ('file' in options) {
         const { file } = options;
-        if (file && !(typeof file === 'string' || Buffer.isBuffer(file) || file instanceof stream_1.Readable)) {
+        if (file && !(typeof file === 'string' || Buffer.isBuffer(file) || file instanceof node_stream_1.Readable)) {
             throw (0, errors_1.errorWithCode)(new Error('file must be a valid string path, buffer or Readable'), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
         }
     }
@@ -8874,15 +8892,15 @@ function buildFileSizeErrorMsg() {
 }
 exports.buildFileSizeErrorMsg = buildFileSizeErrorMsg;
 function buildLegacyFileTypeWarning() {
-    return 'filetype is no longer a supported field in files.uploadV2.' +
+    return ('filetype is no longer a supported field in files.uploadV2.' +
         ' \nPlease remove this field. To indicate file type, please do so via the required filename property' +
-        ' using the appropriate file extension, e.g. image.png, text.txt';
+        ' using the appropriate file extension, e.g. image.png, text.txt');
 }
 exports.buildLegacyFileTypeWarning = buildLegacyFileTypeWarning;
 function buildMissingFileNameWarning() {
-    return 'filename is a required field for files.uploadV2. \n For backwards compatibility and ease of migration, ' +
+    return ('filename is a required field for files.uploadV2. \n For backwards compatibility and ease of migration, ' +
         'defaulting the filename. For best experience and consistent unfurl behavior, you' +
-        ' should set the filename property with correct file extension, e.g. image.png, text.txt';
+        ' should set the filename property with correct file extension, e.g. image.png, text.txt');
 }
 exports.buildMissingFileNameWarning = buildMissingFileNameWarning;
 function buildMissingExtensionWarning(filename) {
@@ -8894,8 +8912,8 @@ function buildLegacyMethodWarning(method) {
 }
 exports.buildLegacyMethodWarning = buildLegacyMethodWarning;
 function buildGeneralFilesUploadWarning() {
-    return 'Our latest recommendation is to use client.files.uploadV2() method, ' +
-        'which is mostly compatible and much stabler, instead.';
+    return ('Our latest recommendation is to use client.files.uploadV2() method, ' +
+        'which is mostly compatible and much stabler, instead.');
 }
 exports.buildGeneralFilesUploadWarning = buildGeneralFilesUploadWarning;
 function buildFilesUploadMissingMessage() {
@@ -8903,8 +8921,8 @@ function buildFilesUploadMissingMessage() {
 }
 exports.buildFilesUploadMissingMessage = buildFilesUploadMissingMessage;
 function buildChannelsWarning() {
-    return 'Although the \'channels\' parameter is still supported for smoother migration from legacy files.upload, ' +
-        'we recommend using the new channel_id parameter with a single str value instead (e.g. \'C12345\').';
+    return ("Although the 'channels' parameter is still supported for smoother migration from legacy files.upload, " +
+        "we recommend using the new channel_id parameter with a single str value instead (e.g. 'C12345').");
 }
 exports.buildChannelsWarning = buildChannelsWarning;
 function buildMultipleChannelsErrorMsg() {
@@ -8912,15 +8930,15 @@ function buildMultipleChannelsErrorMsg() {
 }
 exports.buildMultipleChannelsErrorMsg = buildMultipleChannelsErrorMsg;
 function buildInvalidFilesUploadParamError() {
-    return 'You may supply file_uploads only for a single channel, comment, thread respectively. ' +
-        'Therefore, please supply any channel_id, initial_comment, thread_ts in the top-layer.';
+    return ('You may supply file_uploads only for a single channel, comment, thread respectively. ' +
+        'Therefore, please supply any channel_id, initial_comment, thread_ts in the top-layer.');
 }
 exports.buildInvalidFilesUploadParamError = buildInvalidFilesUploadParamError;
 //# sourceMappingURL=file-upload.js.map
 
 /***/ }),
 
-/***/ 2645:
+/***/ 7992:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -8941,7 +8959,7 @@ exports["default"] = delay;
 
 /***/ }),
 
-/***/ 6977:
+/***/ 2325:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -8966,25 +8984,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.addAppMetadata = exports.retryPolicies = exports.ErrorCode = exports.LogLevel = exports.WebClientEvent = exports.WebClient = void 0;
-var WebClient_1 = __nccwpck_require__(3041);
+var WebClient_1 = __nccwpck_require__(9752);
 Object.defineProperty(exports, "WebClient", ({ enumerable: true, get: function () { return WebClient_1.WebClient; } }));
 Object.defineProperty(exports, "WebClientEvent", ({ enumerable: true, get: function () { return WebClient_1.WebClientEvent; } }));
-var logger_1 = __nccwpck_require__(7490);
+var logger_1 = __nccwpck_require__(8685);
 Object.defineProperty(exports, "LogLevel", ({ enumerable: true, get: function () { return logger_1.LogLevel; } }));
-var errors_1 = __nccwpck_require__(8351);
+var errors_1 = __nccwpck_require__(1454);
 Object.defineProperty(exports, "ErrorCode", ({ enumerable: true, get: function () { return errors_1.ErrorCode; } }));
-var retry_policies_1 = __nccwpck_require__(7736);
+var retry_policies_1 = __nccwpck_require__(8072);
 Object.defineProperty(exports, "retryPolicies", ({ enumerable: true, get: function () { return __importDefault(retry_policies_1).default; } }));
-var instrument_1 = __nccwpck_require__(3081);
+var instrument_1 = __nccwpck_require__(7824);
 Object.defineProperty(exports, "addAppMetadata", ({ enumerable: true, get: function () { return instrument_1.addAppMetadata; } }));
-__exportStar(__nccwpck_require__(248), exports);
-__exportStar(__nccwpck_require__(7978), exports);
-__exportStar(__nccwpck_require__(9311), exports);
+__exportStar(__nccwpck_require__(4447), exports);
+__exportStar(__nccwpck_require__(3625), exports);
+__exportStar(__nccwpck_require__(5095), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 3081:
+/***/ 7824:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -9014,10 +9032,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getUserAgent = exports.addAppMetadata = void 0;
-const os = __importStar(__nccwpck_require__(2037));
-const path_1 = __nccwpck_require__(1017);
-// eslint-disable-next-line @typescript-eslint/no-var-requires, import/no-commonjs
-const packageJson = __nccwpck_require__(4030);
+const os = __importStar(__nccwpck_require__(612));
+const node_path_1 = __nccwpck_require__(9411);
+const packageJson = __nccwpck_require__(1265);
 /**
  * Replaces occurrences of '/' with ':' in a string, since '/' is meaningful inside User-Agent strings as a separator.
  */
@@ -9031,7 +9048,7 @@ function replaceSlashes(s) {
 // the `os` module deno shim to correctly report operating system from a deno runtime. Until then, the below `os`-
 // based code will report "browser/undefined" from a deno runtime.
 const baseUserAgent = `${replaceSlashes(packageJson.name)}/${packageJson.version} ` +
-    `${(0, path_1.basename)(process.title)}/${process.version.replace('v', '')} ` +
+    `${(0, node_path_1.basename)(process.title)}/${process.version.replace('v', '')} ` +
     `${os.platform()}/${os.release()}`;
 const appMetadata = {};
 /**
@@ -9047,16 +9064,18 @@ exports.addAppMetadata = addAppMetadata;
  * Returns the current User-Agent value for instrumentation
  */
 function getUserAgent() {
-    const appIdentifier = Object.entries(appMetadata).map(([name, version]) => `${name}/${version}`).join(' ');
+    const appIdentifier = Object.entries(appMetadata)
+        .map(([name, version]) => `${name}/${version}`)
+        .join(' ');
     // only prepend the appIdentifier when its not empty
-    return ((appIdentifier.length > 0) ? `${appIdentifier} ` : '') + baseUserAgent;
+    return (appIdentifier.length > 0 ? `${appIdentifier} ` : '') + baseUserAgent;
 }
 exports.getUserAgent = getUserAgent;
 //# sourceMappingURL=instrument.js.map
 
 /***/ }),
 
-/***/ 7490:
+/***/ 8685:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -9092,7 +9111,7 @@ exports.getLogger = getLogger;
 
 /***/ }),
 
-/***/ 248:
+/***/ 4447:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -9114,14 +9133,20 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Methods = void 0;
 const eventemitter3_1 = __nccwpck_require__(326);
-const WebClient_1 = __nccwpck_require__(3041);
+const WebClient_1 = __nccwpck_require__(9752);
 /**
- * Binds a certain `method` and its arguments and result types to the `apiCall` method in `WebClient`.
+ * Binds a certain `method` and its (required) arguments and result types to the `apiCall` method in `WebClient`.
  */
 function bindApiCall(self, method) {
-    // We have to 'assert' that the bound method does indeed return the more specific `Result` type instead of just
-    // `WebAPICallResult`
-    return self.apiCall.bind(self, method);
+    const apiMethod = self.apiCall.bind(self, method);
+    return apiMethod;
+}
+/**
+ * Binds a certain `method` and its (required) arguments and result types to the `apiCall` method in `WebClient`.
+ */
+function bindApiCallWithOptionalArgument(self, method) {
+    const apiMethod = self.apiCall.bind(self, method);
+    return apiMethod;
 }
 function bindFilesUploadV2(self) {
     return self.filesUploadV2.bind(self);
@@ -9147,7 +9172,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                      * @description Get logs for a specified team/org.
                      * @see {@link https://api.slack.com/methods/admin.apps.activities.list `admin.apps.activities.list` API reference}.
                      */
-                    list: bindApiCall(this, 'admin.apps.activities.list'),
+                    list: bindApiCallWithOptionalArgument(this, 'admin.apps.activities.list'),
                 },
                 /**
                  * @description Approve an app for installation on a workspace.
@@ -9242,7 +9267,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description Get all Information Barriers for your organization.
                  * @see {@link https://api.slack.com/methods/admin.barriers.list `admin.barriers.list` API reference}.
                  */
-                list: bindApiCall(this, 'admin.barriers.list'),
+                list: bindApiCallWithOptionalArgument(this, 'admin.barriers.list'),
                 /**
                  * @description Update an existing Information Barrier.
                  * @see {@link https://api.slack.com/methods/admin.barriers.update `admin.barriers.update` API reference}.
@@ -9301,7 +9326,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                      * and then disconnected — and the corresponding original channel IDs for key revocation with EKM.
                      * @see {@link https://api.slack.com/methods/admin.conversations.ekm.listOriginalConnectedChannelInfo `admin.conversations.ekm.listOriginalConnectedChannelInfo` API reference}.
                      */
-                    listOriginalConnectedChannelInfo: bindApiCall(this, 'admin.conversations.ekm.listOriginalConnectedChannelInfo'),
+                    listOriginalConnectedChannelInfo: bindApiCallWithOptionalArgument(this, 'admin.conversations.ekm.listOriginalConnectedChannelInfo'),
                 },
                 /**
                  * @description Get conversation preferences for a public or private channel.
@@ -9360,7 +9385,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description Search for public or private channels in an Enterprise organization.
                  * @see {@link https://api.slack.com/methods/admin.conversations.search `admin.conversations.search` API reference}.
                  */
-                search: bindApiCall(this, 'admin.conversations.search'),
+                search: bindApiCallWithOptionalArgument(this, 'admin.conversations.search'),
                 /**
                  * @description Set the posting permissions for a public or private channel.
                  * @see {@link https://api.slack.com/methods/admin.conversations.setConversationPrefs `admin.conversations.setConversationPrefs` API reference}.
@@ -9397,7 +9422,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description List emoji for an Enterprise Grid organization.
                  * @see {@link https://api.slack.com/methods/admin.emoji.list `admin.emoji.list` API reference}.
                  */
-                list: bindApiCall(this, 'admin.emoji.list'),
+                list: bindApiCallWithOptionalArgument(this, 'admin.emoji.list'),
                 /**
                  * @description Remove an emoji across an Enterprise Grid organization.
                  * @see {@link https://api.slack.com/methods/admin.emoji.remove `admin.emoji.remove` API reference}.
@@ -9472,7 +9497,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * Options to scope results by any combination of roles or entities.
                  * @see {@link https://api.slack.com/methods/admin.roles.listAssignments `admin.roles.listAssignments` API reference}.
                  */
-                listAssignments: bindApiCall(this, 'admin.roles.listAssignments'),
+                listAssignments: bindApiCallWithOptionalArgument(this, 'admin.roles.listAssignments'),
                 /**
                  * @description Removes a set of users from a role for the given scopes and entities.
                  * @see {@link https://api.slack.com/methods/admin.roles.removeAssignments `admin.roles.removeAssignments` API reference}.
@@ -9496,7 +9521,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description List all teams on an Enterprise organization.
                  * @see {@link https://api.slack.com/methods/admin.teams.list `admin.teams.list` API reference}.
                  */
-                list: bindApiCall(this, 'admin.teams.list'),
+                list: bindApiCallWithOptionalArgument(this, 'admin.teams.list'),
                 owners: {
                     /**
                      * @description List all of the owners on a given workspace.
@@ -9574,7 +9599,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description List users on a workspace.
                  * @see {@link https://api.slack.com/methods/admin.users.list `admin.users.list` API reference}.
                  */
-                list: bindApiCall(this, 'admin.users.list'),
+                list: bindApiCallWithOptionalArgument(this, 'admin.users.list'),
                 /**
                  * @description Remove a user from a workspace.
                  * @see {@link https://api.slack.com/methods/admin.users.remove `admin.users.remove` API reference}.
@@ -9602,7 +9627,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                      * @description List active user sessions for an organization.
                      * @see {@link https://api.slack.com/methods/admin.users.session.list `admin.users.session.list` API reference}.
                      */
-                    list: bindApiCall(this, 'admin.users.session.list'),
+                    list: bindApiCallWithOptionalArgument(this, 'admin.users.session.list'),
                     /**
                      * @description Wipes all valid sessions on all devices for a given user.
                      * @see {@link https://api.slack.com/methods/admin.users.session.reset `admin.users.session.reset` API reference}.
@@ -9673,7 +9698,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description Search workflows within the team or enterprise.
                  * @see {@link https://api.slack.com/methods/admin.workflows.search `admin.workflows.search` API reference}.
                  */
-                search: bindApiCall(this, 'admin.workflows.search'),
+                search: bindApiCallWithOptionalArgument(this, 'admin.workflows.search'),
                 /**
                  * @description Unpublish workflows within the team or enterprise.
                  * @see {@link https://api.slack.com/methods/admin.workflows.unpublish `admin.workflows.unpublish` API reference}.
@@ -9686,7 +9711,26 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Checks API calling code.
              * @see {@link https://api.slack.com/methods/api.test `api.test` API reference}.
              */
-            test: bindApiCall(this, 'api.test'),
+            test: bindApiCallWithOptionalArgument(this, 'api.test'),
+        };
+        this.assistant = {
+            threads: {
+                /**
+                 * @description Set loading status to indicate that the app is building a response.
+                 * @see {@link https://api.slack.com/methods/assistant.threads.setStatus `assistant.threads.setStatus` API reference}.
+                 */
+                setStatus: bindApiCall(this, 'assistant.threads.setStatus'),
+                /**
+                 * @description Set suggested prompts for the user. Can suggest up to four prompts.
+                 * @see {@link https://api.slack.com/methods/assistant.threads.setSuggestedPrompts `assistant.threads.setSuggestedPrompts` API reference}.
+                 */
+                setSuggestedPrompts: bindApiCall(this, 'assistant.threads.setSuggestedPrompts'),
+                /**
+                 * @description Set the title of the thread. This is shown when a user views the app's chat history.
+                 * @see {@link https://api.slack.com/methods/assistant.threads.setTitle `assistant.threads.setTitle` API reference}.
+                 */
+                setTitle: bindApiCall(this, 'assistant.threads.setTitle'),
+            },
         };
         this.apps = {
             connections: {
@@ -9695,7 +9739,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * events and interactive payloads over.
                  * @see {@link https://api.slack.com/methods/apps.connections.open `apps.connections.open` API reference}.
                  */
-                open: bindApiCall(this, 'apps.connections.open'),
+                open: bindApiCallWithOptionalArgument(this, 'apps.connections.open'),
             },
             event: {
                 authorizations: {
@@ -9745,15 +9789,15 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Revokes a token.
              * @see {@link https://api.slack.com/methods/auth.revoke `auth.revoke` API reference}.
              */
-            revoke: bindApiCall(this, 'auth.revoke'),
+            revoke: bindApiCallWithOptionalArgument(this, 'auth.revoke'),
             teams: {
                 /**
                  * @description Obtain a full list of workspaces your org-wide app has been approved for.
                  * @see {@link https://api.slack.com/methods/auth.teams.list `auth.teams.list` API reference}.
                  */
-                list: bindApiCall(this, 'auth.teams.list'),
+                list: bindApiCallWithOptionalArgument(this, 'auth.teams.list'),
             },
-            test: bindApiCall(this, 'auth.test'),
+            test: bindApiCallWithOptionalArgument(this, 'auth.test'),
         };
         this.bookmarks = {
             /**
@@ -9782,7 +9826,7 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Gets information about a bot user.
              * @see {@link https://api.slack.com/methods/bots.info `bots.info` API reference}.
              */
-            info: bindApiCall(this, 'bots.info'),
+            info: bindApiCallWithOptionalArgument(this, 'bots.info'),
         };
         this.calls = {
             /**
@@ -9831,7 +9875,7 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Create Canvas for a user.
              * @see {@link https://api.slack.com/methods/canvases.create `canvases.create` API reference}.
              */
-            create: bindApiCall(this, 'canvases.create'),
+            create: bindApiCallWithOptionalArgument(this, 'canvases.create'),
             /**
              * @description Deletes a canvas.
              * @see {@link https://api.slack.com/methods/canvases.delete `canvases.delete` API reference}.
@@ -9891,7 +9935,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description Returns a list of scheduled messages.
                  * @see {@link https://api.slack.com/methods/chat.scheduledMessages.list `chat.scheduledMessages.list` API reference}.
                  */
-                list: bindApiCall(this, 'chat.scheduledMessages.list'),
+                list: bindApiCallWithOptionalArgument(this, 'chat.scheduledMessages.list'),
             },
             /**
              * @description Provide custom unfurl behavior for user-posted URLs.
@@ -9989,13 +10033,13 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description List all channels in a Slack team.
              * @see {@link https://api.slack.com/methods/conversations.list `conversations.list` API reference}.
              */
-            list: bindApiCall(this, 'conversations.list'),
+            list: bindApiCallWithOptionalArgument(this, 'conversations.list'),
             /**
              * @description Lists shared channel invites that have been generated or received but have not been approved by
              * all parties.
              * @see {@link https://api.slack.com/methods/conversations.listConnectInvites `conversations.listConnectInvites` API reference}.
              */
-            listConnectInvites: bindApiCall(this, 'conversations.listConnectInvites'),
+            listConnectInvites: bindApiCallWithOptionalArgument(this, 'conversations.listConnectInvites'),
             /**
              * @description Sets the read cursor in a channel.
              * @see {@link https://api.slack.com/methods/conversations.mark `conversations.mark` API reference}.
@@ -10021,6 +10065,23 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @see {@link https://api.slack.com/methods/conversations.replies `conversations.replies` API reference}.
              */
             replies: bindApiCall(this, 'conversations.replies'),
+            requestSharedInvite: {
+                /**
+                 * @description Approves a request to add an external user to a channel and sends them a Slack Connect invite.
+                 * @see {@link https://api.slack.com/methods/conversations.requestSharedInvite.approve `conversations.requestSharedInvite.approve` API reference}.
+                 */
+                approve: bindApiCall(this, 'conversations.requestSharedInvite.approve'),
+                /**
+                 * @description Denies a request to invite an external user to a channel.
+                 * @see {@link https://api.slack.com/methods/conversations.requestSharedInvite.deny `conversations.requestSharedInvite.deny` API reference}.
+                 */
+                deny: bindApiCall(this, 'conversations.requestSharedInvite.deny'),
+                /**
+                 * @description Lists requests to add external users to channels with ability to filter.
+                 * @see {@link https://api.slack.com/methods/conversations.requestSharedInvite.list `conversations.requestSharedInvite.list` API reference}.
+                 */
+                list: bindApiCallWithOptionalArgument(this, 'conversations.requestSharedInvite.list'),
+            },
             /**
              * @description Sets the purpose for a conversation.
              * @see {@link https://api.slack.com/methods/conversations.setPurpose `conversations.setPurpose` API reference}.
@@ -10049,17 +10110,17 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Ends the current user's Do Not Disturb session immediately.
              * @see {@link https://api.slack.com/methods/dnd.endDnd `dnd.endDnd` API reference}.
              */
-            endDnd: bindApiCall(this, 'dnd.endDnd'),
+            endDnd: bindApiCallWithOptionalArgument(this, 'dnd.endDnd'),
             /**
              * @description Ends the current user's snooze mode immediately.
              * @see {@link https://api.slack.com/methods/dnd.endSnooze `dnd.endSnooze` API reference}.
              */
-            endSnooze: bindApiCall(this, 'dnd.endSnooze'),
+            endSnooze: bindApiCallWithOptionalArgument(this, 'dnd.endSnooze'),
             /**
              * @description Retrieves a user's current Do Not Disturb status.
              * @see {@link https://api.slack.com/methods/dnd.info `dnd.info` API reference}.
              */
-            info: bindApiCall(this, 'dnd.info'),
+            info: bindApiCallWithOptionalArgument(this, 'dnd.info'),
             /**
              * @description Turns on Do Not Disturb mode for the current user, or changes its duration.
              * @see {@link https://api.slack.com/methods/dnd.setSnooze `dnd.setSnooze` API reference}.
@@ -10076,7 +10137,7 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Lists custom emoji for a team.
              * @see {@link https://api.slack.com/methods/emoji.list `emoji.list` API reference}.
              */
-            list: bindApiCall(this, 'emoji.list'),
+            list: bindApiCallWithOptionalArgument(this, 'emoji.list'),
         };
         this.files = {
             /**
@@ -10131,8 +10192,8 @@ class Methods extends eventemitter3_1.EventEmitter {
              * - multiple upload_files
              * Will try to honor both single file or content data supplied as well
              * as multiple file uploads property.
-             * @see {@link https://slack.dev/node-slack-sdk/web-api#upload-a-file `@slack/web-api` Upload a file documentation}.
-            */
+             * @see {@link https://tools.slack.dev/node-slack-sdk/web-api#upload-a-file `@slack/web-api` Upload a file documentation}.
+             */
             uploadV2: bindFilesUploadV2(this),
             comments: {
                 /**
@@ -10224,7 +10285,7 @@ class Methods extends eventemitter3_1.EventEmitter {
                  * @description Get the identity of a user who has authorized {@link https://api.slack.com/authentication/sign-in-with-slack Sign in with Slack}.
                  * @see {@link https://api.slack.com/methods/openid.connect.userInfo `openid.connect.userInfo` API reference}.
                  */
-                userInfo: bindApiCall(this, 'openid.connect.userInfo'),
+                userInfo: bindApiCallWithOptionalArgument(this, 'openid.connect.userInfo'),
             },
         };
         this.pins = {
@@ -10259,7 +10320,7 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description List reactions made by a user.
              * @see {@link https://api.slack.com/methods/reactions.list `reactions.list` API reference}.
              */
-            list: bindApiCall(this, 'reactions.list'),
+            list: bindApiCallWithOptionalArgument(this, 'reactions.list'),
             /**
              * @description Removes a reaction from an item.
              * @see {@link https://api.slack.com/methods/reactions.remove `reactions.remove` API reference}.
@@ -10293,20 +10354,20 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Lists all reminders created by or for a given user.
              * @see {@link https://api.slack.com/methods/reminders.list `reminders.list` API reference}.
              */
-            list: bindApiCall(this, 'reminders.list'),
+            list: bindApiCallWithOptionalArgument(this, 'reminders.list'),
         };
         this.rtm = {
             /**
              * @description Starts a Real Time Messaging session.
              * @see {@link https://api.slack.com/methods/rtm.connect `rtm.connect` API reference}.
              */
-            connect: bindApiCall(this, 'rtm.connect'),
+            connect: bindApiCallWithOptionalArgument(this, 'rtm.connect'),
             /**
              * @description Starts a Real Time Messaging session.
              * @deprecated Use `rtm.connect` instead. See {@link https://api.slack.com/changelog/2021-10-rtm-start-to-stop our post on retiring `rtm.start`}.
              * @see {@link https://api.slack.com/methods/rtm.start `rtm.start` API reference}.
              */
-            start: bindApiCall(this, 'rtm.start'),
+            start: bindApiCallWithOptionalArgument(this, 'rtm.start'),
         };
         this.search = {
             /**
@@ -10330,12 +10391,12 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Gets the access logs for the current team.
              * @see {@link https://api.slack.com/methods/team.accessLogs `team.accessLogs` API reference}.
              */
-            accessLogs: bindApiCall(this, 'team.accessLogs'),
+            accessLogs: bindApiCallWithOptionalArgument(this, 'team.accessLogs'),
             /**
              * @description Gets billable users information for the current team.
              * @see {@link https://api.slack.com/methods/team.billableInfo `team.billableInfo` API reference}.
              */
-            billableInfo: bindApiCall(this, 'team.billableInfo'),
+            billableInfo: bindApiCallWithOptionalArgument(this, 'team.billableInfo'),
             billing: {
                 /**
                  * @description Reads a workspace's billing plan information.
@@ -10359,25 +10420,25 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description Gets information about the current team.
              * @see {@link https://api.slack.com/methods/team.info `team.info` API reference}.
              */
-            info: bindApiCall(this, 'team.info'),
+            info: bindApiCallWithOptionalArgument(this, 'team.info'),
             /**
              * @description Gets the integration logs for the current team.
              * @see {@link https://api.slack.com/methods/team.integrationLogs `team.integrationLogs` API reference}.
              */
-            integrationLogs: bindApiCall(this, 'team.integrationLogs'),
+            integrationLogs: bindApiCallWithOptionalArgument(this, 'team.integrationLogs'),
             preferences: {
                 /**
                  * @description Retrieve a list of a workspace's team preferences.
                  * @see {@link https://api.slack.com/methods/team.preferences.list `team.preferences.list` API reference}.
                  */
-                list: bindApiCall(this, 'team.preferences.list'),
+                list: bindApiCallWithOptionalArgument(this, 'team.preferences.list'),
             },
             profile: {
                 /**
                  * @description Retrieve a team's profile.
                  * @see {@link https://api.slack.com/methods/team.profile.get `team.profile.get` API reference}.
                  */
-                get: bindApiCall(this, 'team.profile.get'),
+                get: bindApiCallWithOptionalArgument(this, 'team.profile.get'),
             },
         };
         this.tooling = {
@@ -10409,7 +10470,7 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @description List all User Groups for a team.
              * @see {@link https://api.slack.com/methods/usergroups.list `usergroups.list` API reference}.
              */
-            list: bindApiCall(this, 'usergroups.list'),
+            list: bindApiCallWithOptionalArgument(this, 'usergroups.list'),
             /**
              * @description Update an existing User Group.
              * @see {@link https://api.slack.com/methods/usergroups.update `usergroups.update` API reference}.
@@ -10583,7 +10644,7 @@ __exportStar(__nccwpck_require__(5188), exports);
 
 /***/ }),
 
-/***/ 7736:
+/***/ 8072:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -10624,7 +10685,7 @@ exports["default"] = policies;
 
 /***/ }),
 
-/***/ 7978:
+/***/ 3625:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -10634,7 +10695,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 9311:
+/***/ 5095:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -39716,7 +39777,7 @@ module.exports = { isWorkflowFailed, getRunUrl };
 
 const { getInput } = __nccwpck_require__( 5504 );
 const github = __nccwpck_require__( 6864 );
-const { WebClient } = __nccwpck_require__( 6977 );
+const { WebClient } = __nccwpck_require__( 2325 );
 const { debug } = __nccwpck_require__( 2551 );
 const extras = __nccwpck_require__( 7437 );
 const { isWorkflowFailed, getRunUrl } = __nccwpck_require__( 1746 );
@@ -40548,11 +40609,27 @@ module.exports = require("node:fs/promises");
 
 /***/ }),
 
+/***/ 612:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
+
+/***/ }),
+
 /***/ 9411:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node:path");
+
+/***/ }),
+
+/***/ 9630:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:querystring");
 
 /***/ }),
 
@@ -40585,6 +40662,14 @@ module.exports = require("node:url");
 
 "use strict";
 module.exports = require("node:util");
+
+/***/ }),
+
+/***/ 5628:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:zlib");
 
 /***/ }),
 
@@ -50234,11 +50319,11 @@ exports.PathScurry = process.platform === 'win32' ? PathScurryWin32
 
 /***/ }),
 
-/***/ 1732:
+/***/ 3263:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
-/*! Axios v1.8.2 Copyright (c) 2025 Matt Zabriskie and contributors */
+/*! Axios v1.9.0 Copyright (c) 2025 Matt Zabriskie and contributors */
 
 
 const FormData$1 = __nccwpck_require__(7174);
@@ -50276,6 +50361,7 @@ function bind(fn, thisArg) {
 
 const {toString} = Object.prototype;
 const {getPrototypeOf} = Object;
+const {iterator, toStringTag} = Symbol;
 
 const kindOf = (cache => thing => {
     const str = toString.call(thing);
@@ -50402,7 +50488,7 @@ const isPlainObject = (val) => {
   }
 
   const prototype = getPrototypeOf(val);
-  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in val) && !(Symbol.iterator in val);
+  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(toStringTag in val) && !(iterator in val);
 };
 
 /**
@@ -50753,13 +50839,13 @@ const isTypedArray = (TypedArray => {
  * @returns {void}
  */
 const forEachEntry = (obj, fn) => {
-  const generator = obj && obj[Symbol.iterator];
+  const generator = obj && obj[iterator];
 
-  const iterator = generator.call(obj);
+  const _iterator = generator.call(obj);
 
   let result;
 
-  while ((result = iterator.next()) && !result.done) {
+  while ((result = _iterator.next()) && !result.done) {
     const pair = result.value;
     fn.call(obj, pair[0], pair[1]);
   }
@@ -50880,7 +50966,7 @@ const toFiniteNumber = (value, defaultValue) => {
  * @returns {boolean}
  */
 function isSpecCompliantForm(thing) {
-  return !!(thing && isFunction(thing.append) && thing[Symbol.toStringTag] === 'FormData' && thing[Symbol.iterator]);
+  return !!(thing && isFunction(thing.append) && thing[toStringTag] === 'FormData' && thing[iterator]);
 }
 
 const toJSONObject = (obj) => {
@@ -50949,6 +51035,10 @@ const asap = typeof queueMicrotask !== 'undefined' ?
 
 // *********************
 
+
+const isIterable = (thing) => thing != null && isFunction(thing[iterator]);
+
+
 const utils$1 = {
   isArray,
   isArrayBuffer,
@@ -51004,7 +51094,8 @@ const utils$1 = {
   isAsyncFn,
   isThenable,
   setImmediate: _setImmediate,
-  asap
+  asap,
+  isIterable
 };
 
 /**
@@ -52007,10 +52098,18 @@ class AxiosHeaders {
       setHeaders(header, valueOrRewrite);
     } else if(utils$1.isString(header) && (header = header.trim()) && !isValidHeaderName(header)) {
       setHeaders(parseHeaders(header), valueOrRewrite);
-    } else if (utils$1.isHeaders(header)) {
-      for (const [key, value] of header.entries()) {
-        setHeader(value, key, rewrite);
+    } else if (utils$1.isObject(header) && utils$1.isIterable(header)) {
+      let obj = {}, dest, key;
+      for (const entry of header) {
+        if (!utils$1.isArray(entry)) {
+          throw TypeError('Object iterator must return a key-value pair');
+        }
+
+        obj[key = entry[0]] = (dest = obj[key]) ?
+          (utils$1.isArray(dest) ? [...dest, entry[1]] : [dest, entry[1]]) : entry[1];
       }
+
+      setHeaders(obj, valueOrRewrite);
     } else {
       header != null && setHeader(valueOrRewrite, header, rewrite);
     }
@@ -52150,6 +52249,10 @@ class AxiosHeaders {
 
   toString() {
     return Object.entries(this.toJSON()).map(([header, value]) => header + ': ' + value).join('\n');
+  }
+
+  getSetCookie() {
+    return this.get("set-cookie") || [];
   }
 
   get [Symbol.toStringTag]() {
@@ -52318,13 +52421,13 @@ function combineURLs(baseURL, relativeURL) {
  */
 function buildFullPath(baseURL, requestedURL, allowAbsoluteUrls) {
   let isRelativeUrl = !isAbsoluteURL(requestedURL);
-  if (baseURL && isRelativeUrl || allowAbsoluteUrls == false) {
+  if (baseURL && (isRelativeUrl || allowAbsoluteUrls == false)) {
     return combineURLs(baseURL, requestedURL);
   }
   return requestedURL;
 }
 
-const VERSION = "1.8.2";
+const VERSION = "1.9.0";
 
 function parseProtocol(url) {
   const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
@@ -52606,7 +52709,7 @@ const formDataToStream = (form, headersHandler, options) => {
   }
 
   const boundaryBytes = textEncoder.encode('--' + boundary + CRLF);
-  const footerBytes = textEncoder.encode('--' + boundary + '--' + CRLF + CRLF);
+  const footerBytes = textEncoder.encode('--' + boundary + '--' + CRLF);
   let contentLength = footerBytes.byteLength;
 
   const parts = Array.from(form.entries()).map(([name, value]) => {
@@ -53642,7 +53745,7 @@ const resolveConfig = (config) => {
 
   newConfig.headers = headers = AxiosHeaders$1.from(headers);
 
-  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url), config.params, config.paramsSerializer);
+  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url, newConfig.allowAbsoluteUrls), config.params, config.paramsSerializer);
 
   // HTTP basic authentication
   if (auth) {
@@ -54207,7 +54310,7 @@ const fetchAdapter = isFetchSupported && (async (config) => {
   } catch (err) {
     unsubscribe && unsubscribe();
 
-    if (err && err.name === 'TypeError' && /fetch/i.test(err.message)) {
+    if (err && err.name === 'TypeError' && /Load failed|fetch/i.test(err.message)) {
       throw Object.assign(
         new AxiosError('Network Error', AxiosError.ERR_NETWORK, config, request),
         {
@@ -54473,7 +54576,7 @@ const validators = validator.validators;
  */
 class Axios {
   constructor(instanceConfig) {
-    this.defaults = instanceConfig;
+    this.defaults = instanceConfig || {};
     this.interceptors = {
       request: new InterceptorManager$1(),
       response: new InterceptorManager$1()
@@ -55007,11 +55110,11 @@ module.exports = axios;
 
 /***/ }),
 
-/***/ 4030:
+/***/ 1265:
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@slack/web-api","version":"7.3.2","description":"Official library for using the Slack Platform\'s Web API","author":"Slack Technologies, LLC","license":"MIT","keywords":["slack","web-api","bot","client","http","api","proxy","rate-limiting","pagination"],"main":"dist/index.js","types":"./dist/index.d.ts","files":["dist/**/*"],"engines":{"node":">= 18","npm":">= 8.6.0"},"repository":"slackapi/node-slack-sdk","homepage":"https://slack.dev/node-slack-sdk/web-api","publishConfig":{"access":"public"},"bugs":{"url":"https://github.com/slackapi/node-slack-sdk/issues"},"scripts":{"prepare":"npm run build","build":"npm run build:clean && tsc","build:clean":"shx rm -rf ./dist ./coverage","lint":"eslint --fix --ext .ts src","mocha":"mocha --config .mocharc.json src/*.spec.js","test":"npm run lint && npm run test:types && npm run test:integration && npm run test:unit","test:integration":"npm run build && node test/integration/commonjs-project/index.js && node test/integration/esm-project/index.mjs && npm run test:integration:ts","test:integration:ts":"cd test/integration/ts-4.7-project && npm i && npm run build","test:unit":"npm run build && c8 npm run mocha","test:types":"tsd","ref-docs:model":"api-extractor run","watch":"npx nodemon --watch \'src\' --ext \'ts\' --exec npm run build"},"dependencies":{"@slack/logger":"^4.0.0","@slack/types":"^2.9.0","@types/node":">=18.0.0","@types/retry":"0.12.0","axios":"^1.6.5","eventemitter3":"^5.0.1","form-data":"^4.0.0","is-electron":"2.2.2","is-stream":"^2","p-queue":"^6","p-retry":"^4","retry":"^0.13.1"},"devDependencies":{"@microsoft/api-extractor":"^7","@tsconfig/recommended":"^1","@types/chai":"^4","@types/mocha":"^10","@types/sinon":"^17","@typescript-eslint/eslint-plugin":"^6","@typescript-eslint/parser":"^6","busboy":"^1","c8":"^9.1.0","chai":"^4","eslint":"^8","eslint-config-airbnb-base":"^15","eslint-config-airbnb-typescript":"^17","eslint-plugin-import":"^2","eslint-plugin-import-newlines":"^1.3.4","eslint-plugin-jsdoc":"^48","eslint-plugin-node":"^11","mocha":"^10","nock":"^13","shx":"^0.3.2","sinon":"^17","source-map-support":"^0.5.21","ts-node":"^10","tsd":"^0.30.0","typescript":"5.3.3"},"tsd":{"directory":"test/types"}}');
+module.exports = JSON.parse('{"name":"@slack/web-api","version":"7.9.1","description":"Official library for using the Slack Platform\'s Web API","author":"Slack Technologies, LLC","license":"MIT","keywords":["slack","web-api","bot","client","http","api","proxy","rate-limiting","pagination"],"main":"dist/index.js","types":"./dist/index.d.ts","files":["dist/**/*"],"engines":{"node":">= 18","npm":">= 8.6.0"},"repository":"slackapi/node-slack-sdk","homepage":"https://tools.slack.dev/node-slack-sdk/web-api","publishConfig":{"access":"public"},"bugs":{"url":"https://github.com/slackapi/node-slack-sdk/issues"},"scripts":{"prepare":"npm run build","build":"npm run build:clean && tsc","build:clean":"shx rm -rf ./dist ./coverage","lint":"npx @biomejs/biome check .","lint:fix":"npx @biomejs/biome check --write .","mocha":"mocha --config ./test/.mocharc.json \\"./src/**/*.spec.ts\\"","test":"npm run lint && npm run test:types && npm run test:integration && npm run test:unit","test:integration":"npm run build && node test/integration/commonjs-project/index.js && node test/integration/esm-project/index.mjs && npm run test:integration:ts","test:integration:ts":"cd test/integration/ts-4.7-project && npm i && npm run build","test:unit":"npm run build && c8 --config ./test/.c8rc.json npm run mocha","test:types":"tsd","watch":"npx nodemon --watch \'src\' --ext \'ts\' --exec npm run build"},"dependencies":{"@slack/logger":"^4.0.0","@slack/types":"^2.9.0","@types/node":">=18.0.0","@types/retry":"0.12.0","axios":"^1.8.3","eventemitter3":"^5.0.1","form-data":"^4.0.0","is-electron":"2.2.2","is-stream":"^2","p-queue":"^6","p-retry":"^4","retry":"^0.13.1"},"devDependencies":{"@biomejs/biome":"^1.8.3","@tsconfig/recommended":"^1","@types/busboy":"^1.5.4","@types/chai":"^4","@types/mocha":"^10","@types/sinon":"^17","busboy":"^1","c8":"^10.1.2","chai":"^4","mocha":"^11","mocha-junit-reporter":"^2.2.1","mocha-multi-reporters":"^1.5.1","nock":"^13","shx":"^0.4.0","sinon":"^20","source-map-support":"^0.5.21","ts-node":"^10","tsd":"^0.31.1","typescript":"5.3.3"},"tsd":{"directory":"test/types"}}');
 
 /***/ }),
 
