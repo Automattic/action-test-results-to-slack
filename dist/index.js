@@ -11398,7 +11398,7 @@ function removeHook(state, name, method) {
 
 /***/ }),
 
-/***/ 4356:
+/***/ 8911:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var balanced = __nccwpck_require__(7193);
@@ -11519,7 +11519,7 @@ function expand(str, isTop) {
     var isOptions = m.body.indexOf(',') >= 0;
     if (!isSequence && !isOptions) {
       // {a},b}
-      if (m.post.match(/,.*\}/)) {
+      if (m.post.match(/,(?!,).*\}/)) {
         str = m.pre + '{' + m.body + escClose + m.post;
         return expand(str);
       }
@@ -15278,7 +15278,7 @@ minimatch.sep = path.sep
 
 const GLOBSTAR = Symbol('globstar **')
 minimatch.GLOBSTAR = GLOBSTAR
-const expand = __nccwpck_require__(4356)
+const expand = __nccwpck_require__(8911)
 
 const plTypes = {
   '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
@@ -40027,7 +40027,7 @@ module.exports = { sendMessage, createMessage };
 
 const fs = __nccwpck_require__( 7147 );
 const { getInput } = __nccwpck_require__( 5504 );
-const { glob } = __nccwpck_require__( 1455 );
+const { glob } = __nccwpck_require__( 9086 );
 const { debug } = __nccwpck_require__( 2551 );
 
 /**
@@ -42408,7 +42408,7 @@ module.exports = parseParams
 
 /***/ }),
 
-/***/ 8318:
+/***/ 5489:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -42418,8 +42418,8 @@ exports.Glob = void 0;
 const minimatch_1 = __nccwpck_require__(6231);
 const node_url_1 = __nccwpck_require__(1041);
 const path_scurry_1 = __nccwpck_require__(8107);
-const pattern_js_1 = __nccwpck_require__(3653);
-const walker_js_1 = __nccwpck_require__(5313);
+const pattern_js_1 = __nccwpck_require__(5116);
+const walker_js_1 = __nccwpck_require__(3083);
 // if no process global, just call it linux.
 // so we default to case-sensitive, / separators
 const defaultPlatform = (typeof process === 'object' &&
@@ -42662,7 +42662,7 @@ exports.Glob = Glob;
 
 /***/ }),
 
-/***/ 4195:
+/***/ 4925:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -42696,7 +42696,7 @@ exports.hasMagic = hasMagic;
 
 /***/ }),
 
-/***/ 8623:
+/***/ 2113:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -42708,7 +42708,7 @@ exports.hasMagic = hasMagic;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Ignore = void 0;
 const minimatch_1 = __nccwpck_require__(6231);
-const pattern_js_1 = __nccwpck_require__(3653);
+const pattern_js_1 = __nccwpck_require__(5116);
 const defaultPlatform = (typeof process === 'object' &&
     process &&
     typeof process.platform === 'string') ?
@@ -42822,7 +42822,7 @@ exports.Ignore = Ignore;
 
 /***/ }),
 
-/***/ 1455:
+/***/ 9086:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -42835,16 +42835,16 @@ exports.globSync = globSync;
 exports.globIterateSync = globIterateSync;
 exports.globIterate = globIterate;
 const minimatch_1 = __nccwpck_require__(6231);
-const glob_js_1 = __nccwpck_require__(8318);
-const has_magic_js_1 = __nccwpck_require__(4195);
+const glob_js_1 = __nccwpck_require__(5489);
+const has_magic_js_1 = __nccwpck_require__(4925);
 var minimatch_2 = __nccwpck_require__(6231);
 Object.defineProperty(exports, "escape", ({ enumerable: true, get: function () { return minimatch_2.escape; } }));
 Object.defineProperty(exports, "unescape", ({ enumerable: true, get: function () { return minimatch_2.unescape; } }));
-var glob_js_2 = __nccwpck_require__(8318);
+var glob_js_2 = __nccwpck_require__(5489);
 Object.defineProperty(exports, "Glob", ({ enumerable: true, get: function () { return glob_js_2.Glob; } }));
-var has_magic_js_2 = __nccwpck_require__(4195);
+var has_magic_js_2 = __nccwpck_require__(4925);
 Object.defineProperty(exports, "hasMagic", ({ enumerable: true, get: function () { return has_magic_js_2.hasMagic; } }));
-var ignore_js_1 = __nccwpck_require__(8623);
+var ignore_js_1 = __nccwpck_require__(2113);
 Object.defineProperty(exports, "Ignore", ({ enumerable: true, get: function () { return ignore_js_1.Ignore; } }));
 function globStreamSync(pattern, options = {}) {
     return new glob_js_1.Glob(pattern, options).streamSync();
@@ -42897,7 +42897,7 @@ exports.glob.glob = exports.glob;
 
 /***/ }),
 
-/***/ 3653:
+/***/ 5116:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -43123,7 +43123,7 @@ exports.Pattern = Pattern;
 
 /***/ }),
 
-/***/ 7430:
+/***/ 5738:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -43431,7 +43431,7 @@ exports.Processor = Processor;
 
 /***/ }),
 
-/***/ 5313:
+/***/ 3083:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -43445,8 +43445,8 @@ exports.GlobStream = exports.GlobWalker = exports.GlobUtil = void 0;
  * @module
  */
 const minipass_1 = __nccwpck_require__(6418);
-const ignore_js_1 = __nccwpck_require__(8623);
-const processor_js_1 = __nccwpck_require__(7430);
+const ignore_js_1 = __nccwpck_require__(2113);
+const processor_js_1 = __nccwpck_require__(5738);
 const makeIgnore = (ignore, opts) => typeof ignore === 'string' ? new ignore_js_1.Ignore([ignore], opts)
     : Array.isArray(ignore) ? new ignore_js_1.Ignore(ignore, opts)
         : ignore;
@@ -46214,7 +46214,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.unescape = exports.escape = exports.AST = exports.Minimatch = exports.match = exports.makeRe = exports.braceExpand = exports.defaults = exports.filter = exports.GLOBSTAR = exports.sep = exports.minimatch = void 0;
-const brace_expansion_1 = __importDefault(__nccwpck_require__(4356));
+const brace_expansion_1 = __importDefault(__nccwpck_require__(8911));
 const assert_valid_pattern_js_1 = __nccwpck_require__(7953);
 const ast_js_1 = __nccwpck_require__(5306);
 const escape_js_1 = __nccwpck_require__(2964);
