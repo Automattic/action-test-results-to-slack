@@ -12,6 +12,9 @@ This is an alpha version! The changes listed here are not final.
 ### Changed
 - Update package dependencies.
 
+### Fixed
+- Do not consider "skipped" jobs as a failure.
+
 ## [0.4.1] - 2025-07-04
 ### Changed
 - Update package dependencies. [#43407] [#43478] [#43914]
