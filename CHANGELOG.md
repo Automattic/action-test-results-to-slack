@@ -5,15 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.2-alpha] - unreleased
-
-This is an alpha version! The changes listed here are not final.
-
+## [0.4.2] - 2025-09-08
 ### Changed
-- Update package dependencies.
+- Update package dependencies. [#44217]
 
 ### Fixed
-- Do not consider "skipped" jobs as a failure.
+- Do not consider "skipped" jobs as a failure. [#44520]
 
 ## [0.4.1] - 2025-07-04
 ### Changed
@@ -89,7 +86,7 @@ This is an alpha version! The changes listed here are not final.
 - Remove duplicated last run button for scheduled event notification
 - Remove duplicated last run button for workflow_run events
 
-[0.4.2-alpha]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.4.1...v0.4.2-alpha
+[0.4.2]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.3.3...v0.4.0
 [0.3.3]: https://github.com/Automattic/action-test-results-to-slack/compare/v0.3.2...v0.3.3
