@@ -7252,18 +7252,18 @@ ConsoleLogger.severity = {
 
 /***/ }),
 
-/***/ 5678:
+/***/ 1653:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
-// This file contains objects documented here: https://api.slack.com/reference/block-kit/block-elements
+// This file contains objects documented here: https://docs.slack.dev/reference/block-kit/block-elements
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 //# sourceMappingURL=block-elements.js.map
 
 /***/ }),
 
-/***/ 4580:
+/***/ 6009:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7273,18 +7273,18 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4113:
+/***/ 98:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
-// This file contains objects documented here: https://api.slack.com/reference/block-kit/composition-objects
+// This file contains objects documented here: https://docs.slack.dev/reference/block-kit/composition-objects
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 //# sourceMappingURL=composition-objects.js.map
 
 /***/ }),
 
-/***/ 6571:
+/***/ 703:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7294,20 +7294,20 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 7223:
+/***/ 7995:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 // These types represent users in Slack Calls, which is an API for showing 3rd party calls within the Slack client.
-// More information on the API guide for Calls: https://api.slack.com/apis/calls
-// and on User objects for use with Calls: https://api.slack.com/apis/calls#users
+// More information on the API guide for Calls: https://docs.slack.dev/apis/web-api/using-the-calls-api
+// and on User objects for use with Calls: https://docs.slack.dev/apis/web-api/using-the-calls-api
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 //# sourceMappingURL=calls.js.map
 
 /***/ }),
 
-/***/ 9073:
+/***/ 1418:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7317,7 +7317,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1373:
+/***/ 3459:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7327,7 +7327,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8864:
+/***/ 1306:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7337,7 +7337,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5747:
+/***/ 2609:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7347,7 +7347,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6081:
+/***/ 3007:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7357,7 +7357,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8639:
+/***/ 248:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7367,7 +7367,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1544:
+/***/ 1670:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7377,7 +7377,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 549:
+/***/ 8140:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7387,7 +7387,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1504:
+/***/ 7152:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7398,7 +7398,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3497:
+/***/ 2774:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7408,7 +7408,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5458:
+/***/ 8986:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7418,7 +7418,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4409:
+/***/ 4751:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7428,7 +7428,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8897:
+/***/ 4221:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7438,7 +7438,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6733:
+/***/ 8727:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -7458,37 +7458,37 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(1373), exports);
-__exportStar(__nccwpck_require__(8864), exports);
-__exportStar(__nccwpck_require__(5747), exports);
-__exportStar(__nccwpck_require__(6081), exports);
-__exportStar(__nccwpck_require__(8639), exports);
-__exportStar(__nccwpck_require__(1544), exports);
-__exportStar(__nccwpck_require__(549), exports);
-__exportStar(__nccwpck_require__(1504), exports);
-__exportStar(__nccwpck_require__(3497), exports);
-__exportStar(__nccwpck_require__(5458), exports);
-__exportStar(__nccwpck_require__(4409), exports);
-__exportStar(__nccwpck_require__(8897), exports);
-__exportStar(__nccwpck_require__(481), exports);
-__exportStar(__nccwpck_require__(1516), exports);
-__exportStar(__nccwpck_require__(3456), exports);
-__exportStar(__nccwpck_require__(53), exports);
-__exportStar(__nccwpck_require__(9834), exports);
-__exportStar(__nccwpck_require__(3388), exports);
-__exportStar(__nccwpck_require__(6283), exports);
-__exportStar(__nccwpck_require__(1614), exports);
-__exportStar(__nccwpck_require__(6429), exports);
-__exportStar(__nccwpck_require__(4696), exports);
-__exportStar(__nccwpck_require__(5156), exports);
-__exportStar(__nccwpck_require__(6192), exports);
-__exportStar(__nccwpck_require__(1618), exports);
-__exportStar(__nccwpck_require__(3298), exports);
+__exportStar(__nccwpck_require__(3459), exports);
+__exportStar(__nccwpck_require__(1306), exports);
+__exportStar(__nccwpck_require__(2609), exports);
+__exportStar(__nccwpck_require__(3007), exports);
+__exportStar(__nccwpck_require__(248), exports);
+__exportStar(__nccwpck_require__(1670), exports);
+__exportStar(__nccwpck_require__(8140), exports);
+__exportStar(__nccwpck_require__(7152), exports);
+__exportStar(__nccwpck_require__(2774), exports);
+__exportStar(__nccwpck_require__(8986), exports);
+__exportStar(__nccwpck_require__(4751), exports);
+__exportStar(__nccwpck_require__(4221), exports);
+__exportStar(__nccwpck_require__(9996), exports);
+__exportStar(__nccwpck_require__(4986), exports);
+__exportStar(__nccwpck_require__(7526), exports);
+__exportStar(__nccwpck_require__(9288), exports);
+__exportStar(__nccwpck_require__(5500), exports);
+__exportStar(__nccwpck_require__(9570), exports);
+__exportStar(__nccwpck_require__(676), exports);
+__exportStar(__nccwpck_require__(4673), exports);
+__exportStar(__nccwpck_require__(8472), exports);
+__exportStar(__nccwpck_require__(5966), exports);
+__exportStar(__nccwpck_require__(4333), exports);
+__exportStar(__nccwpck_require__(4747), exports);
+__exportStar(__nccwpck_require__(5936), exports);
+__exportStar(__nccwpck_require__(6460), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 481:
+/***/ 9996:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7498,7 +7498,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1516:
+/***/ 4986:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7508,7 +7508,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3456:
+/***/ 7526:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7518,7 +7518,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 9834:
+/***/ 5500:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7528,7 +7528,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 53:
+/***/ 9288:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7538,7 +7538,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3388:
+/***/ 9570:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7548,7 +7548,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6283:
+/***/ 676:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7558,7 +7558,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1614:
+/***/ 4673:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7568,7 +7568,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6429:
+/***/ 8472:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7578,7 +7578,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4696:
+/***/ 5966:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7588,7 +7588,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5156:
+/***/ 4333:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7598,7 +7598,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6192:
+/***/ 4747:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7608,7 +7608,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1618:
+/***/ 5936:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7618,7 +7618,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3298:
+/***/ 6460:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7628,7 +7628,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5021:
+/***/ 1559:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -7648,21 +7648,21 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(5678), exports);
-__exportStar(__nccwpck_require__(4580), exports);
-__exportStar(__nccwpck_require__(4113), exports);
-__exportStar(__nccwpck_require__(6571), exports);
-__exportStar(__nccwpck_require__(7223), exports);
-__exportStar(__nccwpck_require__(9073), exports);
-__exportStar(__nccwpck_require__(6733), exports);
-__exportStar(__nccwpck_require__(7423), exports);
-__exportStar(__nccwpck_require__(7540), exports);
-__exportStar(__nccwpck_require__(562), exports);
+__exportStar(__nccwpck_require__(1653), exports);
+__exportStar(__nccwpck_require__(6009), exports);
+__exportStar(__nccwpck_require__(98), exports);
+__exportStar(__nccwpck_require__(703), exports);
+__exportStar(__nccwpck_require__(7995), exports);
+__exportStar(__nccwpck_require__(1418), exports);
+__exportStar(__nccwpck_require__(8727), exports);
+__exportStar(__nccwpck_require__(8903), exports);
+__exportStar(__nccwpck_require__(4206), exports);
+__exportStar(__nccwpck_require__(3846), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 7423:
+/***/ 8903:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7672,7 +7672,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 7540:
+/***/ 4206:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7682,7 +7682,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 562:
+/***/ 3846:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -10647,7 +10647,7 @@ class Methods extends eventemitter3_1.EventEmitter {
     }
 }
 exports.Methods = Methods;
-__exportStar(__nccwpck_require__(5021), exports);
+__exportStar(__nccwpck_require__(1559), exports);
 //# sourceMappingURL=methods.js.map
 
 /***/ }),
@@ -39783,7 +39783,7 @@ const { debug } = __nccwpck_require__( 2551 );
 const extras = __nccwpck_require__( 7437 );
 const { isWorkflowFailed, getRunUrl } = __nccwpck_require__( 1746 );
 const { getPlaywrightBlocks } = __nccwpck_require__( 7339 );
-const { getMessage, postOrUpdateMessage } = __nccwpck_require__( 2533 );
+const { getMessage, postOrUpdateMessage } = __nccwpck_require__( 1618 );
 const {
 	context: { eventName, sha, payload, runId, actor, serverUrl },
 } = github;
@@ -40294,7 +40294,7 @@ module.exports = { getChannels };
 
 /***/ }),
 
-/***/ 2533:
+/***/ 1618:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const fs = __nccwpck_require__( 7147 );
@@ -44097,7 +44097,7 @@ exports.GlobStream = GlobStream;
 
 /***/ }),
 
-/***/ 2929:
+/***/ 9523:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -44107,18 +44107,20 @@ exports.GlobStream = GlobStream;
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LRUCache = void 0;
-const perf = typeof performance === 'object' &&
+const defaultPerf = (typeof performance === 'object' &&
     performance &&
-    typeof performance.now === 'function'
-    ? performance
+    typeof performance.now === 'function') ?
+    performance
     : Date;
 const warned = new Set();
 /* c8 ignore start */
-const PROCESS = (typeof process === 'object' && !!process ? process : {});
+const PROCESS = (typeof process === 'object' && !!process ?
+    process
+    : {});
 /* c8 ignore start */
 const emitWarning = (msg, type, code, fn) => {
-    typeof PROCESS.emitWarning === 'function'
-        ? PROCESS.emitWarning(msg, type, code, fn)
+    typeof PROCESS.emitWarning === 'function' ?
+        PROCESS.emitWarning(msg, type, code, fn)
         : console.error(`[${code}] ${type}: ${msg}`);
 };
 let AC = globalThis.AbortController;
@@ -44182,16 +44184,11 @@ const isPosInt = (n) => n && n === Math.floor(n) && n > 0 && isFinite(n);
 // zeroes at init time is brutal when you get that big.
 // But why not be complete?
 // Maybe in the future, these limits will have expanded.
-const getUintArray = (max) => !isPosInt(max)
-    ? null
-    : max <= Math.pow(2, 8)
-        ? Uint8Array
-        : max <= Math.pow(2, 16)
-            ? Uint16Array
-            : max <= Math.pow(2, 32)
-                ? Uint32Array
-                : max <= Number.MAX_SAFE_INTEGER
-                    ? ZeroArray
+const getUintArray = (max) => !isPosInt(max) ? null
+    : max <= Math.pow(2, 8) ? Uint8Array
+        : max <= Math.pow(2, 16) ? Uint16Array
+            : max <= Math.pow(2, 32) ? Uint32Array
+                : max <= Number.MAX_SAFE_INTEGER ? ZeroArray
                     : null;
 /* c8 ignore stop */
 class ZeroArray extends Array {
@@ -44254,6 +44251,13 @@ class LRUCache {
     #disposeAfter;
     #fetchMethod;
     #memoMethod;
+    #perf;
+    /**
+     * {@link LRUCache.OptionsBase.perf}
+     */
+    get perf() {
+        return this.#perf;
+    }
     /**
      * {@link LRUCache.OptionsBase.ttl}
      */
@@ -44422,7 +44426,13 @@ class LRUCache {
         return this.#disposeAfter;
     }
     constructor(options) {
-        const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, onInsert, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, memoMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort, } = options;
+        const { max = 0, ttl, ttlResolution = 1, ttlAutopurge, updateAgeOnGet, updateAgeOnHas, allowStale, dispose, onInsert, disposeAfter, noDisposeOnSet, noUpdateTTL, maxSize = 0, maxEntrySize = 0, sizeCalculation, fetchMethod, memoMethod, noDeleteOnFetchRejection, noDeleteOnStaleGet, allowStaleOnFetchRejection, allowStaleOnFetchAbort, ignoreFetchAbort, perf, } = options;
+        if (perf !== undefined) {
+            if (typeof perf?.now !== 'function') {
+                throw new TypeError('perf option must have a now() method if specified');
+            }
+        }
+        this.#perf = perf ?? defaultPerf;
         if (max !== 0 && !isPosInt(max)) {
             throw new TypeError('max option must be a nonnegative integer');
         }
@@ -44503,8 +44513,8 @@ class LRUCache {
         this.updateAgeOnGet = !!updateAgeOnGet;
         this.updateAgeOnHas = !!updateAgeOnHas;
         this.ttlResolution =
-            isPosInt(ttlResolution) || ttlResolution === 0
-                ? ttlResolution
+            isPosInt(ttlResolution) || ttlResolution === 0 ?
+                ttlResolution
                 : 1;
         this.ttlAutopurge = !!ttlAutopurge;
         this.ttl = ttl || 0;
@@ -44540,7 +44550,7 @@ class LRUCache {
         const starts = new ZeroArray(this.#max);
         this.#ttls = ttls;
         this.#starts = starts;
-        this.#setItemTTL = (index, ttl, start = perf.now()) => {
+        this.#setItemTTL = (index, ttl, start = this.#perf.now()) => {
             starts[index] = ttl !== 0 ? start : 0;
             ttls[index] = ttl;
             if (ttl !== 0 && this.ttlAutopurge) {
@@ -44558,7 +44568,7 @@ class LRUCache {
             }
         };
         this.#updateItemAge = index => {
-            starts[index] = ttls[index] !== 0 ? perf.now() : 0;
+            starts[index] = ttls[index] !== 0 ? this.#perf.now() : 0;
         };
         this.#statusTTL = (status, index) => {
             if (ttls[index]) {
@@ -44578,7 +44588,7 @@ class LRUCache {
         // that costly call repeatedly.
         let cachedNow = 0;
         const getNow = () => {
-            const n = perf.now();
+            const n = this.#perf.now();
             if (this.ttlResolution > 0) {
                 cachedNow = n;
                 const t = setTimeout(() => (cachedNow = 0), this.ttlResolution);
@@ -44815,9 +44825,7 @@ class LRUCache {
     find(fn, getOptions = {}) {
         for (const i of this.#indexes()) {
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined)
                 continue;
             if (fn(value, this.#keyList[i], this)) {
@@ -44839,9 +44847,7 @@ class LRUCache {
     forEach(fn, thisp = this) {
         for (const i of this.#indexes()) {
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined)
                 continue;
             fn.call(thisp, value, this.#keyList[i], this);
@@ -44854,9 +44860,7 @@ class LRUCache {
     rforEach(fn, thisp = this) {
         for (const i of this.#rindexes()) {
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined)
                 continue;
             fn.call(thisp, value, this.#keyList[i], this);
@@ -44893,17 +44897,18 @@ class LRUCache {
         if (i === undefined)
             return undefined;
         const v = this.#valList[i];
-        const value = this.#isBackgroundFetch(v)
-            ? v.__staleWhileFetching
-            : v;
+        /* c8 ignore start - this isn't tested for the info function,
+         * but it's the same logic as found in other places. */
+        const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
         if (value === undefined)
             return undefined;
+        /* c8 ignore end */
         const entry = { value };
         if (this.#ttls && this.#starts) {
             const ttl = this.#ttls[i];
             const start = this.#starts[i];
             if (ttl && start) {
-                const remain = ttl - (perf.now() - start);
+                const remain = ttl - (this.#perf.now() - start);
                 entry.ttl = remain;
                 entry.start = Date.now();
             }
@@ -44931,9 +44936,7 @@ class LRUCache {
         for (const i of this.#indexes({ allowStale: true })) {
             const key = this.#keyList[i];
             const v = this.#valList[i];
-            const value = this.#isBackgroundFetch(v)
-                ? v.__staleWhileFetching
-                : v;
+            const value = this.#isBackgroundFetch(v) ? v.__staleWhileFetching : v;
             if (value === undefined || key === undefined)
                 continue;
             const entry = { value };
@@ -44941,7 +44944,7 @@ class LRUCache {
                 entry.ttl = this.#ttls[i];
                 // always dump the start relative to a portable timestamp
                 // it's ok for this to be a bit slow, it's a rare operation.
-                const age = perf.now() - this.#starts[i];
+                const age = this.#perf.now() - this.#starts[i];
                 entry.start = Math.floor(Date.now() - age);
             }
             if (this.#sizes) {
@@ -44971,7 +44974,7 @@ class LRUCache {
                 //
                 // it's ok for this to be a bit slow, it's a rare operation.
                 const age = Date.now() - entry.start;
-                entry.start = perf.now() - age;
+                entry.start = this.#perf.now() - age;
             }
             this.set(key, entry.value, entry);
         }
@@ -45028,12 +45031,9 @@ class LRUCache {
         let index = this.#size === 0 ? undefined : this.#keyMap.get(k);
         if (index === undefined) {
             // addition
-            index = (this.#size === 0
-                ? this.#tail
-                : this.#free.length !== 0
-                    ? this.#free.pop()
-                    : this.#size === this.#max
-                        ? this.#evict(false)
+            index = (this.#size === 0 ? this.#tail
+                : this.#free.length !== 0 ? this.#free.pop()
+                    : this.#size === this.#max ? this.#evict(false)
                         : this.#size);
             this.#keyList[index] = k;
             this.#valList[index] = v;
@@ -45080,8 +45080,8 @@ class LRUCache {
                 this.#valList[index] = v;
                 if (status) {
                     status.set = 'replace';
-                    const oldValue = oldVal && this.#isBackgroundFetch(oldVal)
-                        ? oldVal.__staleWhileFetching
+                    const oldValue = oldVal && this.#isBackgroundFetch(oldVal) ?
+                        oldVal.__staleWhileFetching
                         : oldVal;
                     if (oldValue !== undefined)
                         status.oldValue = oldValue;
@@ -45275,7 +45275,7 @@ class LRUCache {
             const bf = p;
             if (this.#valList[index] === p) {
                 if (v === undefined) {
-                    if (bf.__staleWhileFetching) {
+                    if (bf.__staleWhileFetching !== undefined) {
                         this.#valList[index] = bf.__staleWhileFetching;
                     }
                     else {
@@ -48593,7 +48593,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PathScurry = exports.Path = exports.PathScurryDarwin = exports.PathScurryPosix = exports.PathScurryWin32 = exports.PathScurryBase = exports.PathPosix = exports.PathWin32 = exports.PathBase = exports.ChildrenCache = exports.ResolveCache = void 0;
-const lru_cache_1 = __nccwpck_require__(2929);
+const lru_cache_1 = __nccwpck_require__(9523);
 const node_path_1 = __nccwpck_require__(9411);
 const node_url_1 = __nccwpck_require__(1041);
 const fs_1 = __nccwpck_require__(7147);
