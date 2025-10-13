@@ -7252,7 +7252,7 @@ ConsoleLogger.severity = {
 
 /***/ }),
 
-/***/ 1653:
+/***/ 985:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7263,7 +7263,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6009:
+/***/ 2954:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7273,7 +7273,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 98:
+/***/ 3694:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7284,7 +7284,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 703:
+/***/ 1141:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7294,7 +7294,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 7995:
+/***/ 8201:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7307,7 +7307,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1418:
+/***/ 6393:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7317,7 +7317,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3459:
+/***/ 577:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7327,7 +7327,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1306:
+/***/ 9404:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7337,7 +7337,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 2609:
+/***/ 6444:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7347,7 +7347,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3007:
+/***/ 4151:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7357,7 +7357,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 248:
+/***/ 4062:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7367,7 +7367,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1670:
+/***/ 4134:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7377,7 +7377,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8140:
+/***/ 5182:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7387,7 +7387,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 7152:
+/***/ 9806:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7398,7 +7398,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 2774:
+/***/ 5798:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7408,7 +7408,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8986:
+/***/ 5480:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7418,7 +7418,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4751:
+/***/ 9399:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7428,7 +7428,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4221:
+/***/ 729:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7438,7 +7438,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8727:
+/***/ 2152:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -7458,37 +7458,37 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(3459), exports);
-__exportStar(__nccwpck_require__(1306), exports);
-__exportStar(__nccwpck_require__(2609), exports);
-__exportStar(__nccwpck_require__(3007), exports);
-__exportStar(__nccwpck_require__(248), exports);
-__exportStar(__nccwpck_require__(1670), exports);
-__exportStar(__nccwpck_require__(8140), exports);
-__exportStar(__nccwpck_require__(7152), exports);
-__exportStar(__nccwpck_require__(2774), exports);
-__exportStar(__nccwpck_require__(8986), exports);
-__exportStar(__nccwpck_require__(4751), exports);
-__exportStar(__nccwpck_require__(4221), exports);
-__exportStar(__nccwpck_require__(9996), exports);
-__exportStar(__nccwpck_require__(4986), exports);
-__exportStar(__nccwpck_require__(7526), exports);
-__exportStar(__nccwpck_require__(9288), exports);
-__exportStar(__nccwpck_require__(5500), exports);
-__exportStar(__nccwpck_require__(9570), exports);
-__exportStar(__nccwpck_require__(676), exports);
-__exportStar(__nccwpck_require__(4673), exports);
-__exportStar(__nccwpck_require__(8472), exports);
-__exportStar(__nccwpck_require__(5966), exports);
-__exportStar(__nccwpck_require__(4333), exports);
-__exportStar(__nccwpck_require__(4747), exports);
-__exportStar(__nccwpck_require__(5936), exports);
-__exportStar(__nccwpck_require__(6460), exports);
+__exportStar(__nccwpck_require__(577), exports);
+__exportStar(__nccwpck_require__(9404), exports);
+__exportStar(__nccwpck_require__(6444), exports);
+__exportStar(__nccwpck_require__(4151), exports);
+__exportStar(__nccwpck_require__(4062), exports);
+__exportStar(__nccwpck_require__(4134), exports);
+__exportStar(__nccwpck_require__(5182), exports);
+__exportStar(__nccwpck_require__(9806), exports);
+__exportStar(__nccwpck_require__(5798), exports);
+__exportStar(__nccwpck_require__(5480), exports);
+__exportStar(__nccwpck_require__(9399), exports);
+__exportStar(__nccwpck_require__(729), exports);
+__exportStar(__nccwpck_require__(7904), exports);
+__exportStar(__nccwpck_require__(2098), exports);
+__exportStar(__nccwpck_require__(3534), exports);
+__exportStar(__nccwpck_require__(4645), exports);
+__exportStar(__nccwpck_require__(9754), exports);
+__exportStar(__nccwpck_require__(7592), exports);
+__exportStar(__nccwpck_require__(4009), exports);
+__exportStar(__nccwpck_require__(2243), exports);
+__exportStar(__nccwpck_require__(3063), exports);
+__exportStar(__nccwpck_require__(1188), exports);
+__exportStar(__nccwpck_require__(9852), exports);
+__exportStar(__nccwpck_require__(9583), exports);
+__exportStar(__nccwpck_require__(3481), exports);
+__exportStar(__nccwpck_require__(5497), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 9996:
+/***/ 7904:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7498,7 +7498,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4986:
+/***/ 2098:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7508,7 +7508,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 7526:
+/***/ 3534:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7518,7 +7518,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5500:
+/***/ 9754:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7528,7 +7528,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 9288:
+/***/ 4645:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7538,7 +7538,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 9570:
+/***/ 7592:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7548,7 +7548,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 676:
+/***/ 4009:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7558,7 +7558,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4673:
+/***/ 2243:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7568,7 +7568,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 8472:
+/***/ 3063:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7578,7 +7578,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5966:
+/***/ 1188:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7588,7 +7588,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4333:
+/***/ 9852:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7598,7 +7598,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4747:
+/***/ 9583:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7608,7 +7608,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5936:
+/***/ 3481:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7618,7 +7618,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6460:
+/***/ 5497:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7628,7 +7628,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 1559:
+/***/ 4401:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -7648,21 +7648,21 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(1653), exports);
-__exportStar(__nccwpck_require__(6009), exports);
-__exportStar(__nccwpck_require__(98), exports);
-__exportStar(__nccwpck_require__(703), exports);
-__exportStar(__nccwpck_require__(7995), exports);
-__exportStar(__nccwpck_require__(1418), exports);
-__exportStar(__nccwpck_require__(8727), exports);
-__exportStar(__nccwpck_require__(8903), exports);
-__exportStar(__nccwpck_require__(4206), exports);
-__exportStar(__nccwpck_require__(3846), exports);
+__exportStar(__nccwpck_require__(985), exports);
+__exportStar(__nccwpck_require__(2954), exports);
+__exportStar(__nccwpck_require__(3694), exports);
+__exportStar(__nccwpck_require__(1141), exports);
+__exportStar(__nccwpck_require__(8201), exports);
+__exportStar(__nccwpck_require__(6393), exports);
+__exportStar(__nccwpck_require__(2152), exports);
+__exportStar(__nccwpck_require__(8559), exports);
+__exportStar(__nccwpck_require__(8141), exports);
+__exportStar(__nccwpck_require__(7382), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 8903:
+/***/ 8559:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7672,7 +7672,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 4206:
+/***/ 8141:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -7682,7 +7682,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 3846:
+/***/ 7382:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -10647,7 +10647,7 @@ class Methods extends eventemitter3_1.EventEmitter {
     }
 }
 exports.Methods = Methods;
-__exportStar(__nccwpck_require__(1559), exports);
+__exportStar(__nccwpck_require__(4401), exports);
 //# sourceMappingURL=methods.js.map
 
 /***/ }),
@@ -44097,7 +44097,7 @@ exports.GlobStream = GlobStream;
 
 /***/ }),
 
-/***/ 9523:
+/***/ 1115:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -45273,7 +45273,11 @@ class LRUCache {
             }
             // either we didn't abort, and are still here, or we did, and ignored
             const bf = p;
-            if (this.#valList[index] === p) {
+            // if nothing else has been written there but we're set to update the
+            // cache and ignore the abort, or if it's still pending on this specific
+            // background request, then write it to the cache.
+            const vl = this.#valList[index];
+            if (vl === p || ignoreAbort && updateCache && vl === undefined) {
                 if (v === undefined) {
                     if (bf.__staleWhileFetching !== undefined) {
                         this.#valList[index] = bf.__staleWhileFetching;
@@ -48593,7 +48597,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PathScurry = exports.Path = exports.PathScurryDarwin = exports.PathScurryPosix = exports.PathScurryWin32 = exports.PathScurryBase = exports.PathPosix = exports.PathWin32 = exports.PathBase = exports.ChildrenCache = exports.ResolveCache = void 0;
-const lru_cache_1 = __nccwpck_require__(9523);
+const lru_cache_1 = __nccwpck_require__(1115);
 const node_path_1 = __nccwpck_require__(9411);
 const node_url_1 = __nccwpck_require__(1041);
 const fs_1 = __nccwpck_require__(7147);
