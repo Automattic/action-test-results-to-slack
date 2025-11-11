@@ -42978,9 +42978,9 @@ function expand_(str, isTop) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Glob = void 0;
-const minimatch_1 = __nccwpck_require__(999);
+const minimatch_1 = __nccwpck_require__(1611);
 const node_url_1 = __nccwpck_require__(1041);
-const path_scurry_1 = __nccwpck_require__(8107);
+const path_scurry_1 = __nccwpck_require__(4149);
 const pattern_js_1 = __nccwpck_require__(5116);
 const walker_js_1 = __nccwpck_require__(3083);
 // if no process global, just call it linux.
@@ -43232,7 +43232,7 @@ exports.Glob = Glob;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.hasMagic = void 0;
-const minimatch_1 = __nccwpck_require__(999);
+const minimatch_1 = __nccwpck_require__(1611);
 /**
  * Return true if the patterns provided contain any magic glob characters,
  * given the options provided.
@@ -43270,7 +43270,7 @@ exports.hasMagic = hasMagic;
 // Ignores are always parsed in dot:true mode
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Ignore = void 0;
-const minimatch_1 = __nccwpck_require__(999);
+const minimatch_1 = __nccwpck_require__(1611);
 const pattern_js_1 = __nccwpck_require__(5116);
 const defaultPlatform = (typeof process === 'object' &&
     process &&
@@ -43397,10 +43397,10 @@ exports.globStream = globStream;
 exports.globSync = globSync;
 exports.globIterateSync = globIterateSync;
 exports.globIterate = globIterate;
-const minimatch_1 = __nccwpck_require__(999);
+const minimatch_1 = __nccwpck_require__(1611);
 const glob_js_1 = __nccwpck_require__(5489);
 const has_magic_js_1 = __nccwpck_require__(4925);
-var minimatch_2 = __nccwpck_require__(999);
+var minimatch_2 = __nccwpck_require__(1611);
 Object.defineProperty(exports, "escape", ({ enumerable: true, get: function () { return minimatch_2.escape; } }));
 Object.defineProperty(exports, "unescape", ({ enumerable: true, get: function () { return minimatch_2.unescape; } }));
 var glob_js_2 = __nccwpck_require__(5489);
@@ -43468,7 +43468,7 @@ exports.glob.glob = exports.glob;
 // this is just a very light wrapper around 2 arrays with an offset index
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Pattern = void 0;
-const minimatch_1 = __nccwpck_require__(999);
+const minimatch_1 = __nccwpck_require__(1611);
 const isPatternList = (pl) => pl.length >= 1;
 const isGlobList = (gl) => gl.length >= 1;
 /**
@@ -43694,7 +43694,7 @@ exports.Pattern = Pattern;
 // synchronous utility for filtering entries and calculating subwalks
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Processor = exports.SubWalks = exports.MatchRecord = exports.HasWalkedCache = void 0;
-const minimatch_1 = __nccwpck_require__(999);
+const minimatch_1 = __nccwpck_require__(1611);
 /**
  * A cache of which patterns have been processed for a given Path
  */
@@ -45963,7 +45963,7 @@ exports.LRUCache = LRUCache;
 
 /***/ }),
 
-/***/ 1292:
+/***/ 5296:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -45984,7 +45984,7 @@ exports.assertValidPattern = assertValidPattern;
 
 /***/ }),
 
-/***/ 2658:
+/***/ 7447:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -45992,8 +45992,8 @@ exports.assertValidPattern = assertValidPattern;
 // parse a single path portion
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AST = void 0;
-const brace_expressions_js_1 = __nccwpck_require__(6723);
-const unescape_js_1 = __nccwpck_require__(7700);
+const brace_expressions_js_1 = __nccwpck_require__(7421);
+const unescape_js_1 = __nccwpck_require__(5025);
 const types = new Set(['!', '?', '+', '*', '@']);
 const isExtglobType = (c) => types.has(c);
 // Patterns that get prepended to bind to the start of either the
@@ -46405,7 +46405,9 @@ class AST {
         if (this.#root === this)
             this.#fillNegs();
         if (!this.type) {
-            const noEmpty = this.isStart() && this.isEnd();
+            const noEmpty = this.isStart() &&
+                this.isEnd() &&
+                !this.#parts.some(s => typeof s !== 'string');
             const src = this.#parts
                 .map(p => {
                 const [re, _, hasMagic, uflag] = typeof p === 'string'
@@ -46561,10 +46563,7 @@ class AST {
                 }
             }
             if (c === '*') {
-                if (noEmpty && glob === '*')
-                    re += starNoEmpty;
-                else
-                    re += star;
+                re += noEmpty && glob === '*' ? starNoEmpty : star;
                 hasMagic = true;
                 continue;
             }
@@ -46583,7 +46582,7 @@ exports.AST = AST;
 
 /***/ }),
 
-/***/ 6723:
+/***/ 7421:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -46742,7 +46741,7 @@ exports.parseClass = parseClass;
 
 /***/ }),
 
-/***/ 7176:
+/***/ 3118:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -46752,16 +46751,24 @@ exports.escape = void 0;
 /**
  * Escape all magic characters in a glob pattern.
  *
- * If the {@link windowsPathsNoEscape | GlobOptions.windowsPathsNoEscape}
+ * If the {@link MinimatchOptions.windowsPathsNoEscape}
  * option is used, then characters are escaped by wrapping in `[]`, because
  * a magic character wrapped in a character class can only be satisfied by
  * that exact character.  In this mode, `\` is _not_ escaped, because it is
  * not interpreted as a magic character, but instead as a path separator.
+ *
+ * If the {@link MinimatchOptions.magicalBraces} option is used,
+ * then braces (`{` and `}`) will be escaped.
  */
-const escape = (s, { windowsPathsNoEscape = false, } = {}) => {
+const escape = (s, { windowsPathsNoEscape = false, magicalBraces = false, } = {}) => {
     // don't need to escape +@! because we escape the parens
     // that make those magic, and escaping ! as [!] isn't valid,
     // because [!]] is a valid glob class meaning not ']'.
+    if (magicalBraces) {
+        return windowsPathsNoEscape
+            ? s.replace(/[?*()[\]{}]/g, '[$&]')
+            : s.replace(/[?*()[\]\\{}]/g, '\\$&');
+    }
     return windowsPathsNoEscape
         ? s.replace(/[?*()[\]]/g, '[$&]')
         : s.replace(/[?*()[\]\\]/g, '\\$&');
@@ -46771,7 +46778,7 @@ exports.escape = escape;
 
 /***/ }),
 
-/***/ 999:
+/***/ 1611:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -46779,10 +46786,10 @@ exports.escape = escape;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.unescape = exports.escape = exports.AST = exports.Minimatch = exports.match = exports.makeRe = exports.braceExpand = exports.defaults = exports.filter = exports.GLOBSTAR = exports.sep = exports.minimatch = void 0;
 const brace_expansion_1 = __nccwpck_require__(9279);
-const assert_valid_pattern_js_1 = __nccwpck_require__(1292);
-const ast_js_1 = __nccwpck_require__(2658);
-const escape_js_1 = __nccwpck_require__(7176);
-const unescape_js_1 = __nccwpck_require__(7700);
+const assert_valid_pattern_js_1 = __nccwpck_require__(5296);
+const ast_js_1 = __nccwpck_require__(7447);
+const escape_js_1 = __nccwpck_require__(3118);
+const unescape_js_1 = __nccwpck_require__(5025);
 const minimatch = (p, pattern, options = {}) => {
     (0, assert_valid_pattern_js_1.assertValidPattern)(pattern);
     // shortcut: comments match nothing.
@@ -47417,7 +47424,7 @@ class Minimatch {
             }
         }
         // resolve and reduce . and .. portions in the file as well.
-        // dont' need to do the second phase, because it's only one string[]
+        // don't need to do the second phase, because it's only one string[]
         const { optimizationLevel = 1 } = this.options;
         if (optimizationLevel >= 2) {
             file = this.levelTwoFileOptimize(file);
@@ -47670,14 +47677,25 @@ class Minimatch {
                     }
                 }
                 else if (next === undefined) {
-                    pp[i - 1] = prev + '(?:\\/|' + twoStar + ')?';
+                    pp[i - 1] = prev + '(?:\\/|\\/' + twoStar + ')?';
                 }
                 else if (next !== exports.GLOBSTAR) {
                     pp[i - 1] = prev + '(?:\\/|\\/' + twoStar + '\\/)' + next;
                     pp[i + 1] = exports.GLOBSTAR;
                 }
             });
-            return pp.filter(p => p !== exports.GLOBSTAR).join('/');
+            const filtered = pp.filter(p => p !== exports.GLOBSTAR);
+            // For partial matches, we need to make the pattern match
+            // any prefix of the full path. We do this by generating
+            // alternative patterns that match progressively longer prefixes.
+            if (this.partial && filtered.length >= 1) {
+                const prefixes = [];
+                for (let i = 1; i <= filtered.length; i++) {
+                    prefixes.push(filtered.slice(0, i).join('/'));
+                }
+                return '(?:' + prefixes.join('|') + ')';
+            }
+            return filtered.join('/');
         })
             .join('|');
         // need to wrap in parens if we had more than one thing with |,
@@ -47686,6 +47704,10 @@ class Minimatch {
         // must match entire pattern
         // ending in a * or ** will make it less strict.
         re = '^' + open + re + close + '$';
+        // In partial mode, '/' should always match as it's a valid prefix for any pattern
+        if (this.partial) {
+            re = '^(?:\\/|' + open + re.slice(1, -1) + close + ')$';
+        }
         // can match anything, as long as it's not this.
         if (this.negate)
             re = '^(?!' + re + ').+$';
@@ -47777,11 +47799,11 @@ class Minimatch {
 }
 exports.Minimatch = Minimatch;
 /* c8 ignore start */
-var ast_js_2 = __nccwpck_require__(2658);
+var ast_js_2 = __nccwpck_require__(7447);
 Object.defineProperty(exports, "AST", ({ enumerable: true, get: function () { return ast_js_2.AST; } }));
-var escape_js_2 = __nccwpck_require__(7176);
+var escape_js_2 = __nccwpck_require__(3118);
 Object.defineProperty(exports, "escape", ({ enumerable: true, get: function () { return escape_js_2.escape; } }));
-var unescape_js_2 = __nccwpck_require__(7700);
+var unescape_js_2 = __nccwpck_require__(5025);
 Object.defineProperty(exports, "unescape", ({ enumerable: true, get: function () { return unescape_js_2.unescape; } }));
 /* c8 ignore stop */
 exports.minimatch.AST = ast_js_1.AST;
@@ -47792,7 +47814,7 @@ exports.minimatch.unescape = unescape_js_1.unescape;
 
 /***/ }),
 
-/***/ 7700:
+/***/ 5025:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -47802,21 +47824,35 @@ exports.unescape = void 0;
 /**
  * Un-escape a string that has been escaped with {@link escape}.
  *
- * If the {@link windowsPathsNoEscape} option is used, then square-brace
- * escapes are removed, but not backslash escapes.  For example, it will turn
- * the string `'[*]'` into `*`, but it will not turn `'\\*'` into `'*'`,
- * becuase `\` is a path separator in `windowsPathsNoEscape` mode.
+ * If the {@link MinimatchOptions.windowsPathsNoEscape} option is used, then
+ * square-bracket escapes are removed, but not backslash escapes.
  *
- * When `windowsPathsNoEscape` is not set, then both brace escapes and
+ * For example, it will turn the string `'[*]'` into `*`, but it will not
+ * turn `'\\*'` into `'*'`, because `\` is a path separator in
+ * `windowsPathsNoEscape` mode.
+ *
+ * When `windowsPathsNoEscape` is not set, then both square-bracket escapes and
  * backslash escapes are removed.
  *
  * Slashes (and backslashes in `windowsPathsNoEscape` mode) cannot be escaped
  * or unescaped.
+ *
+ * When `magicalBraces` is not set, escapes of braces (`{` and `}`) will not be
+ * unescaped.
  */
-const unescape = (s, { windowsPathsNoEscape = false, } = {}) => {
+const unescape = (s, { windowsPathsNoEscape = false, magicalBraces = true, } = {}) => {
+    if (magicalBraces) {
+        return windowsPathsNoEscape
+            ? s.replace(/\[([^\/\\])\]/g, '$1')
+            : s
+                .replace(/((?!\\).|^)\[([^\/\\])\]/g, '$1$2')
+                .replace(/\\([^\/])/g, '$1');
+    }
     return windowsPathsNoEscape
-        ? s.replace(/\[([^\/\\])\]/g, '$1')
-        : s.replace(/((?!\\).|^)\[([^\/\\])\]/g, '$1$2').replace(/\\([^\/])/g, '$1');
+        ? s.replace(/\[([^\/\\{}])\]/g, '$1')
+        : s
+            .replace(/((?!\\).|^)\[([^\/\\{}])\]/g, '$1$2')
+            .replace(/\\([^\/{}])/g, '$1');
 };
 exports.unescape = unescape;
 //# sourceMappingURL=unescape.js.map
@@ -48858,7 +48894,7 @@ exports.Minipass = Minipass;
 
 /***/ }),
 
-/***/ 8107:
+/***/ 4149:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -48963,7 +48999,7 @@ const entToType = (s) => s.isFile() ? IFREG
                         : s.isFIFO() ? IFIFO
                             : UNKNOWN;
 // normalize unicode path names
-const normalizeCache = new Map();
+const normalizeCache = new lru_cache_1.LRUCache({ max: 2 ** 12 });
 const normalize = (s) => {
     const c = normalizeCache.get(s);
     if (c)
@@ -48972,7 +49008,7 @@ const normalize = (s) => {
     normalizeCache.set(s, n);
     return n;
 };
-const normalizeNocaseCache = new Map();
+const normalizeNocaseCache = new lru_cache_1.LRUCache({ max: 2 ** 12 });
 const normalizeNocase = (s) => {
     const c = normalizeNocaseCache.get(s);
     if (c)
@@ -49163,6 +49199,7 @@ class PathBase {
     get parentPath() {
         return (this.parent || this).fullpath();
     }
+    /* c8 ignore start */
     /**
      * Deprecated alias for Dirent['parentPath'] Somewhat counterintuitively,
      * this property refers to the *parent* path, not the path object itself.
@@ -49172,6 +49209,7 @@ class PathBase {
     get path() {
         return this.parentPath;
     }
+    /* c8 ignore stop */
     /**
      * Do not create new Path objects directly.  They should always be accessed
      * via the PathScurry class or other methods on the Path class.
