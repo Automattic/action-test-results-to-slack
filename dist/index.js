@@ -45878,7 +45878,7 @@ module.exports = { sendMessage, createMessage };
 
 const fs = __nccwpck_require__( 7147 );
 const { getInput } = __nccwpck_require__( 6508 );
-const { glob } = __nccwpck_require__( 2771 );
+const { glob } = __nccwpck_require__( 5488 );
 const { debug } = __nccwpck_require__( 2551 );
 
 /**
@@ -46724,12 +46724,13 @@ exports.range = range;
 
 /***/ }),
 
-/***/ 9279:
+/***/ 8110:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.EXPANSION_MAX = void 0;
 exports.expand = expand;
 const balanced_match_1 = __nccwpck_require__(1295);
 const escSlash = '\0SLASH' + Math.random() + '\0';
@@ -46747,6 +46748,7 @@ const openPattern = /\\{/g;
 const closePattern = /\\}/g;
 const commaPattern = /\\,/g;
 const periodPattern = /\\./g;
+exports.EXPANSION_MAX = 100_000;
 function numeric(str) {
     return !isNaN(str) ? parseInt(str, 10) : str.charCodeAt(0);
 }
@@ -46792,10 +46794,11 @@ function parseCommaParts(str) {
     parts.push.apply(parts, p);
     return parts;
 }
-function expand(str) {
+function expand(str, options = {}) {
     if (!str) {
         return [];
     }
+    const { max = exports.EXPANSION_MAX } = options;
     // I don't know why Bash 4.3 does this, but it does.
     // Anything starting with {} will have the first two bytes preserved
     // but *only* at the top level, so {},a}b will not expand to anything,
@@ -46805,7 +46808,7 @@ function expand(str) {
     if (str.slice(0, 2) === '{}') {
         str = '\\{\\}' + str.slice(2);
     }
-    return expand_(escapeBraces(str), true).map(unescapeBraces);
+    return expand_(escapeBraces(str), max, true).map(unescapeBraces);
 }
 function embrace(str) {
     return '{' + str + '}';
@@ -46819,7 +46822,7 @@ function lte(i, y) {
 function gte(i, y) {
     return i >= y;
 }
-function expand_(str, isTop) {
+function expand_(str, max, isTop) {
     /** @type {string[]} */
     const expansions = [];
     const m = (0, balanced_match_1.balanced)('{', '}', str);
@@ -46827,9 +46830,9 @@ function expand_(str, isTop) {
         return [str];
     // no need to expand pre, since it is guaranteed to be free of brace-sets
     const pre = m.pre;
-    const post = m.post.length ? expand_(m.post, false) : [''];
+    const post = m.post.length ? expand_(m.post, max, false) : [''];
     if (/\$$/.test(m.pre)) {
-        for (let k = 0; k < post.length; k++) {
+        for (let k = 0; k < post.length && k < max; k++) {
             const expansion = pre + '{' + m.body + '}' + post[k];
             expansions.push(expansion);
         }
@@ -46843,7 +46846,7 @@ function expand_(str, isTop) {
             // {a},b}
             if (m.post.match(/,(?!,).*\}/)) {
                 str = m.pre + '{' + m.body + escClose + m.post;
-                return expand_(str);
+                return expand_(str, max, true);
             }
             return [str];
         }
@@ -46855,7 +46858,7 @@ function expand_(str, isTop) {
             n = parseCommaParts(m.body);
             if (n.length === 1 && n[0] !== undefined) {
                 // x{{a,b}}y ==> x{a}y x{b}y
-                n = expand_(n[0], false).map(embrace);
+                n = expand_(n[0], max, false).map(embrace);
                 //XXX is this necessary? Can't seem to hit it in tests.
                 /* c8 ignore start */
                 if (n.length === 1) {
@@ -46909,11 +46912,11 @@ function expand_(str, isTop) {
         else {
             N = [];
             for (let j = 0; j < n.length; j++) {
-                N.push.apply(N, expand_(n[j], false));
+                N.push.apply(N, expand_(n[j], max, false));
             }
         }
         for (let j = 0; j < N.length; j++) {
-            for (let k = 0; k < post.length; k++) {
+            for (let k = 0; k < post.length && expansions.length < max; k++) {
                 const expansion = pre + N[j] + post[k];
                 if (!isTop || isSequence || expansion) {
                     expansions.push(expansion);
@@ -46927,7 +46930,7 @@ function expand_(str, isTop) {
 
 /***/ }),
 
-/***/ 4521:
+/***/ 5346:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -46937,8 +46940,8 @@ exports.Glob = void 0;
 const minimatch_1 = __nccwpck_require__(1611);
 const node_url_1 = __nccwpck_require__(1041);
 const path_scurry_1 = __nccwpck_require__(4149);
-const pattern_js_1 = __nccwpck_require__(9676);
-const walker_js_1 = __nccwpck_require__(2680);
+const pattern_js_1 = __nccwpck_require__(8246);
+const walker_js_1 = __nccwpck_require__(8166);
 // if no process global, just call it linux.
 // so we default to case-sensitive, / separators
 const defaultPlatform = (typeof process === 'object' &&
@@ -47181,7 +47184,7 @@ exports.Glob = Glob;
 
 /***/ }),
 
-/***/ 9146:
+/***/ 3636:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -47215,7 +47218,7 @@ exports.hasMagic = hasMagic;
 
 /***/ }),
 
-/***/ 7081:
+/***/ 8845:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -47227,7 +47230,7 @@ exports.hasMagic = hasMagic;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Ignore = void 0;
 const minimatch_1 = __nccwpck_require__(1611);
-const pattern_js_1 = __nccwpck_require__(9676);
+const pattern_js_1 = __nccwpck_require__(8246);
 const defaultPlatform = (typeof process === 'object' &&
     process &&
     typeof process.platform === 'string') ?
@@ -47341,7 +47344,7 @@ exports.Ignore = Ignore;
 
 /***/ }),
 
-/***/ 2771:
+/***/ 5488:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -47354,16 +47357,16 @@ exports.globSync = globSync;
 exports.globIterateSync = globIterateSync;
 exports.globIterate = globIterate;
 const minimatch_1 = __nccwpck_require__(1611);
-const glob_js_1 = __nccwpck_require__(4521);
-const has_magic_js_1 = __nccwpck_require__(9146);
+const glob_js_1 = __nccwpck_require__(5346);
+const has_magic_js_1 = __nccwpck_require__(3636);
 var minimatch_2 = __nccwpck_require__(1611);
 Object.defineProperty(exports, "escape", ({ enumerable: true, get: function () { return minimatch_2.escape; } }));
 Object.defineProperty(exports, "unescape", ({ enumerable: true, get: function () { return minimatch_2.unescape; } }));
-var glob_js_2 = __nccwpck_require__(4521);
+var glob_js_2 = __nccwpck_require__(5346);
 Object.defineProperty(exports, "Glob", ({ enumerable: true, get: function () { return glob_js_2.Glob; } }));
-var has_magic_js_2 = __nccwpck_require__(9146);
+var has_magic_js_2 = __nccwpck_require__(3636);
 Object.defineProperty(exports, "hasMagic", ({ enumerable: true, get: function () { return has_magic_js_2.hasMagic; } }));
-var ignore_js_1 = __nccwpck_require__(7081);
+var ignore_js_1 = __nccwpck_require__(8845);
 Object.defineProperty(exports, "Ignore", ({ enumerable: true, get: function () { return ignore_js_1.Ignore; } }));
 function globStreamSync(pattern, options = {}) {
     return new glob_js_1.Glob(pattern, options).streamSync();
@@ -47416,7 +47419,7 @@ exports.glob.glob = exports.glob;
 
 /***/ }),
 
-/***/ 9676:
+/***/ 8246:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -47642,7 +47645,7 @@ exports.Pattern = Pattern;
 
 /***/ }),
 
-/***/ 3081:
+/***/ 1196:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -47950,7 +47953,7 @@ exports.Processor = Processor;
 
 /***/ }),
 
-/***/ 2680:
+/***/ 8166:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -47964,8 +47967,8 @@ exports.GlobStream = exports.GlobWalker = exports.GlobUtil = void 0;
  * @module
  */
 const minipass_1 = __nccwpck_require__(6418);
-const ignore_js_1 = __nccwpck_require__(7081);
-const processor_js_1 = __nccwpck_require__(3081);
+const ignore_js_1 = __nccwpck_require__(8845);
+const processor_js_1 = __nccwpck_require__(1196);
 const makeIgnore = (ignore, opts) => typeof ignore === 'string' ? new ignore_js_1.Ignore([ignore], opts)
     : Array.isArray(ignore) ? new ignore_js_1.Ignore(ignore, opts)
         : ignore;
@@ -50762,7 +50765,7 @@ exports.escape = escape;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.unescape = exports.escape = exports.AST = exports.Minimatch = exports.match = exports.makeRe = exports.braceExpand = exports.defaults = exports.filter = exports.GLOBSTAR = exports.sep = exports.minimatch = void 0;
-const brace_expansion_1 = __nccwpck_require__(9279);
+const brace_expansion_1 = __nccwpck_require__(8110);
 const assert_valid_pattern_js_1 = __nccwpck_require__(5296);
 const ast_js_1 = __nccwpck_require__(7447);
 const escape_js_1 = __nccwpck_require__(3118);
