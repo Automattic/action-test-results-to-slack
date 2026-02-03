@@ -616,8 +616,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.OidcClient = void 0;
-const http_client_1 = __nccwpck_require__(8381);
-const auth_1 = __nccwpck_require__(515);
+const http_client_1 = __nccwpck_require__(2673);
+const auth_1 = __nccwpck_require__(4551);
 const core_1 = __nccwpck_require__(6508);
 class OidcClient {
     static createHttpClient(allowRetry = true, maxRetry = 10) {
@@ -2138,7 +2138,7 @@ exports.getProxyAgent = getProxyAgent;
 exports.getProxyAgentDispatcher = getProxyAgentDispatcher;
 exports.getProxyFetch = getProxyFetch;
 exports.getApiBaseUrl = getApiBaseUrl;
-const httpClient = __importStar(__nccwpck_require__(8381));
+const httpClient = __importStar(__nccwpck_require__(2673));
 const undici_1 = __nccwpck_require__(2345);
 function getAuthString(token, options) {
     if (!token && !options.auth) {
@@ -2247,7 +2247,7 @@ function getOctokitOptions(token, options) {
 
 /***/ }),
 
-/***/ 515:
+/***/ 4551:
 /***/ (function(__unused_webpack_module, exports) {
 
 "use strict";
@@ -2335,7 +2335,7 @@ exports.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHand
 
 /***/ }),
 
-/***/ 8381:
+/***/ 2673:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -2389,7 +2389,7 @@ exports.getProxyUrl = getProxyUrl;
 exports.isHttps = isHttps;
 const http = __importStar(__nccwpck_require__(3685));
 const https = __importStar(__nccwpck_require__(5687));
-const pm = __importStar(__nccwpck_require__(7469));
+const pm = __importStar(__nccwpck_require__(7328));
 const tunnel = __importStar(__nccwpck_require__(5112));
 const undici_1 = __nccwpck_require__(2345);
 var HttpCodes;
@@ -3079,7 +3079,7 @@ const lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCa
 
 /***/ }),
 
-/***/ 7469:
+/***/ 7328:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
