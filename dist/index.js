@@ -1021,7 +1021,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 562:
+/***/ 6316:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -1141,7 +1141,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 __exportStar(__nccwpck_require__(778), exports);
-__exportStar(__nccwpck_require__(562), exports);
+__exportStar(__nccwpck_require__(6316), exports);
 __exportStar(__nccwpck_require__(7206), exports);
 __exportStar(__nccwpck_require__(2182), exports);
 __exportStar(__nccwpck_require__(9614), exports);
@@ -1381,7 +1381,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 6454:
+/***/ 4645:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 
@@ -1418,15 +1418,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }
 var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _arguments, generator) {
     if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
@@ -1474,14 +1465,14 @@ const is_electron_1 = __importDefault(__nccwpck_require__(7316));
 const is_stream_1 = __importDefault(__nccwpck_require__(2347));
 const p_queue_1 = __importDefault(__nccwpck_require__(9173));
 const p_retry_1 = __importStar(__nccwpck_require__(547));
-const chat_stream_1 = __nccwpck_require__(132);
-const errors_1 = __nccwpck_require__(4815);
-const file_upload_1 = __nccwpck_require__(3580);
-const helpers_1 = __importDefault(__nccwpck_require__(1722));
-const instrument_1 = __nccwpck_require__(1680);
-const logger_1 = __nccwpck_require__(4218);
-const methods_1 = __nccwpck_require__(7810);
-const retry_policies_1 = __nccwpck_require__(1563);
+const chat_stream_1 = __nccwpck_require__(5059);
+const errors_1 = __nccwpck_require__(4773);
+const file_upload_1 = __nccwpck_require__(3323);
+const helpers_1 = __importDefault(__nccwpck_require__(562));
+const instrument_1 = __nccwpck_require__(1640);
+const logger_1 = __nccwpck_require__(2882);
+const methods_1 = __nccwpck_require__(3490);
+const retry_policies_1 = __nccwpck_require__(1458);
 /*
  * Helpers
  */
@@ -1577,62 +1568,60 @@ class WebClient extends methods_1.Methods {
      * @param method - the Web API method to call {@link https://docs.slack.dev/reference/methods}
      * @param options - options
      */
-    apiCall(method_1) {
-        return __awaiter(this, arguments, void 0, function* (method, options = {}) {
-            this.logger.debug(`apiCall('${method}') start`);
-            warnDeprecations(method, this.logger);
-            warnIfFallbackIsMissing(method, this.logger, options);
-            warnIfThreadTsIsNotString(method, this.logger, options);
-            if (typeof options === 'string' || typeof options === 'number' || typeof options === 'boolean') {
-                throw new TypeError(`Expected an options argument but instead received a ${typeof options}`);
-            }
-            (0, file_upload_1.warnIfNotUsingFilesUploadV2)(method, this.logger);
-            // @ts-expect-error insufficient overlap between Record and FilesUploadV2Arguments
-            if (method === 'files.uploadV2')
-                return this.filesUploadV2(options);
-            const headers = {};
-            if (options.token)
-                headers.Authorization = `Bearer ${options.token}`;
-            const url = this.deriveRequestUrl(method);
-            const response = yield this.makeRequest(url, Object.assign({ team_id: this.teamId }, options), headers);
-            const result = yield this.buildResult(response);
-            this.logger.debug(`http request result: ${JSON.stringify(result)}`);
-            // log warnings in response metadata
-            if (result.response_metadata !== undefined && result.response_metadata.warnings !== undefined) {
-                result.response_metadata.warnings.forEach(this.logger.warn.bind(this.logger));
-            }
-            // log warnings and errors in response metadata messages
-            // related to https://docs.slack.dev/changelog/2016/09/28/response-metadata-is-on-the-way
-            if (result.response_metadata !== undefined && result.response_metadata.messages !== undefined) {
-                for (const msg of result.response_metadata.messages) {
-                    const errReg = /\[ERROR\](.*)/;
-                    const warnReg = /\[WARN\](.*)/;
-                    if (errReg.test(msg)) {
-                        const errMatch = msg.match(errReg);
-                        if (errMatch != null) {
-                            this.logger.error(errMatch[1].trim());
-                        }
+    async apiCall(method, options = {}) {
+        this.logger.debug(`apiCall('${method}') start`);
+        warnDeprecations(method, this.logger);
+        warnIfFallbackIsMissing(method, this.logger, options);
+        warnIfThreadTsIsNotString(method, this.logger, options);
+        if (typeof options === 'string' || typeof options === 'number' || typeof options === 'boolean') {
+            throw new TypeError(`Expected an options argument but instead received a ${typeof options}`);
+        }
+        (0, file_upload_1.warnIfNotUsingFilesUploadV2)(method, this.logger);
+        // @ts-expect-error insufficient overlap between Record and FilesUploadV2Arguments
+        if (method === 'files.uploadV2')
+            return this.filesUploadV2(options);
+        const headers = {};
+        if (options.token)
+            headers.Authorization = `Bearer ${options.token}`;
+        const url = this.deriveRequestUrl(method);
+        const response = await this.makeRequest(url, Object.assign({ team_id: this.teamId }, options), headers);
+        const result = await this.buildResult(response);
+        this.logger.debug(`http request result: ${JSON.stringify(result)}`);
+        // log warnings in response metadata
+        if (result.response_metadata !== undefined && result.response_metadata.warnings !== undefined) {
+            result.response_metadata.warnings.forEach(this.logger.warn.bind(this.logger));
+        }
+        // log warnings and errors in response metadata messages
+        // related to https://docs.slack.dev/changelog/2016/09/28/response-metadata-is-on-the-way
+        if (result.response_metadata !== undefined && result.response_metadata.messages !== undefined) {
+            for (const msg of result.response_metadata.messages) {
+                const errReg = /\[ERROR\](.*)/;
+                const warnReg = /\[WARN\](.*)/;
+                if (errReg.test(msg)) {
+                    const errMatch = msg.match(errReg);
+                    if (errMatch != null) {
+                        this.logger.error(errMatch[1].trim());
                     }
-                    else if (warnReg.test(msg)) {
-                        const warnMatch = msg.match(warnReg);
-                        if (warnMatch != null) {
-                            this.logger.warn(warnMatch[1].trim());
-                        }
+                }
+                else if (warnReg.test(msg)) {
+                    const warnMatch = msg.match(warnReg);
+                    if (warnMatch != null) {
+                        this.logger.warn(warnMatch[1].trim());
                     }
                 }
             }
-            // If result's content is gzip, "ok" property is not returned with successful response
-            // TODO: look into simplifying this code block to only check for the second condition
-            // if an { ok: false } body applies for all API errors
-            if (!result.ok && response.headers['content-type'] !== 'application/gzip') {
-                throw (0, errors_1.platformErrorFromResult)(result);
-            }
-            if ('ok' in result && result.ok === false) {
-                throw (0, errors_1.platformErrorFromResult)(result);
-            }
-            this.logger.debug(`apiCall('${method}') end`);
-            return result;
-        });
+        }
+        // If result's content is gzip, "ok" property is not returned with successful response
+        // TODO: look into simplifying this code block to only check for the second condition
+        // if an { ok: false } body applies for all API errors
+        if (!result.ok && response.headers['content-type'] !== 'application/gzip') {
+            throw (0, errors_1.platformErrorFromResult)(result);
+        }
+        if ('ok' in result && result.ok === false) {
+            throw (0, errors_1.platformErrorFromResult)(result);
+        }
+        this.logger.debug(`apiCall('${method}') end`);
+        return result;
     }
     paginate(method, options, shouldStop, reduce) {
         const pageSize = (() => {
@@ -1667,14 +1656,14 @@ class WebClient extends methods_1.Methods {
         }
         const pageReducer = reduce !== undefined ? reduce : noopPageReducer;
         let index = 0;
-        return (() => __awaiter(this, void 0, void 0, function* () {
+        return (async () => {
             // Unroll the first iteration of the iterator
             // This is done primarily because in order to satisfy the type system, we need a variable that is typed as A
             // (shown as accumulator before), but before the first iteration all we have is a variable typed A | undefined.
             // Unrolling the first iteration allows us to deal with undefined as a special case.
             var _a, e_1, _b, _c;
             const pageIterator = generatePages.call(this);
-            const firstIteratorResult = yield pageIterator.next(undefined);
+            const firstIteratorResult = await pageIterator.next(undefined);
             // Assumption: there will always be at least one result in a paginated API request
             // if (firstIteratorResult.done) { return; }
             const firstPage = firstIteratorResult.value;
@@ -1685,7 +1674,7 @@ class WebClient extends methods_1.Methods {
             }
             try {
                 // Continue iteration
-                for (var _d = true, pageIterator_1 = __asyncValues(pageIterator), pageIterator_1_1; pageIterator_1_1 = yield pageIterator_1.next(), _a = pageIterator_1_1.done, !_a; _d = true) {
+                for (var _d = true, pageIterator_1 = __asyncValues(pageIterator), pageIterator_1_1; pageIterator_1_1 = await pageIterator_1.next(), _a = pageIterator_1_1.done, !_a; _d = true) {
                     _c = pageIterator_1_1.value;
                     _d = false;
                     const page = _c;
@@ -1699,17 +1688,19 @@ class WebClient extends methods_1.Methods {
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (!_d && !_a && (_b = pageIterator_1.return)) yield _b.call(pageIterator_1);
+                    if (!_d && !_a && (_b = pageIterator_1.return)) await _b.call(pageIterator_1);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
             return accumulator;
-        }))();
+        })();
     }
     /**
      * Stream markdown text into a conversation.
      *
      * @description The "chatStream" method starts a new chat stream in a conversation that can be appended to. After appending an entire message, the stream can be stopped with concluding arguments such as "blocks" for gathering feedback.
+     *
+     * The "markdown_text" content is appended to a buffer before being sent to the recipient, with a default buffer size of "256" characters. Setting the "buffer_size" value to a smaller number sends more frequent updates for the same amount of characters, but might reach rate limits more often.
      *
      * @example
      * const streamer = client.chatStream({
@@ -1750,23 +1741,21 @@ class WebClient extends methods_1.Methods {
      * **#3**: Complete uploads {@link https://docs.slack.dev/reference/methods/files.completeuploadexternal files.completeUploadExternal}
      * @param options
      */
-    filesUploadV2(options) {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.logger.debug('files.uploadV2() start');
-            // 1
-            const fileUploads = yield this.getAllFileUploads(options);
-            const fileUploadsURLRes = yield this.fetchAllUploadURLExternal(fileUploads);
-            // set the upload_url and file_id returned from Slack
-            fileUploadsURLRes.forEach((res, idx) => {
-                fileUploads[idx].upload_url = res.upload_url;
-                fileUploads[idx].file_id = res.file_id;
-            });
-            // 2
-            yield this.postFileUploadsToExternalURL(fileUploads, options);
-            // 3
-            const completion = yield this.completeFileUploads(fileUploads);
-            return { ok: true, files: completion };
+    async filesUploadV2(options) {
+        this.logger.debug('files.uploadV2() start');
+        // 1
+        const fileUploads = await this.getAllFileUploads(options);
+        const fileUploadsURLRes = await this.fetchAllUploadURLExternal(fileUploads);
+        // set the upload_url and file_id returned from Slack
+        fileUploadsURLRes.forEach((res, idx) => {
+            fileUploads[idx].upload_url = res.upload_url;
+            fileUploads[idx].file_id = res.file_id;
         });
+        // 2
+        await this.postFileUploadsToExternalURL(fileUploads, options);
+        // 3
+        const completion = await this.completeFileUploads(fileUploads);
+        return { ok: true, files: completion };
     }
     /**
      * For each file submitted with this method, submits filenames
@@ -1774,158 +1763,148 @@ class WebClient extends methods_1.Methods {
      * which to send the file data to and an id for the file
      * @param fileUploads
      */
-    fetchAllUploadURLExternal(fileUploads) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return Promise.all(fileUploads.map((upload) => {
-                const options = {
-                    filename: upload.filename,
-                    length: upload.length,
-                    alt_text: upload.alt_text,
-                    snippet_type: upload.snippet_type,
-                };
-                if ('token' in upload) {
-                    options.token = upload.token;
-                }
-                return this.files.getUploadURLExternal(options);
-            }));
-        });
+    async fetchAllUploadURLExternal(fileUploads) {
+        return Promise.all(fileUploads.map((upload) => {
+            const options = {
+                filename: upload.filename,
+                length: upload.length,
+                alt_text: upload.alt_text,
+                snippet_type: upload.snippet_type,
+            };
+            if ('token' in upload) {
+                options.token = upload.token;
+            }
+            return this.files.getUploadURLExternal(options);
+        }));
     }
     /**
      * Complete uploads.
      * @param fileUploads
      * @returns
      */
-    completeFileUploads(fileUploads) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const toComplete = Object.values((0, file_upload_1.getAllFileUploadsToComplete)(fileUploads));
-            return Promise.all(toComplete.map((job) => this.files.completeUploadExternal(job)));
-        });
+    async completeFileUploads(fileUploads) {
+        const toComplete = Object.values((0, file_upload_1.getAllFileUploadsToComplete)(fileUploads));
+        return Promise.all(toComplete.map((job) => this.files.completeUploadExternal(job)));
     }
     /**
      * for each returned file upload URL, upload corresponding file
      * @param fileUploads
      * @returns
      */
-    postFileUploadsToExternalURL(fileUploads, options) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return Promise.all(fileUploads.map((upload) => __awaiter(this, void 0, void 0, function* () {
-                const { upload_url, file_id, filename, data } = upload;
-                // either file or content will be defined
-                const body = data;
-                // try to post to external url
-                if (upload_url) {
-                    const headers = {};
-                    if (options.token)
-                        headers.Authorization = `Bearer ${options.token}`;
-                    const uploadRes = yield this.makeRequest(upload_url, {
-                        body,
-                    }, headers);
-                    if (uploadRes.status !== 200) {
-                        return Promise.reject(Error(`Failed to upload file (id:${file_id}, filename: ${filename})`));
-                    }
-                    const returnData = { ok: true, body: uploadRes.data };
-                    return Promise.resolve(returnData);
+    async postFileUploadsToExternalURL(fileUploads, options) {
+        return Promise.all(fileUploads.map(async (upload) => {
+            const { upload_url, file_id, filename, data } = upload;
+            // either file or content will be defined
+            const body = data;
+            // try to post to external url
+            if (upload_url) {
+                const headers = {};
+                if (options.token)
+                    headers.Authorization = `Bearer ${options.token}`;
+                const uploadRes = await this.makeRequest(upload_url, {
+                    body,
+                }, headers);
+                if (uploadRes.status !== 200) {
+                    return Promise.reject(Error(`Failed to upload file (id:${file_id}, filename: ${filename})`));
                 }
-                return Promise.reject(Error(`No upload url found for file (id: ${file_id}, filename: ${filename}`));
-            })));
-        });
+                const returnData = { ok: true, body: uploadRes.data };
+                return Promise.resolve(returnData);
+            }
+            return Promise.reject(Error(`No upload url found for file (id: ${file_id}, filename: ${filename}`));
+        }));
     }
     /**
      * @param options All file uploads arguments
      * @returns An array of file upload entries
      */
-    getAllFileUploads(options) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let fileUploads = [];
-            // add single file data to uploads if file or content exists at the top level
-            if ('file' in options || 'content' in options) {
-                fileUploads.push(yield (0, file_upload_1.getFileUploadJob)(options, this.logger));
-            }
-            // add multiple files data when file_uploads is supplied
-            if ('file_uploads' in options) {
-                fileUploads = fileUploads.concat(yield (0, file_upload_1.getMultipleFileUploadJobs)(options, this.logger));
-            }
-            return fileUploads;
-        });
+    async getAllFileUploads(options) {
+        let fileUploads = [];
+        // add single file data to uploads if file or content exists at the top level
+        if ('file' in options || 'content' in options) {
+            fileUploads.push(await (0, file_upload_1.getFileUploadJob)(options, this.logger));
+        }
+        // add multiple files data when file_uploads is supplied
+        if ('file_uploads' in options) {
+            fileUploads = fileUploads.concat(await (0, file_upload_1.getMultipleFileUploadJobs)(options, this.logger));
+        }
+        return fileUploads;
     }
     /**
      * Low-level function to make a single API request. handles queuing, retries, and http-level errors
      */
-    makeRequest(url_1, body_1) {
-        return __awaiter(this, arguments, void 0, function* (url, body, headers = {}) {
-            // TODO: better input types - remove any
-            const task = () => this.requestQueue.add(() => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    // biome-ignore lint/suspicious/noExplicitAny: TODO: type this
-                    const config = Object.assign({ headers }, this.tlsConfig);
-                    // admin.analytics.getFile returns a binary response
-                    // To be able to parse it, it should be read as an ArrayBuffer
-                    if (url.endsWith('admin.analytics.getFile')) {
-                        config.responseType = 'arraybuffer';
-                    }
-                    // apps.event.authorizations.list will reject HTTP requests that send token in the body
-                    // TODO: consider applying this change to all methods - though that will require thorough integration testing
-                    if (url.endsWith('apps.event.authorizations.list')) {
-                        body.token = undefined;
-                    }
-                    this.logger.debug(`http request url: ${url}`);
-                    this.logger.debug(`http request body: ${JSON.stringify(redact(body))}`);
-                    // compile all headers - some set by default under the hood by axios - that will be sent along
-                    let allHeaders = Object.keys(this.axios.defaults.headers).reduce((acc, cur) => {
-                        if (!axiosHeaderPropsToIgnore.includes(cur)) {
-                            acc[cur] = this.axios.defaults.headers[cur];
-                        }
-                        return acc;
-                    }, {});
-                    allHeaders = Object.assign(Object.assign(Object.assign({}, this.axios.defaults.headers.common), allHeaders), headers);
-                    this.logger.debug(`http request headers: ${JSON.stringify(redact(allHeaders))}`);
-                    const response = yield this.axios.post(url, body, config);
-                    this.logger.debug('http response received');
-                    if (response.status === 429) {
-                        const retrySec = parseRetryHeaders(response);
-                        if (retrySec !== undefined) {
-                            this.emit(WebClientEvent.RATE_LIMITED, retrySec, { url, body });
-                            if (this.rejectRateLimitedCalls) {
-                                throw new p_retry_1.AbortError((0, errors_1.rateLimitedErrorWithDelay)(retrySec));
-                            }
-                            this.logger.info(`API Call failed due to rate limiting. Will retry in ${retrySec} seconds.`);
-                            // pause the request queue and then delay the rejection by the amount of time in the retry header
-                            this.requestQueue.pause();
-                            // NOTE: if there was a way to introspect the current RetryOperation and know what the next timeout
-                            // would be, then we could subtract that time from the following delay, knowing that it the next
-                            // attempt still wouldn't occur until after the rate-limit header has specified. an even better
-                            // solution would be to subtract the time from only the timeout of this next attempt of the
-                            // RetryOperation. this would result in the staying paused for the entire duration specified in the
-                            // header, yet this operation not having to pay the timeout cost in addition to that.
-                            yield (0, helpers_1.default)(retrySec * 1000);
-                            // resume the request queue and throw a non-abort error to signal a retry
-                            this.requestQueue.start();
-                            // TODO: We may want to have more detailed info such as team_id, params except tokens, and so on.
-                            throw new Error(`A rate limit was exceeded (url: ${url}, retry-after: ${retrySec})`);
-                        }
-                        // TODO: turn this into some CodedError
-                        throw new p_retry_1.AbortError(new Error(`Retry header did not contain a valid timeout (url: ${url}, retry-after header: ${response.headers['retry-after']})`));
-                    }
-                    // Slack's Web API doesn't use meaningful status codes besides 429 and 200
-                    if (response.status !== 200) {
-                        throw (0, errors_1.httpErrorFromResponse)(response);
-                    }
-                    return response;
+    async makeRequest(url, body, headers = {}) {
+        // TODO: better input types - remove any
+        const task = () => this.requestQueue.add(async () => {
+            try {
+                // biome-ignore lint/suspicious/noExplicitAny: TODO: type this
+                const config = Object.assign({ headers }, this.tlsConfig);
+                // admin.analytics.getFile returns a binary response
+                // To be able to parse it, it should be read as an ArrayBuffer
+                if (url.endsWith('admin.analytics.getFile')) {
+                    config.responseType = 'arraybuffer';
                 }
-                catch (error) {
-                    // To make this compatible with tsd, casting here instead of `catch (error: any)`
-                    // biome-ignore lint/suspicious/noExplicitAny: errors can be anything
-                    const e = error;
-                    this.logger.warn('http request failed', e.message);
-                    if (e.request) {
-                        throw (0, errors_1.requestErrorWithOriginal)(e, this.attachOriginalToWebAPIRequestError);
-                    }
-                    throw error;
+                // apps.event.authorizations.list will reject HTTP requests that send token in the body
+                // TODO: consider applying this change to all methods - though that will require thorough integration testing
+                if (url.endsWith('apps.event.authorizations.list')) {
+                    body.token = undefined;
                 }
-            }));
-            // biome-ignore lint/suspicious/noExplicitAny: http responses can be anything
-            return (0, p_retry_1.default)(task, this.retryConfig);
+                this.logger.debug(`http request url: ${url}`);
+                this.logger.debug(`http request body: ${JSON.stringify(redact(body))}`);
+                // compile all headers - some set by default under the hood by axios - that will be sent along
+                let allHeaders = Object.keys(this.axios.defaults.headers).reduce((acc, cur) => {
+                    if (!axiosHeaderPropsToIgnore.includes(cur)) {
+                        acc[cur] = this.axios.defaults.headers[cur];
+                    }
+                    return acc;
+                }, {});
+                allHeaders = Object.assign(Object.assign(Object.assign({}, this.axios.defaults.headers.common), allHeaders), headers);
+                this.logger.debug(`http request headers: ${JSON.stringify(redact(allHeaders))}`);
+                const response = await this.axios.post(url, body, config);
+                this.logger.debug('http response received');
+                if (response.status === 429) {
+                    const retrySec = parseRetryHeaders(response);
+                    if (retrySec !== undefined) {
+                        this.emit(WebClientEvent.RATE_LIMITED, retrySec, { url, body });
+                        if (this.rejectRateLimitedCalls) {
+                            throw new p_retry_1.AbortError((0, errors_1.rateLimitedErrorWithDelay)(retrySec));
+                        }
+                        this.logger.info(`API Call failed due to rate limiting. Will retry in ${retrySec} seconds.`);
+                        // pause the request queue and then delay the rejection by the amount of time in the retry header
+                        this.requestQueue.pause();
+                        // NOTE: if there was a way to introspect the current RetryOperation and know what the next timeout
+                        // would be, then we could subtract that time from the following delay, knowing that it the next
+                        // attempt still wouldn't occur until after the rate-limit header has specified. an even better
+                        // solution would be to subtract the time from only the timeout of this next attempt of the
+                        // RetryOperation. this would result in the staying paused for the entire duration specified in the
+                        // header, yet this operation not having to pay the timeout cost in addition to that.
+                        await (0, helpers_1.default)(retrySec * 1000);
+                        // resume the request queue and throw a non-abort error to signal a retry
+                        this.requestQueue.start();
+                        // TODO: We may want to have more detailed info such as team_id, params except tokens, and so on.
+                        throw new Error(`A rate limit was exceeded (url: ${url}, retry-after: ${retrySec})`);
+                    }
+                    // TODO: turn this into some CodedError
+                    throw new p_retry_1.AbortError(new Error(`Retry header did not contain a valid timeout (url: ${url}, retry-after header: ${response.headers['retry-after']})`));
+                }
+                // Slack's Web API doesn't use meaningful status codes besides 429 and 200
+                if (response.status !== 200) {
+                    throw (0, errors_1.httpErrorFromResponse)(response);
+                }
+                return response;
+            }
+            catch (error) {
+                // To make this compatible with tsd, casting here instead of `catch (error: any)`
+                // biome-ignore lint/suspicious/noExplicitAny: errors can be anything
+                const e = error;
+                this.logger.warn('http request failed', e.message);
+                if (e.request) {
+                    throw (0, errors_1.requestErrorWithOriginal)(e, this.attachOriginalToWebAPIRequestError);
+                }
+                throw error;
+            }
         });
+        // biome-ignore lint/suspicious/noExplicitAny: http responses can be anything
+        return (0, p_retry_1.default)(task, this.retryConfig);
     }
     /**
      * Get the complete request URL for the provided URL.
@@ -2024,74 +2003,72 @@ class WebClient extends methods_1.Methods {
      * HTTP headers into the object.
      * @param response - an http response
      */
-    buildResult(response) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let { data } = response;
-            const isGzipResponse = response.headers['content-type'] === 'application/gzip';
-            // Check for GZIP response - if so, it is a successful response from admin.analytics.getFile
-            if (isGzipResponse) {
-                // admin.analytics.getFile will return a Buffer that can be unzipped
-                try {
-                    const unzippedData = yield new Promise((resolve, reject) => {
-                        node_zlib_1.default.unzip(data, (err, buf) => {
-                            if (err) {
-                                return reject(err);
-                            }
-                            return resolve(buf.toString().split('\n'));
-                        });
-                    })
-                        .then((res) => res)
-                        .catch((err) => {
-                        throw err;
+    async buildResult(response) {
+        let { data } = response;
+        const isGzipResponse = response.headers['content-type'] === 'application/gzip';
+        // Check for GZIP response - if so, it is a successful response from admin.analytics.getFile
+        if (isGzipResponse) {
+            // admin.analytics.getFile will return a Buffer that can be unzipped
+            try {
+                const unzippedData = await new Promise((resolve, reject) => {
+                    node_zlib_1.default.unzip(data, (err, buf) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        return resolve(buf.toString().split('\n'));
                     });
-                    const fileData = [];
-                    if (Array.isArray(unzippedData)) {
-                        for (const dataset of unzippedData) {
-                            if (dataset && dataset.length > 0) {
-                                fileData.push(JSON.parse(dataset));
-                            }
+                })
+                    .then((res) => res)
+                    .catch((err) => {
+                    throw err;
+                });
+                const fileData = [];
+                if (Array.isArray(unzippedData)) {
+                    for (const dataset of unzippedData) {
+                        if (dataset && dataset.length > 0) {
+                            fileData.push(JSON.parse(dataset));
                         }
                     }
-                    data = { file_data: fileData };
                 }
-                catch (err) {
-                    data = { ok: false, error: err };
-                }
+                data = { file_data: fileData };
             }
-            else if (!isGzipResponse && response.request.path === '/api/admin.analytics.getFile') {
-                // if it isn't a Gzip response but is from the admin.analytics.getFile request,
-                // decode the ArrayBuffer to JSON read the error
-                data = JSON.parse(new node_util_1.TextDecoder().decode(data));
+            catch (err) {
+                data = { ok: false, error: err };
             }
-            if (typeof data === 'string') {
-                // response.data can be a string, not an object for some reason
-                try {
-                    data = JSON.parse(data);
-                }
-                catch (_) {
-                    // failed to parse the string value as JSON data
-                    data = { ok: false, error: data };
-                }
+        }
+        else if (!isGzipResponse && response.request.path === '/api/admin.analytics.getFile') {
+            // if it isn't a Gzip response but is from the admin.analytics.getFile request,
+            // decode the ArrayBuffer to JSON read the error
+            data = JSON.parse(new node_util_1.TextDecoder().decode(data));
+        }
+        if (typeof data === 'string') {
+            // response.data can be a string, not an object for some reason
+            try {
+                data = JSON.parse(data);
             }
-            if (data.response_metadata === undefined) {
-                data.response_metadata = {};
+            catch (_) {
+                // failed to parse the string value as JSON data
+                data = { ok: false, error: data };
             }
-            // add scopes metadata from headers
-            if (response.headers['x-oauth-scopes'] !== undefined) {
-                data.response_metadata.scopes = response.headers['x-oauth-scopes'].trim().split(/\s*,\s*/);
-            }
-            if (response.headers['x-accepted-oauth-scopes'] !== undefined) {
-                data.response_metadata.acceptedScopes = response.headers['x-accepted-oauth-scopes']
-                    .trim()
-                    .split(/\s*,\s*/);
-            }
-            // add retry metadata from headers
-            const retrySec = parseRetryHeaders(response);
-            if (retrySec !== undefined) {
-                data.response_metadata.retryAfter = retrySec;
-            }
-            return data;
-        });
+        }
+        if (data.response_metadata === undefined) {
+            data.response_metadata = {};
+        }
+        // add scopes metadata from headers
+        if (response.headers['x-oauth-scopes'] !== undefined) {
+            data.response_metadata.scopes = response.headers['x-oauth-scopes'].trim().split(/\s*,\s*/);
+        }
+        if (response.headers['x-accepted-oauth-scopes'] !== undefined) {
+            data.response_metadata.acceptedScopes = response.headers['x-accepted-oauth-scopes']
+                .trim()
+                .split(/\s*,\s*/);
+        }
+        // add retry metadata from headers
+        const retrySec = parseRetryHeaders(response);
+        if (retrySec !== undefined) {
+            data.response_metadata.retryAfter = retrySec;
+        }
+        return data;
     }
 }
 exports.WebClient = WebClient;
@@ -2228,18 +2205,20 @@ function redact(body) {
 
 /***/ }),
 
-/***/ 132:
+/***/ 5059:
 /***/ (function(__unused_webpack_module, exports) {
 
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ChatStreamer = void 0;
@@ -2297,29 +2276,30 @@ class ChatStreamer {
      * await streamer.stop();
      * @see {@link https://docs.slack.dev/reference/methods/chat.appendStream}
      */
-    append(args) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.state === 'completed') {
-                throw new Error(`failed to append stream: stream state is ${this.state}`);
-            }
-            if (args.token) {
-                this.token = args.token;
-            }
-            this.buffer += args.markdown_text;
-            if (this.buffer.length >= this.options.buffer_size) {
-                return yield this.flushBuffer(args);
-            }
-            const details = {
-                bufferLength: this.buffer.length,
-                bufferSize: this.options.buffer_size,
-                channel: this.streamArgs.channel,
-                recipientTeamId: this.streamArgs.recipient_team_id,
-                recipientUserId: this.streamArgs.recipient_user_id,
-                threadTs: this.streamArgs.thread_ts,
-            };
-            this.logger.debug(`ChatStreamer appended to buffer: ${JSON.stringify(details)}`);
-            return null;
-        });
+    async append(args) {
+        if (this.state === 'completed') {
+            throw new Error(`failed to append stream: stream state is ${this.state}`);
+        }
+        const { markdown_text, chunks } = args, opts = __rest(args, ["markdown_text", "chunks"]);
+        if (opts.token) {
+            this.token = opts.token;
+        }
+        if (markdown_text) {
+            this.buffer += markdown_text;
+        }
+        if (this.buffer.length >= this.options.buffer_size || chunks) {
+            return await this.flushBuffer(Object.assign({ chunks }, opts));
+        }
+        const details = {
+            bufferLength: this.buffer.length,
+            bufferSize: this.options.buffer_size,
+            channel: this.streamArgs.channel,
+            recipientTeamId: this.streamArgs.recipient_team_id,
+            recipientUserId: this.streamArgs.recipient_user_id,
+            threadTs: this.streamArgs.thread_ts,
+        };
+        this.logger.debug(`ChatStreamer appended to buffer: ${JSON.stringify(details)}`);
+        return null;
     }
     /**
      * Stop the stream and finalize the message.
@@ -2339,43 +2319,61 @@ class ChatStreamer {
      * await streamer.stop();
      * @see {@link https://docs.slack.dev/reference/methods/chat.stopStream}
      */
-    stop(args) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.state === 'completed') {
-                throw new Error(`failed to stop stream: stream state is ${this.state}`);
+    async stop(args) {
+        if (this.state === 'completed') {
+            throw new Error(`failed to stop stream: stream state is ${this.state}`);
+        }
+        const _a = args !== null && args !== void 0 ? args : {}, { markdown_text, chunks } = _a, opts = __rest(_a, ["markdown_text", "chunks"]);
+        if (opts.token) {
+            this.token = opts.token;
+        }
+        if (markdown_text) {
+            this.buffer += markdown_text;
+        }
+        if (!this.streamTs) {
+            const response = await this.client.chat.startStream(Object.assign(Object.assign({}, this.streamArgs), { token: this.token }));
+            if (!response.ts) {
+                throw new Error('failed to stop stream: stream not started');
             }
-            if (args === null || args === void 0 ? void 0 : args.token) {
-                this.token = args.token;
-            }
-            if (args === null || args === void 0 ? void 0 : args.markdown_text) {
-                this.buffer += args.markdown_text;
-            }
-            if (!this.streamTs) {
-                const response = yield this.client.chat.startStream(Object.assign(Object.assign({}, this.streamArgs), { token: this.token }));
-                if (!response.ts) {
-                    throw new Error('failed to stop stream: stream not started');
-                }
-                this.streamTs = response.ts;
-                this.state = 'in_progress';
-            }
-            const response = yield this.client.chat.stopStream(Object.assign(Object.assign({ token: this.token, channel: this.streamArgs.channel, ts: this.streamTs }, args), { markdown_text: this.buffer }));
-            this.state = 'completed';
-            return response;
-        });
+            this.streamTs = response.ts;
+            this.state = 'in_progress';
+        }
+        const chunksToFlush = [];
+        if (this.buffer.length > 0) {
+            chunksToFlush.push({
+                type: 'markdown_text',
+                text: this.buffer,
+            });
+        }
+        if (chunks) {
+            chunksToFlush.push(...chunks);
+        }
+        const response = await this.client.chat.stopStream(Object.assign({ token: this.token, channel: this.streamArgs.channel, ts: this.streamTs, chunks: chunksToFlush }, opts));
+        this.state = 'completed';
+        return response;
     }
-    flushBuffer(args) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.streamTs) {
-                const response = yield this.client.chat.startStream(Object.assign(Object.assign(Object.assign(Object.assign({}, this.streamArgs), { token: this.token }), args), { markdown_text: this.buffer }));
-                this.buffer = '';
-                this.streamTs = response.ts;
-                this.state = 'in_progress';
-                return response;
-            }
-            const response = yield this.client.chat.appendStream(Object.assign(Object.assign({ token: this.token, channel: this.streamArgs.channel, ts: this.streamTs }, args), { markdown_text: this.buffer }));
+    async flushBuffer(args) {
+        const _a = args !== null && args !== void 0 ? args : {}, { chunks } = _a, opts = __rest(_a, ["chunks"]);
+        const chunksToFlush = [];
+        if (this.buffer.length > 0) {
+            chunksToFlush.push({
+                type: 'markdown_text',
+                text: this.buffer,
+            });
+        }
+        if (chunks) {
+            chunksToFlush.push(...chunks);
+        }
+        if (!this.streamTs) {
+            const response = await this.client.chat.startStream(Object.assign(Object.assign(Object.assign({}, this.streamArgs), { token: this.token, chunks: chunksToFlush }), opts));
             this.buffer = '';
+            this.streamTs = response.ts;
+            this.state = 'in_progress';
             return response;
-        });
+        }
+        const response = await this.client.chat.appendStream(Object.assign({ token: this.token, channel: this.streamArgs.channel, ts: this.streamTs, chunks: chunksToFlush }, opts));
+        this.buffer = '';
+        return response;
     }
 }
 exports.ChatStreamer = ChatStreamer;
@@ -2383,7 +2381,7 @@ exports.ChatStreamer = ChatStreamer;
 
 /***/ }),
 
-/***/ 4815:
+/***/ 4773:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -2469,19 +2467,10 @@ function rateLimitedErrorWithDelay(retrySec) {
 
 /***/ }),
 
-/***/ 3580:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ 3323:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getFileUploadJob = getFileUploadJob;
 exports.getMultipleFileUploadJobs = getMultipleFileUploadJobs;
@@ -2508,44 +2497,42 @@ exports.buildMultipleChannelsErrorMsg = buildMultipleChannelsErrorMsg;
 exports.buildInvalidFilesUploadParamError = buildInvalidFilesUploadParamError;
 const node_fs_1 = __nccwpck_require__(7561);
 const node_stream_1 = __nccwpck_require__(4492);
-const errors_1 = __nccwpck_require__(4815);
-function getFileUploadJob(options, logger) {
-    return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c, _d;
-        // Validate parameters
-        warnIfLegacyFileType(options, logger);
-        warnIfChannels(options, logger);
-        errorIfChannelsCsv(options);
-        const fileName = warnIfMissingOrInvalidFileNameAndDefault(options, logger);
-        const fileData = yield getFileData(options);
-        const fileDataBytesLength = getFileDataLength(fileData);
-        const fileUploadJob = {
-            // supplied by user
-            alt_text: options.alt_text,
-            blocks: options.blocks,
-            channel_id: (_a = options.channels) !== null && _a !== void 0 ? _a : options.channel_id,
-            filename: (_b = options.filename) !== null && _b !== void 0 ? _b : fileName,
-            initial_comment: options.initial_comment,
-            snippet_type: options.snippet_type,
-            title: (_d = (_c = options.title) !== null && _c !== void 0 ? _c : options.filename) !== null && _d !== void 0 ? _d : fileName, // default title to filename unless otherwise specified
-            // calculated
-            data: fileData,
-            length: fileDataBytesLength,
-        };
-        if ('thread_ts' in options) {
-            fileUploadJob.thread_ts = options.thread_ts;
-        }
-        if ('token' in options) {
-            fileUploadJob.token = options.token;
-        }
-        if ('content' in options) {
-            return Object.assign({ content: options.content }, fileUploadJob);
-        }
-        if ('file' in options) {
-            return Object.assign({ file: options.file }, fileUploadJob);
-        }
-        throw (0, errors_1.errorWithCode)(new Error('Either a file or content field is required for valid file upload. You must supply one'), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
-    });
+const errors_1 = __nccwpck_require__(4773);
+async function getFileUploadJob(options, logger) {
+    var _a, _b, _c, _d;
+    // Validate parameters
+    warnIfLegacyFileType(options, logger);
+    warnIfChannels(options, logger);
+    errorIfChannelsCsv(options);
+    const fileName = warnIfMissingOrInvalidFileNameAndDefault(options, logger);
+    const fileData = await getFileData(options);
+    const fileDataBytesLength = getFileDataLength(fileData);
+    const fileUploadJob = {
+        // supplied by user
+        alt_text: options.alt_text,
+        blocks: options.blocks,
+        channel_id: (_a = options.channels) !== null && _a !== void 0 ? _a : options.channel_id,
+        filename: (_b = options.filename) !== null && _b !== void 0 ? _b : fileName,
+        initial_comment: options.initial_comment,
+        snippet_type: options.snippet_type,
+        title: (_d = (_c = options.title) !== null && _c !== void 0 ? _c : options.filename) !== null && _d !== void 0 ? _d : fileName, // default title to filename unless otherwise specified
+        // calculated
+        data: fileData,
+        length: fileDataBytesLength,
+    };
+    if ('thread_ts' in options) {
+        fileUploadJob.thread_ts = options.thread_ts;
+    }
+    if ('token' in options) {
+        fileUploadJob.token = options.token;
+    }
+    if ('content' in options) {
+        return Object.assign({ content: options.content }, fileUploadJob);
+    }
+    if ('file' in options) {
+        return Object.assign({ file: options.file }, fileUploadJob);
+    }
+    throw (0, errors_1.errorWithCode)(new Error('Either a file or content field is required for valid file upload. You must supply one'), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
 }
 /**
  * Returns an array of files upload entries when `file_uploads` is supplied.
@@ -2572,38 +2559,36 @@ function getFileUploadJob(options, logger) {
  * ```
  * @param options provided by user
  */
-function getMultipleFileUploadJobs(options, logger) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if ('file_uploads' in options) {
-            // go through each file_upload and create a job for it
-            return Promise.all(options.file_uploads.map((upload) => {
-                // ensure no omitted properties included in files_upload entry
-                // these properties are valid only at the top-level, not
-                // inside file_uploads.
-                const { blocks, channel_id, channels, initial_comment, thread_ts } = upload;
-                if (blocks || channel_id || channels || initial_comment || thread_ts) {
-                    throw (0, errors_1.errorWithCode)(new Error(buildInvalidFilesUploadParamError()), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
-                }
-                // takes any channel_id, initial_comment and thread_ts
-                // supplied at the top level.
-                const uploadJobArgs = Object.assign(Object.assign({}, upload), { blocks: options.blocks, channels: options.channels, channel_id: options.channel_id, initial_comment: options.initial_comment });
-                if ('thread_ts' in options) {
-                    uploadJobArgs.thread_ts = options.thread_ts;
-                }
-                if ('token' in options) {
-                    uploadJobArgs.token = options.token;
-                }
-                if ('content' in upload) {
-                    return getFileUploadJob(Object.assign({ content: upload.content }, uploadJobArgs), logger);
-                }
-                if ('file' in upload) {
-                    return getFileUploadJob(Object.assign({ file: upload.file }, uploadJobArgs), logger);
-                }
-                throw (0, errors_1.errorWithCode)(new Error('Either a file or content field is required for valid file upload. You must supply one'), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
-            }));
-        }
-        throw new Error(buildFilesUploadMissingMessage());
-    });
+async function getMultipleFileUploadJobs(options, logger) {
+    if ('file_uploads' in options) {
+        // go through each file_upload and create a job for it
+        return Promise.all(options.file_uploads.map((upload) => {
+            // ensure no omitted properties included in files_upload entry
+            // these properties are valid only at the top-level, not
+            // inside file_uploads.
+            const { blocks, channel_id, channels, initial_comment, thread_ts } = upload;
+            if (blocks || channel_id || channels || initial_comment || thread_ts) {
+                throw (0, errors_1.errorWithCode)(new Error(buildInvalidFilesUploadParamError()), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
+            }
+            // takes any channel_id, initial_comment and thread_ts
+            // supplied at the top level.
+            const uploadJobArgs = Object.assign(Object.assign({}, upload), { blocks: options.blocks, channels: options.channels, channel_id: options.channel_id, initial_comment: options.initial_comment });
+            if ('thread_ts' in options) {
+                uploadJobArgs.thread_ts = options.thread_ts;
+            }
+            if ('token' in options) {
+                uploadJobArgs.token = options.token;
+            }
+            if ('content' in upload) {
+                return getFileUploadJob(Object.assign({ content: upload.content }, uploadJobArgs), logger);
+            }
+            if ('file' in upload) {
+                return getFileUploadJob(Object.assign({ file: upload.file }, uploadJobArgs), logger);
+            }
+            throw (0, errors_1.errorWithCode)(new Error('Either a file or content field is required for valid file upload. You must supply one'), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
+        }));
+    }
+    throw new Error(buildFilesUploadMissingMessage());
 }
 // Helpers to build the FileUploadJob
 /**
@@ -2611,35 +2596,33 @@ function getMultipleFileUploadJobs(options, logger) {
  * @param options
  * @returns Binary data representation of file
  */
-function getFileData(options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        errorIfInvalidOrMissingFileData(options);
-        if ('file' in options) {
-            const { file } = options;
-            // try to handle as buffer
-            if (Buffer.isBuffer(file))
-                return file;
-            // try to handle as filepath
-            if (typeof file === 'string') {
-                // try to read file as if the string was a file path
-                try {
-                    const dataBuffer = (0, node_fs_1.readFileSync)(file);
-                    return dataBuffer;
-                }
-                catch (_err) {
-                    throw (0, errors_1.errorWithCode)(new Error(`Unable to resolve file data for ${file}. Please supply a filepath string, or binary data Buffer or String directly.`), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
-                }
+async function getFileData(options) {
+    errorIfInvalidOrMissingFileData(options);
+    if ('file' in options) {
+        const { file } = options;
+        // try to handle as buffer
+        if (Buffer.isBuffer(file))
+            return file;
+        // try to handle as filepath
+        if (typeof file === 'string') {
+            // try to read file as if the string was a file path
+            try {
+                const dataBuffer = (0, node_fs_1.readFileSync)(file);
+                return dataBuffer;
             }
-            // try to handle as Readable
-            const data = yield getFileDataAsStream(file);
-            if (data)
-                return data;
+            catch (_err) {
+                throw (0, errors_1.errorWithCode)(new Error(`Unable to resolve file data for ${file}. Please supply a filepath string, or binary data Buffer or String directly.`), errors_1.ErrorCode.FileUploadInvalidArgumentsError);
+            }
         }
-        if ('content' in options)
-            return Buffer.from(options.content);
-        // general catch-all error
-        throw (0, errors_1.errorWithCode)(new Error('There was an issue getting the file data for the file or content supplied'), errors_1.ErrorCode.FileUploadReadFileDataError);
-    });
+        // try to handle as Readable
+        const data = await getFileDataAsStream(file);
+        if (data)
+            return data;
+    }
+    if ('content' in options)
+        return Buffer.from(options.content);
+    // general catch-all error
+    throw (0, errors_1.errorWithCode)(new Error('There was an issue getting the file data for the file or content supplied'), errors_1.ErrorCode.FileUploadReadFileDataError);
 }
 function getFileDataLength(data) {
     if (data) {
@@ -2647,26 +2630,24 @@ function getFileDataLength(data) {
     }
     throw (0, errors_1.errorWithCode)(new Error(buildFileSizeErrorMsg()), errors_1.ErrorCode.FileUploadReadFileDataError);
 }
-function getFileDataAsStream(readable) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const chunks = [];
-        return new Promise((resolve, reject) => {
-            readable.on('readable', () => {
-                let chunk = readable.read();
-                while (chunk !== null) {
-                    chunks.push(chunk);
-                    chunk = readable.read();
-                }
-            });
-            readable.on('end', () => {
-                if (chunks.length > 0) {
-                    const content = Buffer.concat(chunks);
-                    resolve(content);
-                }
-                else {
-                    reject(Error('No data in supplied file'));
-                }
-            });
+async function getFileDataAsStream(readable) {
+    const chunks = [];
+    return new Promise((resolve, reject) => {
+        readable.on('readable', () => {
+            let chunk = readable.read();
+            while (chunk !== null) {
+                chunks.push(chunk);
+                chunk = readable.read();
+            }
+        });
+        readable.on('end', () => {
+            if (chunks.length > 0) {
+                const content = Buffer.concat(chunks);
+                resolve(content);
+            }
+            else {
+                reject(Error('No data in supplied file'));
+            }
         });
     });
 }
@@ -2850,7 +2831,7 @@ function buildInvalidFilesUploadParamError() {
 
 /***/ }),
 
-/***/ 1722:
+/***/ 562:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -2870,7 +2851,7 @@ function delay(ms) {
 
 /***/ }),
 
-/***/ 8205:
+/***/ 7450:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 
@@ -2893,27 +2874,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.WebClientEvent = exports.WebClient = exports.retryPolicies = exports.LogLevel = exports.addAppMetadata = exports.ErrorCode = void 0;
-var errors_1 = __nccwpck_require__(4815);
+exports.WebClientEvent = exports.WebClient = exports.ChatStreamer = exports.retryPolicies = exports.LogLevel = exports.addAppMetadata = exports.ErrorCode = void 0;
+var errors_1 = __nccwpck_require__(4773);
 Object.defineProperty(exports, "ErrorCode", ({ enumerable: true, get: function () { return errors_1.ErrorCode; } }));
-var instrument_1 = __nccwpck_require__(1680);
+var instrument_1 = __nccwpck_require__(1640);
 Object.defineProperty(exports, "addAppMetadata", ({ enumerable: true, get: function () { return instrument_1.addAppMetadata; } }));
-var logger_1 = __nccwpck_require__(4218);
+var logger_1 = __nccwpck_require__(2882);
 Object.defineProperty(exports, "LogLevel", ({ enumerable: true, get: function () { return logger_1.LogLevel; } }));
-var retry_policies_1 = __nccwpck_require__(1563);
+var retry_policies_1 = __nccwpck_require__(1458);
 Object.defineProperty(exports, "retryPolicies", ({ enumerable: true, get: function () { return __importDefault(retry_policies_1).default; } }));
-__exportStar(__nccwpck_require__(4123), exports);
-__exportStar(__nccwpck_require__(5936), exports);
-var WebClient_1 = __nccwpck_require__(6454);
+__exportStar(__nccwpck_require__(1433), exports);
+__exportStar(__nccwpck_require__(4656), exports);
+var chat_stream_1 = __nccwpck_require__(5059);
+Object.defineProperty(exports, "ChatStreamer", ({ enumerable: true, get: function () { return chat_stream_1.ChatStreamer; } }));
+var WebClient_1 = __nccwpck_require__(4645);
 Object.defineProperty(exports, "WebClient", ({ enumerable: true, get: function () { return WebClient_1.WebClient; } }));
 Object.defineProperty(exports, "WebClientEvent", ({ enumerable: true, get: function () { return WebClient_1.WebClientEvent; } }));
 // methods must be exported after WebClient
-__exportStar(__nccwpck_require__(7810), exports);
+__exportStar(__nccwpck_require__(3490), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 1680:
+/***/ 1640:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 
@@ -2955,12 +2938,24 @@ exports.addAppMetadata = addAppMetadata;
 exports.getUserAgent = getUserAgent;
 const os = __importStar(__nccwpck_require__(612));
 const node_path_1 = __nccwpck_require__(9411);
-const packageJson = __nccwpck_require__(6692);
+const packageJson = __nccwpck_require__(3832);
 /**
  * Replaces occurrences of '/' with ':' in a string, since '/' is meaningful inside User-Agent strings as a separator.
  */
 function replaceSlashes(s) {
     return s.replace('/', ':');
+}
+const MAX_LATIN1_CODE = 0xff;
+/**
+ * Ensures a string is safe for use in HTTP headers by URI-encoding characters outside the Latin-1 (ISO-8859-1) range.
+ * Latin-1 characters (code points 0x00–0xFF) are preserved as-is; all others are percent-encoded via encodeURIComponent.
+ */
+function toLatin1Safe(s) {
+    let result = '';
+    for (const char of s) {
+        result += char.charCodeAt(0) <= MAX_LATIN1_CODE ? char : encodeURIComponent(char);
+    }
+    return result;
 }
 // TODO: for the deno build (see the `npm run build:deno` npm run script), we could replace the `os-browserify` npm
 // module shim with our own shim leveraging the deno beta compatibility layer for node's `os` module (for more info
@@ -2969,7 +2964,7 @@ function replaceSlashes(s) {
 // the `os` module deno shim to correctly report operating system from a deno runtime. Until then, the below `os`-
 // based code will report "browser/undefined" from a deno runtime.
 const baseUserAgent = `${replaceSlashes(packageJson.name)}/${packageJson.version} ` +
-    `${(0, node_path_1.basename)(process.title)}/${process.version.replace('v', '')} ` +
+    `${toLatin1Safe((0, node_path_1.basename)(process.title))}/${process.version.replace('v', '')} ` +
     `${os.platform()}/${os.release()}`;
 const appMetadata = {};
 /**
@@ -2994,7 +2989,7 @@ function getUserAgent() {
 
 /***/ }),
 
-/***/ 4218:
+/***/ 2882:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 
@@ -3029,7 +3024,7 @@ function getLogger(name, level, existingLogger) {
 
 /***/ }),
 
-/***/ 7810:
+/***/ 3490:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 
@@ -3050,7 +3045,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Methods = void 0;
 const eventemitter3_1 = __nccwpck_require__(6257);
-const WebClient_1 = __nccwpck_require__(6454);
+const WebClient_1 = __nccwpck_require__(4645);
 /**
  * Binds a certain `method` and its (required) arguments and result types to the `apiCall` method in `WebClient`.
  */
@@ -3700,6 +3695,15 @@ class Methods extends eventemitter3_1.EventEmitter {
              * @see {@link https://docs.slack.dev/reference/methods/apps.uninstall `apps.uninstall` API reference}.
              */
             uninstall: bindApiCall(this, 'apps.uninstall'),
+            user: {
+                connection: {
+                    /**
+                     * @description Updates the connection status between a user and an app.
+                     * @see {@link https://docs.slack.dev/reference/methods/apps.user.connection.update `apps.user.connection.update` API reference}.
+                     */
+                    update: bindApiCall(this, 'apps.user.connection.update'),
+                },
+            },
         };
         this.auth = {
             /**
@@ -3814,6 +3818,7 @@ class Methods extends eventemitter3_1.EventEmitter {
         this.chat = {
             /**
              * @description Appends text to an existing streaming conversation.
+             * @see {@link https://docs.slack.dev/reference/methods/chat.appendStream `chat.appendStream` API reference}.
              */
             appendStream: bindApiCall(this, 'chat.appendStream'),
             /**
@@ -3860,10 +3865,12 @@ class Methods extends eventemitter3_1.EventEmitter {
             },
             /**
              * @description Starts a new streaming conversation.
+             * @see {@link https://docs.slack.dev/reference/methods/chat.startStream `chat.startStream` API reference}.
              */
             startStream: bindApiCall(this, 'chat.startStream'),
             /**
              * @description Stops a streaming conversation.
+             * @see {@link https://docs.slack.dev/reference/methods/chat.stopStream `chat.stopStream` API reference}.
              */
             stopStream: bindApiCall(this, 'chat.stopStream'),
             /**
@@ -4322,6 +4329,74 @@ class Methods extends eventemitter3_1.EventEmitter {
              */
             messages: bindApiCall(this, 'search.messages'),
         };
+        this.slackLists = {
+            access: {
+                /**
+                 * @description Delete access for specified entities.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.access.delete `slackLists.access.delete` API reference}.
+                 */
+                delete: bindApiCall(this, 'slackLists.access.delete'),
+                /**
+                 * @description Set access level for specified entities.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.access.set `slackLists.access.set` API reference}.
+                 */
+                set: bindApiCall(this, 'slackLists.access.set'),
+            },
+            /**
+             * @description Create a List.
+             * @see {@link https://docs.slack.dev/reference/methods/slackLists.create `slackLists.create` API reference}.
+             */
+            create: bindApiCall(this, 'slackLists.create'),
+            download: {
+                /**
+                 * @description Get download job status.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.download.get `slackLists.download.get` API reference}.
+                 */
+                get: bindApiCall(this, 'slackLists.download.get'),
+                /**
+                 * @description Start a download job for a list.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.download.start `slackLists.download.start` API reference}.
+                 */
+                start: bindApiCall(this, 'slackLists.download.start'),
+            },
+            items: {
+                /**
+                 * @description Create a list item.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.items.create `slackLists.items.create` API reference}.
+                 */
+                create: bindApiCall(this, 'slackLists.items.create'),
+                /**
+                 * @description Delete a list item.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.items.delete `slackLists.items.delete` API reference}.
+                 */
+                delete: bindApiCall(this, 'slackLists.items.delete'),
+                /**
+                 * @description Delete multiple list items.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.items.deleteMultiple `slackLists.items.deleteMultiple` API reference}.
+                 */
+                deleteMultiple: bindApiCall(this, 'slackLists.items.deleteMultiple'),
+                /**
+                 * @description Get info about a list item.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.items.info `slackLists.items.info` API reference}.
+                 */
+                info: bindApiCall(this, 'slackLists.items.info'),
+                /**
+                 * @description Get records from a List.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.items.list `slackLists.items.list` API reference}.
+                 */
+                list: bindApiCall(this, 'slackLists.items.list'),
+                /**
+                 * @description Update a list item.
+                 * @see {@link https://docs.slack.dev/reference/methods/slackLists.items.update `slackLists.items.update` API reference}.
+                 */
+                update: bindApiCall(this, 'slackLists.items.update'),
+            },
+            /**
+             * @description Update a list.
+             * @see {@link https://docs.slack.dev/reference/methods/slackLists.update `slackLists.update` API reference}.
+             */
+            update: bindApiCall(this, 'slackLists.update'),
+        };
         this.team = {
             /**
              * @description Gets the access logs for the current team.
@@ -4602,7 +4677,7 @@ __exportStar(__nccwpck_require__(1710), exports);
 
 /***/ }),
 
-/***/ 1563:
+/***/ 1458:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -4642,7 +4717,7 @@ exports["default"] = policies;
 
 /***/ }),
 
-/***/ 4123:
+/***/ 1433:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -4651,7 +4726,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 5936:
+/***/ 4656:
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -5690,7 +5765,7 @@ module.exports = function setToStringTag(object, value) {
 
 /***/ }),
 
-/***/ 1458:
+/***/ 7330:
 /***/ ((module) => {
 
 
@@ -6376,7 +6451,7 @@ if (true) {
 
 /***/ }),
 
-/***/ 2159:
+/***/ 1877:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var debug;
@@ -6398,7 +6473,7 @@ module.exports = function () {
 
 /***/ }),
 
-/***/ 7684:
+/***/ 2567:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var url = __nccwpck_require__(7310);
@@ -6407,7 +6482,7 @@ var http = __nccwpck_require__(3685);
 var https = __nccwpck_require__(5687);
 var Writable = (__nccwpck_require__(2781).Writable);
 var assert = __nccwpck_require__(9491);
-var debug = __nccwpck_require__(2159);
+var debug = __nccwpck_require__(1877);
 
 // Preventive platform detection
 // istanbul ignore next
@@ -6428,6 +6503,13 @@ try {
 catch (error) {
   useNativeURL = error.code === "ERR_INVALID_URL";
 }
+
+// HTTP headers to drop across HTTP/HTTPS and domain boundaries
+var sensitiveHeaders = [
+  "Authorization",
+  "Proxy-Authorization",
+  "Cookie",
+];
 
 // URL fields to preserve in copy operations
 var preservedUrlFields = [
@@ -6509,6 +6591,11 @@ function RedirectableRequest(options, responseCallback) {
         cause : new RedirectionError({ cause: cause }));
     }
   };
+
+  // Create filter for sensitive HTTP headers
+  this._headerFilter = new RegExp("^(?:" +
+      sensitiveHeaders.concat(options.sensitiveHeaders).map(escapeRegex).join("|") +
+    ")$", "i");
 
   // Perform the first request
   this._performRequest();
@@ -6693,6 +6780,9 @@ RedirectableRequest.prototype._sanitizeOptions = function (options) {
   if (!options.headers) {
     options.headers = {};
   }
+  if (!isArray(options.sensitiveHeaders)) {
+    options.sensitiveHeaders = [];
+  }
 
   // Since http.request treats host as an alias of hostname,
   // but the url module interprets host as hostname plus port,
@@ -6875,7 +6965,7 @@ RedirectableRequest.prototype._processResponse = function (response) {
      redirectUrl.protocol !== "https:" ||
      redirectUrl.host !== currentHost &&
      !isSubdomain(redirectUrl.host, currentHost)) {
-    removeMatchingHeaders(/^(?:(?:proxy-)?authorization|cookie)$/i, this._options.headers);
+    removeMatchingHeaders(this._headerFilter, this._options.headers);
   }
 
   // Evaluate the beforeRedirect callback
@@ -7068,6 +7158,10 @@ function isSubdomain(subdomain, domain) {
   return dot > 0 && subdomain[dot] === "." && subdomain.endsWith(domain);
 }
 
+function isArray(value) {
+  return value instanceof Array;
+}
+
 function isString(value) {
   return typeof value === "string" || value instanceof String;
 }
@@ -7082,6 +7176,10 @@ function isBuffer(value) {
 
 function isURL(value) {
   return URL && value instanceof URL;
+}
+
+function escapeRegex(regex) {
+  return regex.replace(/[\]\\/()*+?.$]/g, "\\$&");
 }
 
 // Exports
@@ -8692,7 +8790,7 @@ module.exports = (promise, onFinally) => {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const EventEmitter = __nccwpck_require__(1458);
+const EventEmitter = __nccwpck_require__(7330);
 const p_timeout_1 = __nccwpck_require__(903);
 const priority_queue_1 = __nccwpck_require__(6677);
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -37621,7 +37719,7 @@ var http = __nccwpck_require__(3685);
 var https = __nccwpck_require__(5687);
 var http2 = __nccwpck_require__(5158);
 var util = __nccwpck_require__(3837);
-var followRedirects = __nccwpck_require__(7684);
+var followRedirects = __nccwpck_require__(2567);
 var zlib = __nccwpck_require__(9796);
 var stream = __nccwpck_require__(2781);
 var events = __nccwpck_require__(2361);
@@ -42426,10 +42524,10 @@ module.exports = axios;
 
 /***/ }),
 
-/***/ 6692:
+/***/ 3832:
 /***/ ((module) => {
 
-module.exports = JSON.parse('{"name":"@slack/web-api","version":"7.12.0","description":"Official library for using the Slack Platform\'s Web API","author":"Slack Technologies, LLC","license":"MIT","keywords":["slack","web-api","bot","client","http","api","proxy","rate-limiting","pagination"],"main":"dist/index.js","types":"./dist/index.d.ts","files":["dist/**/*"],"engines":{"node":">= 18","npm":">= 8.6.0"},"repository":"slackapi/node-slack-sdk","homepage":"https://docs.slack.dev/tools/node-slack-sdk/web-api/","publishConfig":{"access":"public"},"bugs":{"url":"https://github.com/slackapi/node-slack-sdk/issues"},"scripts":{"prepare":"npm run build","build":"npm run build:clean && tsc","build:clean":"shx rm -rf ./dist ./coverage","docs":"npx typedoc --plugin typedoc-plugin-markdown","lint":"npx @biomejs/biome check .","lint:fix":"npx @biomejs/biome check --write .","mocha":"mocha --config ./test/.mocharc.json \\"./src/**/*.spec.ts\\"","test":"npm run lint && npm run test:types && npm run test:integration && npm run test:unit","test:integration":"npm run build && node test/integration/commonjs-project/index.js && node test/integration/esm-project/index.mjs && npm run test:integration:ts","test:integration:ts":"cd test/integration/ts-4.7-project && npm i && npm run build","test:unit":"npm run build && c8 --config ./test/.c8rc.json npm run mocha","test:types":"tsd","watch":"npx nodemon --watch \'src\' --ext \'ts\' --exec npm run build"},"dependencies":{"@slack/logger":"^4.0.0","@slack/types":"^2.18.0","@types/node":">=18.0.0","@types/retry":"0.12.0","axios":"^1.11.0","eventemitter3":"^5.0.1","form-data":"^4.0.4","is-electron":"2.2.2","is-stream":"^2","p-queue":"^6","p-retry":"^4","retry":"^0.13.1"},"devDependencies":{"@biomejs/biome":"^2.0.5","@tsconfig/recommended":"^1","@types/busboy":"^1.5.4","@types/chai":"^4","@types/mocha":"^10","@types/sinon":"^17","busboy":"^1","c8":"^10.1.2","chai":"^4","mocha":"^11","mocha-junit-reporter":"^2.2.1","mocha-multi-reporters":"^1.5.1","nock":"^14","shx":"^0.4.0","sinon":"^21","source-map-support":"^0.5.21","ts-node":"^10","tsd":"^0.33.0","typedoc":"^0.28.7","typedoc-plugin-markdown":"^4.7.1","typescript":"5.9.3"},"tsd":{"directory":"test/types"}}');
+module.exports = JSON.parse('{"name":"@slack/web-api","version":"7.15.1","description":"Official library for using the Slack Platform\'s Web API","author":"Slack Technologies, LLC","license":"MIT","keywords":["slack","web-api","bot","client","http","api","proxy","rate-limiting","pagination"],"main":"dist/index.js","types":"./dist/index.d.ts","files":["dist/**/*"],"engines":{"node":">= 18","npm":">= 8.6.0"},"repository":{"type":"git","url":"git+https://github.com/slackapi/node-slack-sdk.git"},"homepage":"https://docs.slack.dev/tools/node-slack-sdk/web-api/","publishConfig":{"access":"public"},"bugs":{"url":"https://github.com/slackapi/node-slack-sdk/issues"},"scripts":{"build":"npm run build:clean && tsc","build:clean":"shx rm -rf ./dist","docs":"npx typedoc --plugin typedoc-plugin-markdown","prepack":"npm run build","test":"npm run test:unit","test:node18":"npm run build && bash -c \'node --test --test-reporter=spec --import tsx src/*.test.ts\'","test:integration":"npm run build && node test/integration/commonjs-project/index.js && node test/integration/esm-project/index.mjs && npm run test:integration:ts","test:integration:ts":"cd test/integration/ts-4.7-project && npm i && npm run build","test:types":"tsd","test:unit":"npm run build && node --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info --test-reporter=junit --test-reporter-destination=test-results.xml --import tsx --test src/*.test.ts","watch":"npx nodemon --watch \'src\' --ext \'ts\' --exec npm run build"},"dependencies":{"@slack/logger":"^4.0.1","@slack/types":"^2.20.1","@types/node":">=18","@types/retry":"0.12.0","axios":"^1.15.0","eventemitter3":"^5.0.1","form-data":"^4.0.4","is-electron":"2.2.2","is-stream":"^2","p-queue":"^6","p-retry":"^4","retry":"^0.13.1"},"devDependencies":{"@types/busboy":"^1.5.4","@types/sinon":"^21","busboy":"^1","nock":"^14","sinon":"^21","tsd":"^0.33.0"},"tsd":{"directory":"test/types"}}');
 
 /***/ }),
 
@@ -49790,8 +49888,8 @@ function getOctokit(token, options, ...additionalPlugins) {
     return new GitHubWithPlugins(getOctokitOptions(token, options));
 }
 //# sourceMappingURL=github.js.map
-// EXTERNAL MODULE: ../../../node_modules/.pnpm/@slack+web-api@7.12.0/node_modules/@slack/web-api/dist/index.js
-var dist = __nccwpck_require__(8205);
+// EXTERNAL MODULE: ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/index.js
+var dist = __nccwpck_require__(7450);
 ;// CONCATENATED MODULE: ./src/debug.js
 /**
  * Prints a debug message to STDOUT in non-testing environments.
