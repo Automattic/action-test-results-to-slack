@@ -2055,11 +2055,11 @@ SOFTWARE.
 ---
 
 Name: brace-expansion
-Version: 5.0.6
+Version: 5.0.7
 License: MIT
 Private: false
 Description: Brace expansion as known from sh/bash
-Repository: git+ssh://git@github.com/juliangruber/brace-expansion.git
+Repository: git+https://github.com/juliangruber/brace-expansion.git
 License Text:
 ===
 

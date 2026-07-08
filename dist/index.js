@@ -42467,7 +42467,7 @@ const range = (a, b, str) => {
 	return result;
 };
 //#endregion
-//#region ../../../node_modules/.pnpm/brace-expansion@5.0.6/node_modules/brace-expansion/dist/esm/index.js
+//#region ../../../node_modules/.pnpm/brace-expansion@5.0.7/node_modules/brace-expansion/dist/esm/index.js
 const escSlash = "\0SLASH" + Math.random() + "\0";
 const escOpen = "\0OPEN" + Math.random() + "\0";
 const escClose = "\0CLOSE" + Math.random() + "\0";
@@ -42535,15 +42535,18 @@ function gte(i, y) {
 function expand_(str, max, isTop) {
 	/** @type {string[]} */
 	const expansions = [];
-	const m = balanced("{", "}", str);
-	if (!m) return [str];
-	const pre = m.pre;
-	const post = m.post.length ? expand_(m.post, max, false) : [""];
-	if (/\$$/.test(m.pre)) for (let k = 0; k < post.length && k < max; k++) {
-		const expansion = pre + "{" + m.body + "}" + post[k];
-		expansions.push(expansion);
-	}
-	else {
+	for (;;) {
+		const m = balanced("{", "}", str);
+		if (!m) return [str];
+		const pre = m.pre;
+		if (/\$$/.test(m.pre)) {
+			const post = m.post.length ? expand_(m.post, max, false) : [""];
+			for (let k = 0; k < post.length && k < max; k++) {
+				const expansion = pre + "{" + m.body + "}" + post[k];
+				expansions.push(expansion);
+			}
+			return expansions;
+		}
 		const isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
 		const isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
 		const isSequence = isNumericSequence || isAlphaSequence;
@@ -42551,10 +42554,12 @@ function expand_(str, max, isTop) {
 		if (!isSequence && !isOptions) {
 			if (m.post.match(/,(?!,).*\}/)) {
 				str = m.pre + "{" + m.body + escClose + m.post;
-				return expand_(str, max, true);
+				isTop = true;
+				continue;
 			}
 			return [str];
 		}
+		const post = m.post.length ? expand_(m.post, max, false) : [""];
 		let n;
 		if (isSequence) n = m.body.split(/\.\./);
 		else {
@@ -42604,8 +42609,8 @@ function expand_(str, max, isTop) {
 			const expansion = pre + N[j] + post[k];
 			if (!isTop || isSequence || expansion) expansions.push(expansion);
 		}
+		return expansions;
 	}
-	return expansions;
 }
 //#endregion
 //#region ../../../node_modules/.pnpm/minimatch@10.2.4/node_modules/minimatch/dist/esm/assert-valid-pattern.js
