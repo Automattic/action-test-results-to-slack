@@ -501,7 +501,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ---
 
 Name: json-with-bigint
-Version: 3.5.8
+Version: 3.5.10
 License: MIT
 Private: false
 Description: JS library that allows you to easily serialize and deserialize data with BigInt values
@@ -569,7 +569,7 @@ THE SOFTWARE.
 ---
 
 Name: @octokit/request
-Version: 10.0.10
+Version: 10.0.11
 License: MIT
 Private: false
 Description: Send parameterized requests to GitHub's APIs with sensible defaults in browsers and Node
@@ -1908,7 +1908,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 ---
 
 Name: @slack/types
-Version: 2.21.1
+Version: 2.22.0
 License: MIT
 Private: false
 Description: Shared type definitions for the Node Slack SDK

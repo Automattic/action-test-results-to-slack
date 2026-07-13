@@ -17469,7 +17469,7 @@ var endpoint = withDefaults$2(null, DEFAULTS);
 * MIT Licensed
 */
 //#endregion
-//#region ../../../node_modules/.pnpm/json-with-bigint@3.5.8/node_modules/json-with-bigint/json-with-bigint.js
+//#region ../../../node_modules/.pnpm/json-with-bigint@3.5.10/node_modules/json-with-bigint/json-with-bigint.js
 var import_dist$1 = (/* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.parse = parse;
@@ -17589,12 +17589,164 @@ const noiseValue = /^-?\d+n+$/;
 const originalStringify = JSON.stringify;
 const originalParse = JSON.parse;
 const customFormat = /^-?\d+n$/;
-const bigIntsStringify = /([\[:])?"(-?\d+)n"($|([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
-const noiseStringify = /([\[:])?("-?\d+n+)n("$|"([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
+const bigIntsStringify = /([\[:])?"(-?\d+)n"($|\s*[,\}\]])/g;
+const noiseStringify = /([\[:])?("-?\d+n+)n("$|"\s*[,\}\]])/g;
 /**
 * @typedef {(this: any, key: string | number | undefined, value: any) => any} Replacer
 * @typedef {(key: string | number | undefined, value: any, context?: { source: string }) => any} Reviver
 */
+/**
+* Checks if a value is unstringifiable according to native JSON.stringify rules.
+*
+* @param {any} val The value to check.
+* @returns {boolean} True if the value is undefined, a function, or a symbol.
+*/
+const isUnstringifiable = (val) => val === void 0 || typeof val === "function" || typeof val === "symbol";
+/**
+* Checks if a value is a native JSON.rawJSON object (Node.js 22+).
+*
+* @param {any} val The value to check.
+* @returns {boolean} True if the value is a RawJSON instance.
+*/
+const isRawJSON = (val) => val !== null && typeof val === "object" && val.constructor && val.constructor.name === "RawJSON";
+/**
+* Iteratively converts a JS value to a JSON string.
+* Used as a fallback when the native JSON.stringify hits the Maximum Call Stack size.
+* Fully compliant with JSON formatting (space), replacers, and toJSON behaviors.
+*
+* @param {any} rootValue The value to stringify.
+* @param {Replacer | Array<string | number> | null} [replacer] User's custom replacer function.
+* @param {string | number} [spaceParam] Indentation for pretty-printing.
+* @returns {string | undefined} The generated JSON string.
+*/
+const stringifyIteratively = (rootValue, replacer, spaceParam) => {
+	let space = "";
+	if (typeof spaceParam === "number") space = " ".repeat(Math.min(10, Math.max(0, Math.floor(spaceParam))));
+	else if (typeof spaceParam === "string") space = spaceParam.slice(0, 10);
+	const isFunctionReplacer = typeof replacer === "function";
+	const propertyList = Array.isArray(replacer) ? new Set(replacer.map(String)) : null;
+	/**
+	* Prepares a value for stringification by resolving toJSON, handling BigInts,
+	* applying custom replacers, and unwrapping primitive objects.
+	*
+	* @param {object|Array} parent The parent object or array holding the value.
+	* @param {string} key The key associated with the value.
+	* @param {any} val The raw value to process.
+	* @returns {any} The processed value ready for stringification.
+	*/
+	const prepareVal = (parent, key, val) => {
+		if (val !== null && typeof val === "object" && typeof val.toJSON === "function") val = val.toJSON(key);
+		if (typeof val === "string" && noiseValue.test(val)) return val + "n";
+		if (typeof val === "bigint") {
+			if ("rawJSON" in JSON) return JSON.rawJSON(val.toString());
+			return val.toString() + "n";
+		}
+		if (isFunctionReplacer) val = replacer.call(parent, key, val);
+		if (val !== null && typeof val === "object") {
+			if (val instanceof Number || val instanceof String || val instanceof Boolean) val = val.valueOf();
+		}
+		return val;
+	};
+	const rootProcessed = prepareVal({ "": rootValue }, "", rootValue);
+	if (isUnstringifiable(rootProcessed)) return;
+	const isRootPrimitive = rootProcessed === null || typeof rootProcessed !== "object";
+	const isRootNativeRawJSON = isRawJSON(rootProcessed);
+	if (isRootPrimitive || isRootNativeRawJSON) return originalStringify(rootProcessed);
+	const chunks = [];
+	let level = 0;
+	const stack = [{
+		parent: { "": rootProcessed },
+		key: "",
+		val: rootProcessed,
+		isArray: Array.isArray(rootProcessed),
+		keys: Array.isArray(rootProcessed) ? null : Object.keys(rootProcessed),
+		index: 0,
+		first: true
+	}];
+	const visited = new WeakSet([rootProcessed]);
+	while (stack.length > 0) {
+		const node = stack[stack.length - 1];
+		if (node.index === 0) {
+			chunks.push(node.isArray ? "[" : "{");
+			level++;
+		}
+		let isDone = false;
+		if (node.isArray) if (node.index < node.val.length) {
+			if (!node.first) chunks.push(",");
+			if (space) chunks.push("\n" + space.repeat(level));
+			const childRaw = node.val[node.index];
+			const childVal = prepareVal(node.val, String(node.index), childRaw);
+			if (isUnstringifiable(childVal)) {
+				chunks.push("null");
+				node.first = false;
+				node.index++;
+			} else {
+				const isComplexObject = childVal !== null && typeof childVal === "object";
+				const isNativeRaw = isRawJSON(childVal);
+				if (isComplexObject && !isNativeRaw) {
+					if (visited.has(childVal)) throw new TypeError("Converting circular structure to JSON");
+					visited.add(childVal);
+					stack.push({
+						parent: node.val,
+						key: String(node.index),
+						val: childVal,
+						isArray: Array.isArray(childVal),
+						keys: Array.isArray(childVal) ? null : Object.keys(childVal),
+						index: 0,
+						first: true
+					});
+					node.first = false;
+					node.index++;
+				} else {
+					chunks.push(originalStringify(childVal));
+					node.first = false;
+					node.index++;
+				}
+			}
+		} else isDone = true;
+		else {
+			while (node.index < node.keys.length) {
+				const k = node.keys[node.index++];
+				if (propertyList && !propertyList.has(k)) continue;
+				const childRaw = node.val[k];
+				const childVal = prepareVal(node.val, k, childRaw);
+				if (isUnstringifiable(childVal)) continue;
+				if (!node.first) chunks.push(",");
+				if (space) chunks.push("\n" + space.repeat(level) + originalStringify(k) + ": ");
+				else chunks.push(originalStringify(k) + ":");
+				const isComplexObject = childVal !== null && typeof childVal === "object";
+				const isNativeRaw = isRawJSON(childVal);
+				if (isComplexObject && !isNativeRaw) {
+					if (visited.has(childVal)) throw new TypeError("Converting circular structure to JSON");
+					visited.add(childVal);
+					stack.push({
+						parent: node.val,
+						key: k,
+						val: childVal,
+						isArray: Array.isArray(childVal),
+						keys: Array.isArray(childVal) ? null : Object.keys(childVal),
+						index: 0,
+						first: true
+					});
+					node.first = false;
+					break;
+				} else {
+					chunks.push(originalStringify(childVal));
+					node.first = false;
+				}
+			}
+			if (node.index >= node.keys.length && stack[stack.length - 1] === node) isDone = true;
+		}
+		if (isDone) {
+			level--;
+			if (!node.first && space) chunks.push("\n" + space.repeat(level));
+			chunks.push(node.isArray ? "]" : "}");
+			visited.delete(node.val);
+			stack.pop();
+		}
+	}
+	return chunks.join("");
+};
 /**
 * Converts a JavaScript value to a JSON string.
 *
@@ -17606,27 +17758,37 @@ const noiseStringify = /([\[:])?("-?\d+n+)n("$|"([\\n]|\s)*(\s|[\\n])*[,\}\]])/g
 *
 * @param {*} value The value to convert to a JSON string.
 * @param {Replacer | Array<string | number> | null} [replacer]
-*   A function that alters the behavior of the stringification process,
-*   or an array of strings/numbers to indicate properties to exclude.
+* A function that alters the behavior of the stringification process,
+* or an array of strings/numbers to indicate properties to exclude.
 * @param {string | number} [space]
-*   A string or number to specify indentation or pretty-printing.
+* A string or number to specify indentation or pretty-printing.
 * @returns {string} The JSON string representation.
 */
 const JSONStringify = (value, replacer, space) => {
-	if ("rawJSON" in JSON) return originalStringify(value, (key, value) => {
-		if (typeof value === "bigint") return JSON.rawJSON(value.toString());
-		if (typeof replacer === "function") return replacer(key, value);
-		if (Array.isArray(replacer) && replacer.includes(key)) return value;
-		return value;
-	}, space);
-	if (!value) return originalStringify(value, replacer, space);
-	return originalStringify(value, (key, value) => {
-		if (typeof value === "string" && noiseValue.test(value)) return value.toString() + "n";
-		if (typeof value === "bigint") return value.toString() + "n";
-		if (typeof replacer === "function") return replacer(key, value);
-		if (Array.isArray(replacer) && replacer.includes(key)) return value;
-		return value;
-	}, space).replace(bigIntsStringify, "$1$2$3").replace(noiseStringify, "$1$2$3");
+	try {
+		if ("rawJSON" in JSON) return originalStringify(value, (key, val) => {
+			if (typeof val === "bigint") return JSON.rawJSON(val.toString());
+			if (typeof replacer === "function") return replacer(key, val);
+			if (Array.isArray(replacer) && replacer.includes(key)) return val;
+			return val;
+		}, space);
+		if (!value) return originalStringify(value, replacer, space);
+		return originalStringify(value, (key, val) => {
+			if (typeof val === "string" && noiseValue.test(val)) return val.toString() + "n";
+			if (typeof val === "bigint") return val.toString() + "n";
+			if (typeof replacer === "function") return replacer(key, val);
+			if (Array.isArray(replacer) && replacer.includes(key)) return val;
+			return val;
+		}, space).replace(bigIntsStringify, "$1$2$3").replace(noiseStringify, "$1$2$3");
+	} catch (error) {
+		if (error instanceof RangeError) {
+			const convertedJSON = stringifyIteratively(value, replacer, space);
+			if (convertedJSON === void 0) return void 0;
+			if ("rawJSON" in JSON) return convertedJSON;
+			return convertedJSON.replace(bigIntsStringify, "$1$2$3").replace(noiseStringify, "$1$2$3");
+		}
+		throw error;
+	}
 };
 const featureCache = /* @__PURE__ */ new Map();
 /**
@@ -17662,7 +17824,7 @@ const isContextSourceSupported = () => {
 const convertMarkedBigIntsReviver = (key, value, context, userReviver) => {
 	if (typeof value === "string" && customFormat.test(value)) return BigInt(value.slice(0, -1));
 	if (typeof value === "string" && noiseValue.test(value)) return value.slice(0, -1);
-	if (typeof userReviver !== "function") return value;
+	if (!(typeof userReviver === "function")) return value;
 	return userReviver(key, value, context);
 };
 /**
@@ -17678,10 +17840,12 @@ const convertMarkedBigIntsReviver = (key, value, context, userReviver) => {
 */
 const JSONParseV2 = (text, reviver) => {
 	return JSON.parse(text, (key, value, context) => {
-		const isBigNumber = typeof value === "number" && (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER);
+		const isNumber = typeof value === "number";
+		const isOutOfBounds = value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER;
+		const isBigNumber = isNumber && isOutOfBounds;
 		const isInt = context && intRegex.test(context.source);
 		if (isBigNumber && isInt) return BigInt(context.source);
-		if (typeof reviver !== "function") return value;
+		if (!(typeof reviver === "function")) return value;
 		return reviver(key, value, context);
 	});
 };
@@ -17689,6 +17853,66 @@ const MAX_INT = Number.MAX_SAFE_INTEGER.toString();
 const MAX_DIGITS = MAX_INT.length;
 const stringsOrLargeNumbers = /"(?:\\.|[^"])*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
 const noiseValueWithQuotes = /^"-?\d+n+"$/;
+/**
+* Iteratively traverses the parsed object bottom-up (post-order),
+* emulating the native JSON.parse reviver behavior.
+* This avoids Call Stack overflows (RangeError) on deeply nested structures.
+*
+* @param {any} parsed The natively parsed JSON object.
+* @param {Reviver} [userReviver] User's custom reviver function.
+* @returns {any} The fully processed object.
+*/
+const applyReviverIteratively = (parsed, userReviver) => {
+	const rootHolder = { "": parsed };
+	const stack = [{
+		parent: rootHolder,
+		key: "",
+		visited: false
+	}];
+	while (stack.length > 0) {
+		const node = stack[stack.length - 1];
+		if (!node.visited) {
+			node.visited = true;
+			const value = node.parent[node.key];
+			if (value !== null && typeof value === "object") {
+				const keys = Object.keys(value);
+				for (let i = keys.length - 1; i >= 0; i--) stack.push({
+					parent: value,
+					key: keys[i],
+					visited: false
+				});
+			}
+		} else {
+			const { parent, key } = node;
+			let value = parent[key];
+			if (typeof value === "string") {
+				if (customFormat.test(value)) value = BigInt(value.slice(0, -1));
+				else if (noiseValue.test(value)) value = value.slice(0, -1);
+			}
+			if (typeof userReviver === "function") value = userReviver.call(parent, key, value);
+			if (value === void 0) delete parent[key];
+			else parent[key] = value;
+			stack.pop();
+		}
+	}
+	return rootHolder[""];
+};
+/**
+* Pre-processes the JSON string to mark large numbers with an 'n' suffix.
+*
+* @param {string} text The raw JSON string.
+* @returns {string} The serialized string with marked BigInts.
+*/
+const serializeBigInts = (text) => {
+	return text.replace(stringsOrLargeNumbers, (match, digits, fractional, exponential) => {
+		const isString = match[0] === "\"";
+		if (isString && noiseValueWithQuotes.test(match)) return match.substring(0, match.length - 1) + "n\"";
+		const hasFractionalOrExponential = fractional || exponential;
+		const isLessThanMaxSafeInt = digits && (digits.length < MAX_DIGITS || digits.length === MAX_DIGITS && digits <= MAX_INT);
+		if (isString || hasFractionalOrExponential || isLessThanMaxSafeInt) return match;
+		return "\"" + match + "n\"";
+	});
+};
 /**
 * Converts a JSON string into a JavaScript value.
 *
@@ -17700,24 +17924,26 @@ const noiseValueWithQuotes = /^"-?\d+n+"$/;
 *
 * @param {string} text A valid JSON string.
 * @param {Reviver} [reviver]
-*   A function that transforms the results. This function is called for each member
-*   of the object. If a member contains nested objects, the nested objects are
-*   transformed before the parent object is.
+* A function that transforms the results. This function is called for each member
+* of the object. If a member contains nested objects, the nested objects are
+* transformed before the parent object is.
 * @returns {any} The parsed JavaScript value.
 * @throws {SyntaxError} If text is not valid JSON.
 */
 const JSONParse = (text, reviver) => {
 	if (!text) return originalParse(text, reviver);
-	if (isContextSourceSupported()) return JSONParseV2(text, reviver);
-	const serializedData = text.replace(stringsOrLargeNumbers, (text, digits, fractional, exponential) => {
-		const isString = text[0] === "\"";
-		if (isString && noiseValueWithQuotes.test(text)) return text.substring(0, text.length - 1) + "n\"";
-		const isFractionalOrExponential = fractional || exponential;
-		const isLessThanMaxSafeInt = digits && (digits.length < MAX_DIGITS || digits.length === MAX_DIGITS && digits <= MAX_INT);
-		if (isString || isFractionalOrExponential || isLessThanMaxSafeInt) return text;
-		return "\"" + text + "n\"";
-	});
-	return originalParse(serializedData, (key, value, context) => convertMarkedBigIntsReviver(key, value, context, reviver));
+	try {
+		if (isContextSourceSupported()) return JSONParseV2(text, reviver);
+		const serializedData = serializeBigInts(text);
+		return originalParse(serializedData, (key, value, context) => convertMarkedBigIntsReviver(key, value, context, reviver));
+	} catch (error) {
+		if (error instanceof RangeError) {
+			const serializedData = serializeBigInts(text);
+			const parsed = originalParse(serializedData);
+			return applyReviverIteratively(parsed, reviver);
+		}
+		throw error;
+	}
 };
 //#endregion
 //#region ../../../node_modules/.pnpm/@octokit+request-error@7.1.0/node_modules/@octokit/request-error/dist-src/index.js
@@ -17749,8 +17975,8 @@ var RequestError = class extends Error {
 	}
 };
 //#endregion
-//#region ../../../node_modules/.pnpm/@octokit+request@10.0.10/node_modules/@octokit/request/dist-bundle/index.js
-var defaults_default = { headers: { "user-agent": `octokit-request.js/10.0.10 ${getUserAgent()}` } };
+//#region ../../../node_modules/.pnpm/@octokit+request@10.0.11/node_modules/@octokit/request/dist-bundle/index.js
+var defaults_default = { headers: { "user-agent": `octokit-request.js/10.0.11 ${getUserAgent()}` } };
 function isPlainObject(value) {
 	if (typeof value !== "object" || value === null) return false;
 	if (Object.prototype.toString.call(value) !== "[object Object]") return false;
@@ -17858,9 +18084,10 @@ function isJSONResponse(mimetype) {
 function toErrorMessage(data) {
 	if (typeof data === "string") return data;
 	if (data instanceof ArrayBuffer) return "Unknown error";
-	if ("message" in data) {
-		const suffix = "documentation_url" in data ? ` - ${data.documentation_url}` : "";
-		return Array.isArray(data.errors) ? `${data.message}: ${data.errors.map((v) => JSON.stringify(v)).join(", ")}${suffix}` : `${data.message}${suffix}`;
+	if (typeof data === "object" && data !== null && "message" in data) {
+		const objectData = data;
+		const suffix = "documentation_url" in objectData ? ` - ${objectData.documentation_url}` : "";
+		return Array.isArray(objectData.errors) ? `${objectData.message}: ${objectData.errors.map((v) => JSON.stringify(v)).join(", ")}${suffix}` : `${objectData.message}${suffix}`;
 	}
 	return `Unknown error: ${JSON.stringify(data)}`;
 }
@@ -36209,172 +36436,172 @@ var require_eventemitter3 = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	if ("undefined" !== typeof module) module.exports = EventEmitter;
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/block-kit/block-elements.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/block-kit/block-elements.js
 var require_block_elements = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/block-kit/blocks.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/block-kit/blocks.js
 var require_blocks = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/block-kit/composition-objects.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/block-kit/composition-objects.js
 var require_composition_objects = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/block-kit/extensions.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/block-kit/extensions.js
 var require_extensions = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/calls.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/calls.js
 var require_calls = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/chunk.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/chunk.js
 var require_chunk = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/dialog.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/dialog.js
 var require_dialog = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/app.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/app.js
 var require_app = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/assistant.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/assistant.js
 var require_assistant = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/call.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/call.js
 var require_call = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/channel.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/channel.js
 var require_channel = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/dnd.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/dnd.js
 var require_dnd = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/email.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/email.js
 var require_email = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/emoji.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/emoji.js
 var require_emoji = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/file.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/file.js
 var require_file = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/function.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/function.js
 var require_function = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/grid-migration.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/grid-migration.js
 var require_grid_migration = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/group.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/group.js
 var require_group = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/im.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/im.js
 var require_im = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/invite.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/invite.js
 var require_invite = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/link-shared.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/link-shared.js
 var require_link_shared = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/member.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/member.js
 var require_member = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/message.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/message.js
 var require_message = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/message-metadata.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/message-metadata.js
 var require_message_metadata$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/pin.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/pin.js
 var require_pin = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/reaction.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/reaction.js
 var require_reaction = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/shared-channel.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/shared-channel.js
 var require_shared_channel = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/star.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/star.js
 var require_star = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/steps-from-apps.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/steps-from-apps.js
 var require_steps_from_apps = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/subteam.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/subteam.js
 var require_subteam = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/team.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/team.js
 var require_team = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/token.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/token.js
 var require_token = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/user.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/user.js
 var require_user = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/events/index.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/events/index.js
 var require_events = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
 		if (k2 === void 0) k2 = k;
@@ -36422,12 +36649,12 @@ var require_events = /* @__PURE__ */ __commonJSMin(((exports) => {
 	__exportStar(require_user(), exports);
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/message-attachments.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/message-attachments.js
 var require_message_attachments = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/message-metadata.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/message-metadata.js
 var require_message_metadata = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.CustomFieldType = exports.EntityType = void 0;
@@ -36456,12 +36683,12 @@ var require_message_metadata = /* @__PURE__ */ __commonJSMin(((exports) => {
 	})(CustomFieldType || (exports.CustomFieldType = CustomFieldType = {}));
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/views.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/views.js
 var require_views = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
 //#endregion
-//#region ../../../node_modules/.pnpm/@slack+types@2.21.1/node_modules/@slack/types/dist/index.js
+//#region ../../../node_modules/.pnpm/@slack+types@2.22.0/node_modules/@slack/types/dist/index.js
 var require_dist$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
 		if (k2 === void 0) k2 = k;
