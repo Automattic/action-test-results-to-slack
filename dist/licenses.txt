@@ -56,7 +56,7 @@ THE SOFTWARE.
 ---
 
 Name: undici
-Version: 6.27.0
+Version: 6.28.0
 License: MIT
 Private: false
 Description: An HTTP/1.1 client, written from scratch for Node.js
@@ -2055,7 +2055,7 @@ SOFTWARE.
 ---
 
 Name: brace-expansion
-Version: 5.0.7
+Version: 5.0.9
 License: MIT
 Private: false
 Description: Brace expansion as known from sh/bash
