@@ -43153,14 +43153,14 @@ function expand_(str, max, maxLength, isTop) {
 	return acc;
 }
 //#endregion
-//#region ../../../node_modules/.pnpm/minimatch@10.2.4/node_modules/minimatch/dist/esm/assert-valid-pattern.js
+//#region ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/assert-valid-pattern.js
 const MAX_PATTERN_LENGTH = 1024 * 64;
 const assertValidPattern = (pattern) => {
 	if (typeof pattern !== "string") throw new TypeError("invalid pattern");
 	if (pattern.length > MAX_PATTERN_LENGTH) throw new TypeError("pattern is too long");
 };
 //#endregion
-//#region ../../../node_modules/.pnpm/minimatch@10.2.4/node_modules/minimatch/dist/esm/brace-expressions.js
+//#region ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/brace-expressions.js
 const posixClasses = {
 	"[:alnum:]": ["\\p{L}\\p{Nl}\\p{Nd}", true],
 	"[:alpha:]": ["\\p{L}\\p{Nl}", true],
@@ -43284,7 +43284,7 @@ const parseClass = (glob, position) => {
 	];
 };
 //#endregion
-//#region ../../../node_modules/.pnpm/minimatch@10.2.4/node_modules/minimatch/dist/esm/unescape.js
+//#region ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/unescape.js
 /**
 * Un-escape a string that has been escaped with {@link escape}.
 *
@@ -43305,11 +43305,11 @@ const parseClass = (glob, position) => {
 * unescaped.
 */
 const unescape = (s, { windowsPathsNoEscape = false, magicalBraces = true } = {}) => {
-	if (magicalBraces) return windowsPathsNoEscape ? s.replace(/\[([^\/\\])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^\/\\])\]/g, "$1$2").replace(/\\([^\/])/g, "$1");
-	return windowsPathsNoEscape ? s.replace(/\[([^\/\\{}])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^\/\\{}])\]/g, "$1$2").replace(/\\([^\/{}])/g, "$1");
+	if (magicalBraces) return windowsPathsNoEscape ? s.replace(/\[([^/\\])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^/\\])\]/g, "$1$2").replace(/\\([^/])/g, "$1");
+	return windowsPathsNoEscape ? s.replace(/\[([^/\\{}])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^/\\{}])\]/g, "$1$2").replace(/\\([^/{}])/g, "$1");
 };
 //#endregion
-//#region ../../../node_modules/.pnpm/minimatch@10.2.4/node_modules/minimatch/dist/esm/ast.js
+//#region ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/ast.js
 var _a;
 const types = /* @__PURE__ */ new Set([
 	"!",
@@ -43426,9 +43426,7 @@ var AST = class {
 		return this.#hasMagic;
 	}
 	toString() {
-		if (this.#toString !== void 0) return this.#toString;
-		if (!this.type) return this.#toString = this.#parts.map((p) => String(p)).join("");
-		else return this.#toString = this.type + "(" + this.#parts.map((p) => String(p)).join("|") + ")";
+		return this.#toString !== void 0 ? this.#toString : !this.type ? this.#toString = this.#parts.map((p) => String(p)).join("") : this.#toString = this.type + "(" + this.#parts.map((p) => String(p)).join("|") + ")";
 	}
 	#fillNegs() {
 		/* c8 ignore start */
@@ -43820,7 +43818,7 @@ var AST = class {
 };
 _a = AST;
 //#endregion
-//#region ../../../node_modules/.pnpm/minimatch@10.2.4/node_modules/minimatch/dist/esm/escape.js
+//#region ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/escape.js
 /**
 * Escape all magic characters in a glob pattern.
 *
@@ -43838,13 +43836,13 @@ const escape = (s, { windowsPathsNoEscape = false, magicalBraces = false } = {})
 	return windowsPathsNoEscape ? s.replace(/[?*()[\]]/g, "[$&]") : s.replace(/[?*()[\]\\]/g, "\\$&");
 };
 //#endregion
-//#region ../../../node_modules/.pnpm/minimatch@10.2.4/node_modules/minimatch/dist/esm/index.js
+//#region ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/index.js
 const minimatch = (p, pattern, options = {}) => {
 	assertValidPattern(pattern);
 	if (!options.nocomment && pattern.charAt(0) === "#") return false;
 	return new Minimatch(pattern, options).match(p);
 };
-const starDotExtRE = /^\*+([^+@!?\*\[\(]*)$/;
+const starDotExtRE = /^\*+([^+@!?*[(]*)$/;
 const starDotExtTest = (ext) => (f) => !f.startsWith(".") && f.endsWith(ext);
 const starDotExtTestDot = (ext) => (f) => f.endsWith(ext);
 const starDotExtTestNocase = (ext) => {
@@ -43863,7 +43861,7 @@ const dotStarTest = (f) => f !== "." && f !== ".." && f.startsWith(".");
 const starRE = /^\*+$/;
 const starTest = (f) => f.length !== 0 && !f.startsWith(".");
 const starTestDot = (f) => f.length !== 0 && f !== "." && f !== "..";
-const qmarksRE = /^\?+([^+@!?\*\[\(]*)?$/;
+const qmarksRE = /^\?+([^+@!?*[(]*)?$/;
 const qmarksTestNocase = ([$0, ext = ""]) => {
 	const noext = qmarksTestNoExt([$0]);
 	if (!ext) return noext;
@@ -44046,7 +44044,7 @@ var Minimatch = class {
 	}
 	preprocess(globParts) {
 		if (this.options.noglobstar) {
-			for (let i = 0; i < globParts.length; i++) for (let j = 0; j < globParts[i].length; j++) if (globParts[i][j] === "**") globParts[i][j] = "*";
+			for (const partset of globParts) for (let j = 0; j < partset.length; j++) if (partset[j] === "**") partset[j] = "*";
 		}
 		const { optimizationLevel = 1 } = this.options;
 		if (optimizationLevel >= 2) {
@@ -44107,7 +44105,7 @@ var Minimatch = class {
 			let dd = 0;
 			while (-1 !== (dd = parts.indexOf("..", dd + 1))) {
 				const p = parts[dd - 1];
-				if (p && p !== "." && p !== ".." && p !== "**") {
+				if (p && p !== "." && p !== ".." && p !== "**" && !(this.isWindows && /^[a-z]:$/i.test(p))) {
 					didSomething = true;
 					parts.splice(dd - 1, 2);
 					dd -= 2;
@@ -44412,7 +44410,7 @@ var Minimatch = class {
 		if (this.negate) re = "^(?!" + re + ").+$";
 		try {
 			this.regexp = new RegExp(re, [...flags].join(""));
-		} catch (ex) {
+		} catch {
 			this.regexp = false;
 		}
 		/* c8 ignore stop */
@@ -44420,7 +44418,7 @@ var Minimatch = class {
 	}
 	slashSplit(p) {
 		if (this.preserveMultipleSlashes) return p.split("/");
-		else if (this.isWindows && /^\/\/[^\/]+/.test(p)) return ["", ...p.split(/\/+/)];
+		else if (this.isWindows && /^\/\/[^/]+/.test(p)) return ["", ...p.split(/\/+/)];
 		else return p.split(/\/+/);
 	}
 	match(f, partial = this.partial) {
@@ -44436,8 +44434,7 @@ var Minimatch = class {
 		this.debug(this.pattern, "set", set);
 		let filename = ff[ff.length - 1];
 		if (!filename) for (let i = ff.length - 2; !filename && i >= 0; i--) filename = ff[i];
-		for (let i = 0; i < set.length; i++) {
-			const pattern = set[i];
+		for (const pattern of set) {
 			let file = ff;
 			if (options.matchBase && pattern.length === 1) file = [filename];
 			if (this.matchOne(file, pattern, partial)) {
