@@ -1648,7 +1648,7 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ---
 
 Name: axios
-Version: 1.18.0
+Version: 1.20.0
 License: MIT
 Private: false
 Description: Promise based HTTP client for the browser and node.js
@@ -1666,8 +1666,8 @@ Contributors:
   Martti Laine (https://github.com/codeclown)
   Xianming Zhong (https://github.com/chinesedfan)
   Shaan Majid (https://github.com/shaanmajid)
-  Willian Agostini (https://github.com/WillianAgostini)
   Remco Haszing (https://github.com/remcohaszing)
+  Willian Agostini (https://github.com/WillianAgostini)
   Rikki Gibson (https://github.com/RikkiGibson)
 License Text:
 ===
