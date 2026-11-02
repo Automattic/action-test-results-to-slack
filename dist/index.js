@@ -30252,7 +30252,7 @@ var require_dist$3 = /* @__PURE__ */ __commonJSMin(((exports, module, this$6) =>
 	})(createHttpsProxyAgent || (createHttpsProxyAgent = {}));
 	module.exports = createHttpsProxyAgent;
 }));
-// ../../../node_modules/.pnpm/follow-redirects@1.16.1/node_modules/follow-redirects/debug.js
+// ../../../node_modules/.pnpm/follow-redirects@1.16.2/node_modules/follow-redirects/debug.js
 var require_debug = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var debug;
 	module.exports = function() {
@@ -30265,7 +30265,7 @@ var require_debug = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		debug.apply(null, arguments);
 	};
 }));
-// ../../../node_modules/.pnpm/follow-redirects@1.16.1/node_modules/follow-redirects/index.js
+// ../../../node_modules/.pnpm/follow-redirects@1.16.2/node_modules/follow-redirects/index.js
 var require_follow_redirects = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var url = __require("url");
 	var URL = url.URL;
@@ -30474,7 +30474,7 @@ var require_follow_redirects = /* @__PURE__ */ __commonJSMin(((exports, module) 
 			options.headers = {};
 			for (var i = 0; i < headerList.length; i += 2) options.headers[headerList[i]] = headerList[i + 1];
 		}
-		if (!isArray(options.sensitiveHeaders)) options.sensitiveHeaders = [];
+		if (!Array.isArray(options.sensitiveHeaders)) options.sensitiveHeaders = [];
 		if (options.host) {
 			if (!options.hostname) options.hostname = options.host;
 			delete options.host;
@@ -30690,9 +30690,6 @@ var require_follow_redirects = /* @__PURE__ */ __commonJSMin(((exports, module) 
 		var dot = subdomain.length - domain.length - 1;
 		return dot > 0 && subdomain[dot] === "." && subdomain.endsWith(domain);
 	}
-	function isArray(value) {
-		return value instanceof Array;
-	}
 	function isString(value) {
 		return typeof value === "string" || value instanceof String;
 	}
@@ -30714,8 +30711,8 @@ var require_follow_redirects = /* @__PURE__ */ __commonJSMin(((exports, module) 
 	});
 	module.exports.wrap = wrap;
 }));
-// ../../../node_modules/.pnpm/axios@1.20.0/node_modules/axios/dist/node/axios.cjs
-/*! Axios v1.20.0 Copyright (c) 2026 Matt Zabriskie and contributors */
+// ../../../node_modules/.pnpm/axios@1.21.0/node_modules/axios/dist/node/axios.cjs
+/*! Axios v1.21.0 Copyright (c) 2026 Matt Zabriskie and contributors */
 var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var FormData$1 = require_form_data();
 	var crypto = __require("crypto");
@@ -30960,7 +30957,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const isPlainObject = (val) => {
 		if (!isObject(val)) return false;
 		const prototype = getPrototypeOf(val);
-		return (prototype === null || prototype === Object.prototype || getPrototypeOf(prototype) === null) && !hasOwnInPrototypeChain(val, toStringTag) && !hasOwnInPrototypeChain(val, iterator);
+		return (prototype === null || prototype === Object.prototype || getPrototypeOf(prototype) === null) && (isPrototypeBoundary(val, prototype, true) || !hasOwnProperty(val, toStringTag) && !hasOwnProperty(val, iterator));
 	};
 	/**
 	* Determine if a value is an empty object (safely handles Buffers)
@@ -31169,9 +31166,16 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function merge(...objs) {
 		const { caseless, skipUndefined } = isContextDefined(this) && this || {};
 		const result = {};
+		const lowerCaseKeys = caseless ? Object.create(null) : null;
 		const assignValue = (val, key) => {
 			if (key === "__proto__" || key === "constructor" || key === "prototype") return;
-			const targetKey = caseless && typeof key === "string" && findKey(result, key) || key;
+			let targetKey = key;
+			if (lowerCaseKeys && typeof key === "string") {
+				const lowerKey = key.toLowerCase();
+				const knownKey = lowerCaseKeys[lowerKey];
+				if (knownKey !== void 0 && hasOwnProperty(result, knownKey)) targetKey = knownKey;
+				else lowerCaseKeys[lowerKey] = key;
+			}
 			const existing = hasOwnProperty(result, targetKey) ? result[targetKey] : void 0;
 			if (isPlainObject(existing) && isPlainObject(val)) result[targetKey] = merge(existing, val);
 			else if (isPlainObject(val)) result[targetKey] = merge({}, val);
@@ -31182,7 +31186,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const source = objs[i];
 			if (!source || isBuffer(source)) continue;
 			forEach(source, assignValue);
-			if (typeof source !== "object" || isArray(source)) continue;
+			if (typeof source !== "object" || isArray(source) || !Object.getOwnPropertySymbols) continue;
 			const symbols = Object.getOwnPropertySymbols(source);
 			for (let j = 0; j < symbols.length; j++) {
 				const symbol = symbols[j];
@@ -31313,7 +31317,22 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		if (!thing) return null;
 		if (isArray(thing)) return thing;
 		let i = thing.length;
-		if (!isNumber(i)) return null;
+		if (!Number.isSafeInteger(i) || i < 0 || i > 4294967295) return null;
+		const indexes = /* @__PURE__ */ new Set();
+		const seen = /* @__PURE__ */ new Set();
+		let source = thing;
+		while (source != null && indexes.size < i) {
+			if (seen.has(source)) return null;
+			seen.add(source);
+			const prototype = getPrototypeOf(source);
+			if (isPrototypeBoundary(source, prototype, source === thing)) break;
+			Object.getOwnPropertyNames(source).forEach((key) => {
+				const index = +key;
+				if (Number.isInteger(index) && index >= 0 && index < i && String(index) === key && hasOwnProperty(source, key)) indexes.add(index);
+			});
+			source = prototype;
+		}
+		if (indexes.size !== i) return null;
 		const arr = new Array(i);
 		while (i-- > 0) arr[i] = thing[i];
 		return arr;
@@ -31629,7 +31648,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	* @returns {Object} Headers parsed into an object
 	*/
 	var parseHeaders = (rawHeaders) => {
-		const parsed = {};
+		const parsed = Object.create(null);
 		let key;
 		let val;
 		let i;
@@ -31755,8 +31774,10 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		return parameters;
 	}
 	const isValidHeaderName = (str) => /^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(str.trim());
+	const PROTO_HEADER_SLOT = "__Proto__";
+	const headerSlot = (name) => name === "__proto__" ? PROTO_HEADER_SLOT : name;
 	function matchHeaderValue(context, value, header, filter, isHeaderNameFilter) {
-		if (utils$1.isFunction(filter)) return filter.call(this, value, header);
+		if (utils$1.isFunction(filter)) return filter.call(context, value, header);
 		if (isHeaderNameFilter) value = header;
 		if (!utils$1.isString(value)) return;
 		if (utils$1.isString(filter)) return value.indexOf(filter) !== -1;
@@ -31793,7 +31814,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				const lHeader = normalizeHeader(_header);
 				if (!lHeader) return;
 				const key = utils$1.findKey(self, lHeader);
-				if (!key || self[key] === void 0 || _rewrite === true || _rewrite === void 0 && self[key] !== false) self[key || _header] = normalizeValue(_value);
+				if (!key || self[key] === void 0 || _rewrite === true || _rewrite === void 0 && self[key] !== false) self[headerSlot(key || _header)] = normalizeValue(_value);
 			}
 			const setHeaders = (headers, _rewrite) => utils$1.forEach(headers, (_value, _header) => setHeader(_value, _header, _rewrite));
 			if (utils$1.isPlainObject(header) || header instanceof this.constructor) setHeaders(header, valueOrRewrite);
@@ -31866,7 +31887,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		}
 		normalize(format) {
 			const self = this;
-			const headers = {};
+			const headers = Object.create(null);
 			utils$1.forEach(this, (value, header) => {
 				const key = utils$1.findKey(headers, header);
 				if (key) {
@@ -31874,7 +31895,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					delete self[header];
 					return;
 				}
-				const normalized = format ? formatHeader(header) : String(header).trim();
+				const normalized = headerSlot(format ? formatHeader(header) : String(header).trim());
 				if (normalized !== header) delete self[header];
 				self[normalized] = normalizeValue(value);
 				headers[normalized] = true;
@@ -32005,6 +32026,44 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 		}).filter(Boolean).join("; ") || error.name || "AggregateError";
 	}
+	const CAUSED_BY_SEPARATOR = "\nCaused by: ";
+	const $causeStack = Symbol("causeStack");
+	function getCauseStackIndex(error, stack) {
+		const causeStack = utils$1.hasOwnProp(error, $causeStack) && error[$causeStack];
+		return causeStack && stack.endsWith(causeStack) ? stack.length - causeStack.length : -1;
+	}
+	/**
+	* Append the stack of a wrapped error to `target.stack`.
+	*
+	* `cause` already exposes the original error for tooling that walks the standard
+	* cause chain, but many error reporters read `stack` and nothing else. Inlining
+	* the wrapped stack there means those reporters surface the underlying failure
+	* instead of the axios frames that normalized it (see #6670).
+	*
+	* Every read is defensive: a custom `Error.prepareStackTrace` hook, a runtime
+	* without stack support, or a replaced `stack` property can leave the value
+	* missing, non-string, or read-only, and normalizing an error must not throw
+	* because of that.
+	*
+	* @param {Error} target The AxiosError being built.
+	* @param {Error} source The error being wrapped.
+	*
+	* @returns {void}
+	*/
+	function appendCauseStack(target, source) {
+		try {
+			const sourceStack = source && source.stack;
+			if (typeof sourceStack !== "string" || !sourceStack) return;
+			const targetStack = target.stack;
+			if (typeof targetStack !== "string" || !targetStack) return;
+			const causeStack = CAUSED_BY_SEPARATOR + sourceStack;
+			target.stack = targetStack + causeStack;
+			Object.defineProperty(target, $causeStack, {
+				__proto__: null,
+				value: causeStack
+			});
+		} catch (e) {}
+	}
 	var AxiosError = class AxiosError extends Error {
 		static from(error, code, config, request, response, customProps) {
 			let message = error.message;
@@ -32018,6 +32077,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				configurable: true
 			});
 			axiosError.name = error.name;
+			appendCauseStack(axiosError, error);
 			if (error.status != null && axiosError.status == null) axiosError.status = error.status;
 			customProps && Object.assign(axiosError, customProps);
 			return axiosError;
@@ -32345,6 +32405,10 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		if (!handlers) return;
 		while (handlers.length && handlers[handlers.length - 1] === null) handlers.pop();
 	}
+	function normalizeHandlerId(id) {
+		if (typeof id === "string" && id !== "" && String(Number(id)) === id) return Number(id);
+		return id;
+	}
 	function syncHandlerEntries(manager, internals) {
 		const handlers = manager.handlers;
 		const length = countHandlers(handlers);
@@ -32408,9 +32472,10 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		eject(id) {
 			const internals = this[$internals];
 			syncHandlerEntries(this, internals);
-			const entry = internals.handlerEntries.get(id);
+			const handlerId = normalizeHandlerId(id);
+			const entry = internals.handlerEntries.get(handlerId);
 			if (entry) {
-				internals.handlerEntries.delete(id);
+				internals.handlerEntries.delete(handlerId);
 				if (this.handlers[entry.index] !== entry.handler) return;
 				this.handlers[entry.index] = null;
 				if (!internals.iterationDepth) {
@@ -32463,7 +32528,8 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		clarifyTimeoutError: false,
 		legacyInterceptorReqResOrdering: true,
 		advertiseZstdAcceptEncoding: false,
-		validateStatusUndefinedResolves: true
+		validateStatusUndefinedResolves: true,
+		encodeBasicAuthUsername: false
 	};
 	var URLSearchParams = url.URLSearchParams;
 	const ALPHA = "abcdefghijklmnopqrstuvwxyz";
@@ -32597,6 +32663,22 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		}
 		return obj;
 	}
+	function normalizeArray(value) {
+		if (!utils$1.isArray(value)) return value;
+		const keys = Object.keys(value);
+		return keys.length !== value.length || keys.some((key, index) => key !== String(index)) ? arrayToObject(value) : value;
+	}
+	function normalizeArrays(obj) {
+		const pending = [obj];
+		while (pending.length) {
+			const target = pending.pop();
+			Object.keys(target).forEach((key) => {
+				const value = target[key] = normalizeArray(target[key]);
+				if (utils$1.isArray(value) || utils$1.isPlainObject(value)) pending.push(value);
+			});
+		}
+		return obj;
+	}
 	/**
 	* It takes a FormData object and returns a JavaScript object
 	*
@@ -32613,8 +32695,10 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const isLast = index >= path.length;
 			name = !name && utils$1.isArray(target) ? target.length : name;
 			if (isLast) {
-				if (utils$1.hasOwnProp(target, name)) target[name] = utils$1.isArray(target[name]) ? target[name].concat(value) : [target[name], value];
-				else target[name] = value;
+				if (utils$1.hasOwnProp(target, name)) {
+					target[name] = normalizeArray(target[name]);
+					target[name] = utils$1.isArray(target[name]) ? target[name].concat(value) : [target[name], value];
+				} else target[name] = value;
 				return !isNumericKey;
 			}
 			if (!utils$1.hasOwnProp(target, name) || !utils$1.isObject(target[name])) target[name] = [];
@@ -32626,7 +32710,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			utils$1.forEachEntry(formData, (name, value) => {
 				buildPath(parsePropPath(name), value, obj, 0);
 			});
-			return obj;
+			return normalizeArrays(obj);
 		}
 		return null;
 	}
@@ -32939,12 +33023,12 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function getEnv(key) {
 		return process.env[key.toLowerCase()] || process.env[key.toUpperCase()] || "";
 	}
-	const VERSION = "1.20.0";
+	const VERSION = "1.21.0";
 	function parseProtocol(url) {
 		const match = /^([-+\w]{1,25}):(?:\/\/)?/.exec(url);
-		return match && match[1] || "";
+		return match && match[1].toLowerCase() || "";
 	}
-	const DATA_URL_PATTERN = /^([^,;/]+\/[^,;/]+)?((?:;[^,;=]+=[^,;]+)*)(;base64)?,([\s\S]*)$/;
+	const DATA_URL_PATTERN = /^([^,;/]+\/[^,;/]+)?((?:;[^,;=]+=[^,;]+)*)(;base64)?,([\s\S]*)$/i;
 	/**
 	* Parse data uri to a Buffer or Blob
 	*
@@ -32970,7 +33054,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			let mime = "";
 			if (type) mime = params ? type + params : type;
 			else if (params) mime = "text/plain" + params;
-			const buffer = encoding === "base64" ? Buffer.from(body, "base64") : Buffer.from(decodeURIComponent(body), encoding);
+			const buffer = encoding === "base64" ? Buffer.from(body.replace(/%([\da-f]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16))), "base64") : Buffer.from(decodeURIComponent(body), encoding);
 			if (asBlob) {
 				if (!_Blob) throw new AxiosError("Blob is not supported", AxiosError.ERR_NOT_SUPPORT);
 				return new _Blob([buffer], { type: mime });
@@ -33043,7 +33127,8 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const readableHighWaterMark = this.readableHighWaterMark;
 			const timeWindow = internals.timeWindow;
 			const bytesThreshold = maxRate / (1e3 / timeWindow);
-			const minChunkSize = internals.minChunkSize !== false ? Math.max(internals.minChunkSize, bytesThreshold * .01) : 0;
+			let minChunkSize = internals.minChunkSize !== false ? Math.max(internals.minChunkSize, bytesThreshold * .01) : 0;
+			if (maxRate) minChunkSize = Math.min(bytesThreshold, minChunkSize);
 			const pushChunk = (_chunk, _callback) => {
 				const bytes = Buffer.byteLength(_chunk);
 				internals.bytesSeen += bytes;
@@ -33056,6 +33141,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				};
 			};
 			const transformChunk = (_chunk, _callback) => {
+				if (this.destroyed) return _callback();
 				const chunkSize = Buffer.byteLength(_chunk);
 				let chunkRemainder = null;
 				let maxChunkSize = readableHighWaterMark;
@@ -33075,7 +33161,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					if (bytesLeft <= 0) return setTimeout(() => {
 						_callback(null, _chunk);
 					}, timeWindow - passed);
-					if (bytesLeft < maxChunkSize) maxChunkSize = bytesLeft;
+					if (bytesLeft < maxChunkSize) maxChunkSize = Math.max(1, Math.floor(bytesLeft));
 				}
 				if (maxChunkSize && chunkSize > maxChunkSize && chunkSize - maxChunkSize > minChunkSize) {
 					chunkRemainder = _chunk.subarray(maxChunkSize);
@@ -33101,20 +33187,20 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 	const BOUNDARY_ALPHABET = platform.ALPHABET.ALPHA_DIGIT + "-_";
 	const textEncoder = typeof TextEncoder === "function" ? new TextEncoder() : new util.TextEncoder();
-	const CRLF = "\r\n";
-	const CRLF_BYTES = textEncoder.encode(CRLF);
+	const CRLF$1 = "\r\n";
+	const CRLF_BYTES = textEncoder.encode(CRLF$1);
 	const CRLF_BYTES_COUNT = 2;
 	var FormDataPart = class {
 		constructor(name, value) {
 			const { escapeName } = this.constructor;
 			const isStringValue = utils$1.isString(value);
-			let headers = `Content-Disposition: form-data; name="${escapeName(name)}"${!isStringValue && value.name ? `; filename="${escapeName(value.name)}"` : ""}${CRLF}`;
-			if (isStringValue) value = textEncoder.encode(String(value).replace(/\r?\n|\r\n?/g, CRLF));
+			let headers = `Content-Disposition: form-data; name="${escapeName(name)}"${!isStringValue && value.name ? `; filename="${escapeName(value.name)}"` : ""}${CRLF$1}`;
+			if (isStringValue) value = textEncoder.encode(String(value).replace(/\r?\n|\r\n?/g, CRLF$1));
 			else {
 				const safeType = String(value.type || "application/octet-stream").replace(/[\r\n]/g, "");
-				headers += `Content-Type: ${safeType}${CRLF}`;
+				headers += `Content-Type: ${safeType}${CRLF$1}`;
 			}
-			this.headers = textEncoder.encode(headers + CRLF);
+			this.headers = textEncoder.encode(headers + CRLF$1);
 			this.contentLength = isStringValue ? value.byteLength : value.size;
 			this.size = this.headers.byteLength + this.contentLength + CRLF_BYTES_COUNT;
 			this.name = name;
@@ -33139,7 +33225,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		const { tag = "form-data-boundary", size = 25, boundary = tag + "-" + platform.generateString(size, BOUNDARY_ALPHABET) } = options || {};
 		if (!utils$1.isFormData(form)) throw new TypeError("FormData instance required");
 		if (boundary.length < 1 || boundary.length > 70) throw new Error("boundary must be 1-70 characters long");
-		const boundaryBytes = textEncoder.encode("--" + boundary + CRLF);
+		const boundaryBytes = textEncoder.encode("--" + boundary + CRLF$1);
 		const footerBytes = textEncoder.encode("--" + boundary + "--\r\n");
 		let contentLength = footerBytes.byteLength;
 		const parts = Array.from(form.entries()).map(([name, value]) => {
@@ -33222,7 +33308,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 						timer = null;
 					}
 					stream.once("close", () => {
-						if (!--streamsCount) timer = setTimeout(() => {
+						if (!--streamsCount && !removed) timer = setTimeout(() => {
 							timer = null;
 							removeSession();
 						}, sessionTimeout);
@@ -33232,6 +33318,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 			session.once("close", removeSession);
 			session.once("error", removeSession);
+			session.once("goaway", removeSession);
 			let entry = [session, options];
 			authoritySessions ? authoritySessions.push(entry) : authoritySessions = this.sessions[authority] = [entry];
 			return session;
@@ -33435,7 +33522,19 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const normalizeNoProxyHost = (hostname) => {
 		if (!hostname) return hostname;
 		if (hostname.charAt(0) === "[" && hostname.charAt(hostname.length - 1) === "]") hostname = hostname.slice(1, -1);
-		const trimmed = trimTrailingDots(hostname);
+		let trimmed = trimTrailingDots(hostname);
+		if (trimmed.indexOf(":") !== -1) try {
+			trimmed = new URL("http://[" + trimmed + "]/").hostname.slice(1, -1);
+		} catch (_err) {
+			return trimmed;
+		}
+		else if (/[\u0080-\uffff]/.test(trimmed)) {
+			const prefix = /^[*.]+/.exec(trimmed);
+			const start = prefix ? prefix[0] : "";
+			const ascii = url.domainToASCII(trimmed.slice(start.length));
+			if (!ascii) return "";
+			trimmed = start + trimTrailingDots(ascii);
+		}
 		const ipv4 = normalizeIPAddress(trimmed);
 		if (ipv4 !== trimmed) return ipv4;
 		return unmapIPv4MappedIPv6(trimmed);
@@ -33633,7 +33732,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	* Estimate data: URL byte lengths *without* allocating large buffers.
 	* - Fetch percent-decodes a base64 body before decoding it.
 	* - Node's Buffer.from(body, 'base64') sizes its backing allocation from the
-	*   raw body, including ignored characters and content after padding.
+	*   percent-decoded body, including ignored characters and content after padding.
 	* - Non-base64 data is percent-decoded and then encoded as UTF-8.
 	*/
 	const isHexDigit = (charCode) => charCode >= 48 && charCode <= 57 || charCode >= 65 && charCode <= 70 || charCode >= 97 && charCode <= 102;
@@ -33654,6 +33753,23 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (len > 1 && body.charCodeAt(len - 2) === 61) padding++;
 		}
 		return Math.floor((len - padding) * 3 / 4);
+	};
+	const estimatePercentDecodedBase64BufferAllocation = (body) => {
+		if (body.indexOf("%") === -1) return estimateBase64BufferAllocation(body);
+		let length = 0;
+		let previous = 0;
+		let last = 0;
+		for (let i = 0, len = body.length; i < len; i++) {
+			let code = body.charCodeAt(i);
+			if (code === 37 && isPercentEncodedByte(body, i, len)) {
+				code = hexValue(body.charCodeAt(i + 1)) * 16 + hexValue(body.charCodeAt(i + 2));
+				i += 2;
+			}
+			length++;
+			previous = last;
+			last = code;
+		}
+		return Math.floor((length - (last === 61 ? previous === 61 ? 2 : 1 : 0)) * 3 / 4);
 	};
 	const estimatePercentDecodedBase64Bytes = (body) => {
 		const len = body.length;
@@ -33680,14 +33796,14 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		if (invalid || padding > 2 || padding > 0 && (significant + padding) % 4 !== 0 || significant % 4 === 1) return estimateBase64BufferAllocation(body);
 		return base64Bytes(significant);
 	};
-	const estimateDataURLBytes = (url, estimateBase64) => {
+	const estimateDataURLBytes = (url, estimateBase64, base64Pattern) => {
 		if (!url || typeof url !== "string") return 0;
-		if (!url.startsWith("data:")) return 0;
+		if (!/^data:/i.test(url)) return 0;
 		const comma = url.indexOf(",");
 		if (comma < 0) return 0;
 		const meta = url.slice(5, comma);
 		const body = url.slice(comma + 1);
-		if (/;base64/i.test(meta)) return estimateBase64(body);
+		if (base64Pattern.test(meta)) return estimateBase64(body);
 		let bytes = 0;
 		for (let i = 0, len = body.length; i < len; i++) {
 			const c = body.charCodeAt(i);
@@ -33714,16 +33830,16 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	*/
 	function estimateDataURLDecodedBytes(url) {
 		const fragmentIndex = typeof url === "string" ? url.indexOf("#") : -1;
-		return estimateDataURLBytes(fragmentIndex === -1 ? url : url.slice(0, fragmentIndex), estimatePercentDecodedBase64Bytes);
+		return estimateDataURLBytes(fragmentIndex === -1 ? url : url.slice(0, fragmentIndex), estimatePercentDecodedBase64Bytes, /; *base64[\t\n\f\r ]*$/i);
 	}
 	/**
-	* Estimate the Buffer backing allocation used by Node's raw base64 decoder.
+	* Estimate the Buffer backing allocation used after Node's percent-decoding step.
 	*
 	* @param {string} url
 	* @returns {number}
 	*/
 	function estimateDataURLBufferAllocation(url) {
-		return estimateDataURLBytes(url, estimateBase64BufferAllocation);
+		return estimateDataURLBytes(url, estimatePercentDecodedBase64BufferAllocation, /;base64$/i);
 	}
 	const zlibOptions = {
 		flush: zlib.constants.Z_SYNC_FLUSH,
@@ -33753,6 +33869,18 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const kAxiosInstalledTunnel = Symbol("axios.http.installedTunnel");
 	const tunnelingAgentCache = /* @__PURE__ */ new Map();
 	const tunnelingAgentCacheUser = /* @__PURE__ */ new WeakMap();
+	const directAgents = /* @__PURE__ */ new WeakMap();
+	const directAgentHooks = ["createConnection", "getName"];
+	const nativeAgentPoolHooks = [
+		"addRequest",
+		"createSocket",
+		"removeSocket",
+		"keepSocketAlive",
+		"reuseSocket",
+		"_getSession",
+		"_cacheSession",
+		"_evictSession"
+	];
 	const NODE_NATIVE_ENV_PROXY_SUPPORT = {
 		22: 21,
 		24: 5
@@ -33772,6 +33900,37 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function getProxyEnvAgent(options, configHttpAgent, configHttpsAgent) {
 		return isHttps.test(options.protocol) ? configHttpsAgent || https.globalAgent : configHttpAgent || http.globalAgent;
 	}
+	function getDirectAgent(configuredAgent, transport) {
+		if (!process.allowedNodeEnvironmentFlags || !process.allowedNodeEnvironmentFlags.has("--use-env-proxy")) return configuredAgent;
+		const agent = configuredAgent || transport.globalAgent;
+		const options = agent && agent.options;
+		if (!(agent instanceof transport.Agent) || agent.protocol !== transport.globalAgent.protocol || !options || !utils$1.hasOwnProp(options, "proxyEnv") || typeof options.proxyEnv !== "object" || options.proxyEnv === null) return configuredAgent;
+		for (const hook of nativeAgentPoolHooks) if (utils$1.isFunction(transport.Agent.prototype[hook]) && agent[hook] !== transport.Agent.prototype[hook]) throw new AxiosError("proxy: false cannot adapt an agent overriding " + hook + "; use an agent constructed without proxyEnv", AxiosError.ERR_BAD_OPTION_VALUE);
+		let direct = directAgents.get(agent);
+		if (!direct) {
+			direct = new transport.Agent({
+				...options,
+				proxyEnv: void 0
+			});
+			const destroy = agent.destroy;
+			agent.destroy = function destroyWithDirectAgent() {
+				try {
+					return destroy.apply(this, arguments);
+				} finally {
+					direct.destroy();
+				}
+			};
+			directAgents.set(agent, direct);
+		}
+		for (const hook of directAgentHooks) direct[hook] = agent[hook] === transport.Agent.prototype[hook] ? transport.Agent.prototype[hook] : bind(agent[hook], agent);
+		return direct;
+	}
+	function setDirectAgent(options, configHttpAgent, configHttpsAgent) {
+		const secure = isHttps.test(options.protocol);
+		const agent = getDirectAgent(secure ? configHttpsAgent : configHttpAgent, secure ? https : http);
+		options.agent = agent;
+		if (options.agents) options.agents[secure ? "https" : "http"] = agent;
+	}
 	function getTunnelingAgent(agentOptions, userHttpsAgent) {
 		const key = agentOptions.protocol + "//" + agentOptions.hostname + ":" + (agentOptions.port || "") + "#" + (agentOptions.auth || "");
 		const cache = userHttpsAgent ? tunnelingAgentCacheUser.get(userHttpsAgent) || tunnelingAgentCacheUser.set(userHttpsAgent, /* @__PURE__ */ new Map()).get(userHttpsAgent) : tunnelingAgentCache;
@@ -33781,16 +33940,15 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			...userHttpsAgent.options,
 			...agentOptions
 		} : agentOptions);
-		if (userHttpsAgent && userHttpsAgent.options) {
-			const originTLSOptions = { ...userHttpsAgent.options };
-			const callback = agent.callback;
-			agent.callback = function axiosTunnelingAgentCallback(req, opts) {
-				return callback.call(this, req, {
-					...originTLSOptions,
-					...opts
-				});
-			};
-		}
+		const callback = agent.callback;
+		agent.callback = function axiosTunnelingAgentCallback(req, opts) {
+			const originTLSAgent = userHttpsAgent || https.globalAgent;
+			const originTLSOptions = originTLSAgent && originTLSAgent.options;
+			return callback.call(this, req, {
+				...originTLSOptions,
+				...opts
+			});
+		};
 		agent[kAxiosInstalledTunnel] = true;
 		cache.set(key, agent);
 		return agent;
@@ -33820,9 +33978,14 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	* @returns {Object<string, any>}
 	*/
 	function dispatchBeforeRedirect(options, responseDetails, requestDetails) {
+		if (!isSameOriginRedirect(options, requestDetails)) {
+			stripMatchingHeaders(options.headers, /* @__PURE__ */ new Set(["authorization", "cookie"]));
+			delete options.auth;
+		}
 		if (options.beforeRedirects.proxy) options.beforeRedirects.proxy(options);
 		if (options.beforeRedirects.auth) options.beforeRedirects.auth(options);
 		if (options.beforeRedirects.sensitiveHeaders) options.beforeRedirects.sensitiveHeaders(options, requestDetails);
+		if (options.beforeRedirects.direct) options.beforeRedirects.direct(options);
 		if (options.beforeRedirects.config) options.beforeRedirects.config(options, responseDetails, requestDetails);
 	}
 	function stripMatchingHeaders(headers, sensitiveSet) {
@@ -33862,6 +34025,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			for (const name of Object.keys(options.headers)) if (name.toLowerCase() === "proxy-authorization") delete options.headers[name];
 		}
 		if (isRedirect && options.agent && options.agent[kAxiosInstalledTunnel]) options.agent = void 0;
+		if (isRedirect && options.agents && options.agents.https && options.agents.https[kAxiosInstalledTunnel]) options.agents.https = configHttpsAgent;
 		if (proxy) {
 			const isProxyURL = proxy instanceof URL;
 			const readProxyField = (key) => isProxyURL || utils$1.hasOwnProp(proxy, key) ? proxy[key] : void 0;
@@ -34008,9 +34172,9 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (httpVersion === void 0) httpVersion = 1;
 			const rawHttpVersion = httpVersion;
 			let http2Options = own("http2Options");
+			const configProxy = own("proxy");
 			const httpAgent = own("httpAgent");
 			const httpsAgent = own("httpsAgent");
-			const configProxy = own("proxy");
 			const responseType = own("responseType");
 			const responseEncoding = own("responseEncoding");
 			const socketPath = own("socketPath");
@@ -34098,6 +34262,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				} catch (err) {
 					throw AxiosError.from(err, AxiosError.ERR_BAD_REQUEST, config);
 				}
+				if (maxContentLength > -1 && (responseType === "blob" ? convertedData.size : convertedData.length) > maxContentLength) return reject(new AxiosError("maxContentLength size of " + maxContentLength + " exceeded", AxiosError.ERR_BAD_RESPONSE, config));
 				if (responseType === "text") {
 					convertedData = convertedData.toString(responseEncoding);
 					if (!responseEncoding || responseEncoding === "utf8") convertedData = utils$1.stripBOM(convertedData);
@@ -34112,7 +34277,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 			if (supportedProtocols.indexOf(protocol) === -1) return reject(new AxiosError("Unsupported protocol " + protocol, AxiosError.ERR_BAD_REQUEST, config));
 			const headers = AxiosHeaders.from(config.headers).normalize();
-			headers.set("User-Agent", "axios/1.20.0", false);
+			headers.set("User-Agent", "axios/1.21.0", false);
 			const { onUploadProgress, onDownloadProgress } = config;
 			const maxRate = config.maxRate;
 			let maxUploadRate = void 0;
@@ -34211,9 +34376,13 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 			let transport;
 			let isNativeTransport = false;
-			let transportEnforcesMaxBodyLength = false;
 			const isHttpsRequest = isHttps.test(options.protocol);
-			if (options.agent == null) options.agent = isHttpsRequest ? httpsAgent : httpAgent;
+			if (!isHttp2 && configProxy === false) {
+				setDirectAgent(options, httpAgent, httpsAgent);
+				options.beforeRedirects.direct = (redirectOptions) => {
+					setDirectAgent(redirectOptions, httpAgent, httpsAgent);
+				};
+			} else if (options.agent == null) options.agent = isHttpsRequest ? httpsAgent : httpAgent;
 			if (isHttp2) {
 				if (proxyApplied) return reject(new AxiosError("HTTP/2 requests with a proxy are not supported", AxiosError.ERR_NOT_SUPPORT, config));
 				transport = http2Transport;
@@ -34224,7 +34393,6 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					transport = isHttpsRequest ? https : http;
 					isNativeTransport = true;
 				} else {
-					transportEnforcesMaxBodyLength = true;
 					options.sensitiveHeaders = [];
 					if (maxRedirects) options.maxRedirects = maxRedirects;
 					const configBeforeRedirect = own("beforeRedirect");
@@ -34414,7 +34582,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					if (!ended && !errored) abort(new CanceledError("Request stream has been aborted", config, req));
 				});
 				let uploadStream = data;
-				if (maxBodyLength > -1 && !transportEnforcesMaxBodyLength) {
+				if (maxBodyLength > -1) {
 					const limit = maxBodyLength;
 					let bytesSent = 0;
 					uploadStream = stream.pipeline([data, new stream.Transform({ transform(chunk, _enc, cb) {
@@ -34433,10 +34601,13 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 		});
 	};
-	var isURLSameOrigin = platform.hasStandardBrowserEnv ? ((origin, isMSIE) => (url) => {
-		url = new URL(url, platform.origin);
-		return origin.protocol === url.protocol && origin.host === url.host && (isMSIE || origin.port === url.port);
-	})(new URL(platform.origin), platform.navigator && /(msie|trident)/i.test(platform.navigator.userAgent)) : () => true;
+	const decodeCookieValue = (value) => {
+		try {
+			return decodeURIComponent(value);
+		} catch (e) {
+			return value;
+		}
+	};
 	var cookies = platform.hasStandardBrowserEnv ? {
 		write(name, value, expires, path, domain, secure, sameSite) {
 			if (typeof document === "undefined") return;
@@ -34450,17 +34621,25 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		},
 		read(name) {
 			if (typeof document === "undefined") return null;
-			const cookies = document.cookie.split(";");
+			const cookieString = document.cookie;
+			if (!cookieString) return null;
+			const cookies = cookieString.split(";");
 			for (let i = 0; i < cookies.length; i++) {
 				const cookie = cookies[i].replace(/^\s+/, "");
 				const eq = cookie.indexOf("=");
-				if (eq !== -1 && cookie.slice(0, eq) === name) try {
-					return decodeURIComponent(cookie.slice(eq + 1));
-				} catch (e) {
-					return cookie.slice(eq + 1);
-				}
+				if (eq !== -1 && cookie.slice(0, eq) === name) return decodeCookieValue(cookie.slice(eq + 1));
 			}
 			return null;
+		},
+		async readAsync(name) {
+			try {
+				const store = typeof window !== "undefined" && window.cookieStore;
+				if (store && utils$1.isFunction(store.get)) {
+					const cookie = await store.get(name);
+					return cookie ? decodeCookieValue(cookie.value) : null;
+				}
+			} catch (e) {}
+			return this.read(name);
 		},
 		remove(name) {
 			this.write(name, "", Date.now() - 864e5, "/");
@@ -34470,12 +34649,166 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		read() {
 			return null;
 		},
+		async readAsync() {
+			return null;
+		},
 		remove() {}
 	};
+	var isURLSameOrigin = platform.hasStandardBrowserEnv ? ((origin) => (url) => {
+		url = new URL(url, document.baseURI || platform.origin);
+		return origin.protocol === url.protocol && origin.host === url.host && origin.port === url.port;
+	})(new URL(platform.origin)) : () => true;
+	function assertParamsAcyclic(params) {
+		const pending = [{ value: params }];
+		const active = /* @__PURE__ */ new WeakSet();
+		const visited = /* @__PURE__ */ new WeakSet();
+		while (pending.length) {
+			const { value, done } = pending.pop();
+			if (!utils$1.isPlainObject(value) && !utils$1.isArray(value)) continue;
+			if (done) {
+				active.delete(value);
+				continue;
+			}
+			if (active.has(value)) throw new AxiosError("Circular reference detected in params", AxiosError.ERR_BAD_OPTION_VALUE);
+			if (visited.has(value)) continue;
+			visited.add(value);
+			active.add(value);
+			pending.push({
+				value,
+				done: true
+			});
+			const keys = Object.keys(value);
+			if (Object.getOwnPropertySymbols && Object.getOwnPropertyDescriptor) Object.getOwnPropertySymbols(value).forEach((key) => {
+				const descriptor = Object.getOwnPropertyDescriptor(value, key);
+				if (descriptor && descriptor.enumerable) keys.push(key);
+			});
+			keys.forEach((key) => {
+				if (key === "__proto__" || key === "constructor" || key === "prototype") {
+					const descriptor = Object.getOwnPropertyDescriptor(value, key);
+					if (descriptor && utils$1.hasOwnProp(descriptor, "value")) pending.push({ value: descriptor.value });
+				} else pending.push({ value: value[key] });
+			});
+		}
+	}
 	const headersToObject = (thing) => thing instanceof AxiosHeaders ? { ...thing } : thing;
 	const ownEnumerableKeys = (thing) => {
-		if (Object.getOwnPropertySymbols && Object.getOwnPropertyDescriptor) return Object.keys(thing).concat(Object.getOwnPropertySymbols(thing).filter((symbol) => Object.getOwnPropertyDescriptor(thing, symbol).enumerable));
+		if (Object.getOwnPropertySymbols && Object.getOwnPropertyDescriptor) return Object.keys(thing).concat(Object.getOwnPropertySymbols(thing).filter((symbol) => {
+			const descriptor = Object.getOwnPropertyDescriptor(thing, symbol);
+			return descriptor && descriptor.enumerable;
+		}));
 		return Object.keys(thing);
+	};
+	function mergeParams(a, b) {
+		const pending = [];
+		const copies = /* @__PURE__ */ new WeakMap();
+		const empty = {};
+		function copy(target, source) {
+			if (!utils$1.isPlainObject(source)) return utils$1.isArray(source) ? source.slice() : source;
+			const base = utils$1.isPlainObject(target) ? target : empty;
+			let bases = copies.get(source);
+			if (!bases) {
+				bases = /* @__PURE__ */ new WeakMap();
+				copies.set(source, bases);
+			}
+			if (bases.has(base)) return bases.get(base);
+			const result = {};
+			bases.set(base, result);
+			pending.push({
+				base,
+				source,
+				result
+			});
+			return result;
+		}
+		const result = utils$1.isUndefined(b) ? copy(void 0, a) : copy(a, b);
+		while (pending.length) {
+			const { base, source, result: target } = pending.pop();
+			const baseKeys = new Set(ownEnumerableKeys(base));
+			const sourceKeys = new Set(ownEnumerableKeys(source));
+			(/* @__PURE__ */ new Set([...baseKeys, ...sourceKeys])).forEach((key) => {
+				if (key === "__proto__" || key === "constructor" || key === "prototype") return;
+				const hasSource = sourceKeys.has(key);
+				const value = hasSource ? source[key] : void 0;
+				const previous = (!hasSource || utils$1.isPlainObject(value)) && baseKeys.has(key) ? base[key] : void 0;
+				target[key] = hasSource ? copy(previous, value) : copy(void 0, previous);
+			});
+		}
+		assertParamsAcyclic(result);
+		return result;
+	}
+	function getMergedValue(target, source, prop, caseless) {
+		if (utils$1.isPlainObject(target) && utils$1.isPlainObject(source)) return utils$1.merge.call({ caseless }, target, source);
+		else if (utils$1.isPlainObject(source)) return utils$1.merge({}, source);
+		else if (utils$1.isArray(source)) return source.slice();
+		return source;
+	}
+	function mergeDeepProperties(a, b, prop, caseless) {
+		if (!utils$1.isUndefined(b)) return getMergedValue(a, b, prop, caseless);
+		else if (!utils$1.isUndefined(a)) return getMergedValue(void 0, a, prop, caseless);
+	}
+	function valueFromConfig2(a, b) {
+		if (!utils$1.isUndefined(b)) return getMergedValue(void 0, b);
+	}
+	function defaultToConfig2(a, b) {
+		if (!utils$1.isUndefined(b)) return getMergedValue(void 0, b);
+		else if (!utils$1.isUndefined(a)) return getMergedValue(void 0, a);
+	}
+	function getMergedTransitionalOption(config1, config2, prop) {
+		const transitional2 = utils$1.hasOwnProp(config2, "transitional") ? config2.transitional : void 0;
+		if (!utils$1.isUndefined(transitional2)) {
+			if (utils$1.isPlainObject(transitional2)) {
+				if (utils$1.hasOwnProp(transitional2, prop)) return transitional2[prop];
+			} else return;
+		}
+		const transitional1 = utils$1.hasOwnProp(config1, "transitional") ? config1.transitional : void 0;
+		if (utils$1.isPlainObject(transitional1) && utils$1.hasOwnProp(transitional1, prop)) return transitional1[prop];
+	}
+	function mergeDirectKeys(a, b, prop, config1, config2) {
+		if (utils$1.hasOwnProp(config2, prop)) return getMergedValue(a, b);
+		else if (utils$1.hasOwnProp(config1, prop)) return getMergedValue(void 0, a);
+	}
+	function mergeHeaders(a, b, prop) {
+		return mergeDeepProperties(headersToObject(a), headersToObject(b), prop, true);
+	}
+	const hasOwnPropertyDescriptor = Object.freeze({
+		__proto__: null,
+		value: Object.prototype.hasOwnProperty,
+		enumerable: false,
+		writable: true,
+		configurable: true
+	});
+	const mergeMap = {
+		url: valueFromConfig2,
+		method: valueFromConfig2,
+		data: valueFromConfig2,
+		baseURL: defaultToConfig2,
+		transformRequest: defaultToConfig2,
+		transformResponse: defaultToConfig2,
+		params: mergeParams,
+		paramsSerializer: defaultToConfig2,
+		timeout: defaultToConfig2,
+		timeoutErrorMessage: defaultToConfig2,
+		withCredentials: defaultToConfig2,
+		withXSRFToken: defaultToConfig2,
+		adapter: defaultToConfig2,
+		responseType: defaultToConfig2,
+		xsrfCookieName: defaultToConfig2,
+		xsrfHeaderName: defaultToConfig2,
+		onUploadProgress: defaultToConfig2,
+		onDownloadProgress: defaultToConfig2,
+		decompress: defaultToConfig2,
+		maxContentLength: defaultToConfig2,
+		maxBodyLength: defaultToConfig2,
+		beforeRedirect: defaultToConfig2,
+		transport: defaultToConfig2,
+		httpAgent: defaultToConfig2,
+		httpsAgent: defaultToConfig2,
+		cancelToken: defaultToConfig2,
+		socketPath: defaultToConfig2,
+		allowedSocketPaths: defaultToConfig2,
+		responseEncoding: defaultToConfig2,
+		validateStatus: mergeDirectKeys,
+		headers: mergeHeaders
 	};
 	/**
 	* Config-specific merge-function which creates a new config-object
@@ -34490,86 +34823,21 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		config1 = config1 || {};
 		config2 = config2 || {};
 		const config = Object.create(null);
-		Object.defineProperty(config, "hasOwnProperty", {
-			__proto__: null,
-			value: Object.prototype.hasOwnProperty,
-			enumerable: false,
-			writable: true,
-			configurable: true
-		});
-		function getMergedValue(target, source, prop, caseless) {
-			if (utils$1.isPlainObject(target) && utils$1.isPlainObject(source)) return utils$1.merge.call({ caseless }, target, source);
-			else if (utils$1.isPlainObject(source)) return utils$1.merge({}, source);
-			else if (utils$1.isArray(source)) return source.slice();
-			return source;
-		}
-		function mergeDeepProperties(a, b, prop, caseless) {
-			if (!utils$1.isUndefined(b)) return getMergedValue(a, b, prop, caseless);
-			else if (!utils$1.isUndefined(a)) return getMergedValue(void 0, a, prop, caseless);
-		}
-		function valueFromConfig2(a, b) {
-			if (!utils$1.isUndefined(b)) return getMergedValue(void 0, b);
-		}
-		function defaultToConfig2(a, b) {
-			if (!utils$1.isUndefined(b)) return getMergedValue(void 0, b);
-			else if (!utils$1.isUndefined(a)) return getMergedValue(void 0, a);
-		}
-		function getMergedTransitionalOption(prop) {
-			const transitional2 = utils$1.hasOwnProp(config2, "transitional") ? config2.transitional : void 0;
-			if (!utils$1.isUndefined(transitional2)) {
-				if (utils$1.isPlainObject(transitional2)) {
-					if (utils$1.hasOwnProp(transitional2, prop)) return transitional2[prop];
-				} else return;
-			}
-			const transitional1 = utils$1.hasOwnProp(config1, "transitional") ? config1.transitional : void 0;
-			if (utils$1.isPlainObject(transitional1) && utils$1.hasOwnProp(transitional1, prop)) return transitional1[prop];
-		}
-		function mergeDirectKeys(a, b, prop) {
-			if (utils$1.hasOwnProp(config2, prop)) return getMergedValue(a, b);
-			else if (utils$1.hasOwnProp(config1, prop)) return getMergedValue(void 0, a);
-		}
-		const mergeMap = {
-			url: valueFromConfig2,
-			method: valueFromConfig2,
-			data: valueFromConfig2,
-			baseURL: defaultToConfig2,
-			transformRequest: defaultToConfig2,
-			transformResponse: defaultToConfig2,
-			paramsSerializer: defaultToConfig2,
-			timeout: defaultToConfig2,
-			timeoutErrorMessage: defaultToConfig2,
-			withCredentials: defaultToConfig2,
-			withXSRFToken: defaultToConfig2,
-			adapter: defaultToConfig2,
-			responseType: defaultToConfig2,
-			xsrfCookieName: defaultToConfig2,
-			xsrfHeaderName: defaultToConfig2,
-			onUploadProgress: defaultToConfig2,
-			onDownloadProgress: defaultToConfig2,
-			decompress: defaultToConfig2,
-			maxContentLength: defaultToConfig2,
-			maxBodyLength: defaultToConfig2,
-			beforeRedirect: defaultToConfig2,
-			transport: defaultToConfig2,
-			httpAgent: defaultToConfig2,
-			httpsAgent: defaultToConfig2,
-			cancelToken: defaultToConfig2,
-			socketPath: defaultToConfig2,
-			allowedSocketPaths: defaultToConfig2,
-			responseEncoding: defaultToConfig2,
-			validateStatus: mergeDirectKeys,
-			headers: (a, b, prop) => mergeDeepProperties(headersToObject(a), headersToObject(b), prop, true)
-		};
-		utils$1.forEach(ownEnumerableKeys({
+		Object.defineProperty(config, "hasOwnProperty", hasOwnPropertyDescriptor);
+		const keys = ownEnumerableKeys({
 			...config1,
 			...config2
-		}), function computeConfigValue(prop) {
-			if (prop === "__proto__" || prop === "constructor" || prop === "prototype") return;
-			const merge = utils$1.hasOwnProp(mergeMap, prop) ? mergeMap[prop] : mergeDeepProperties;
-			const configValue = merge(utils$1.hasOwnProp(config1, prop) ? config1[prop] : void 0, utils$1.hasOwnProp(config2, prop) ? config2[prop] : void 0, prop);
-			utils$1.isUndefined(configValue) && merge !== mergeDirectKeys || (config[prop] = configValue);
 		});
-		if (utils$1.hasOwnProp(config2, "validateStatus") && utils$1.isUndefined(config2.validateStatus) && getMergedTransitionalOption("validateStatusUndefinedResolves") === false) {
+		for (let i = 0, len = keys.length; i < len; i++) {
+			const prop = keys[i];
+			if (prop === "__proto__" || prop === "constructor" || prop === "prototype") continue;
+			const merge = utils$1.hasOwnProp(mergeMap, prop) ? mergeMap[prop] : mergeDeepProperties;
+			const a = utils$1.hasOwnProp(config1, prop) ? config1[prop] : void 0;
+			const b = utils$1.hasOwnProp(config2, prop) ? config2[prop] : void 0;
+			const configValue = merge === mergeDirectKeys ? merge(a, b, prop, config1, config2) : merge(a, b, prop);
+			utils$1.isUndefined(configValue) && merge !== mergeDirectKeys || (config[prop] = configValue);
+		}
+		if (utils$1.hasOwnProp(config2, "validateStatus") && utils$1.isUndefined(config2.validateStatus) && getMergedTransitionalOption(config1, config2, "validateStatusUndefinedResolves") === false) {
 			if (utils$1.hasOwnProp(config1, "validateStatus")) config.validateStatus = getMergedValue(void 0, config1.validateStatus);
 			else delete config.validateStatus;
 		}
@@ -34584,7 +34852,8 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	* @returns {string} UTF-8 bytes as a Latin-1 string
 	*/
 	const encodeUTF8$1 = (str) => encodeURIComponent(str).replace(/%([0-9A-F]{2})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-	function resolveConfig(config) {
+	const readCookie = (name) => cookies.read(name);
+	function resolveConfig(config, readXsrfCookie = readCookie) {
 		const newConfig = mergeConfig({}, config);
 		const own = (key) => utils$1.hasOwnProp(newConfig, key) ? newConfig[key] : void 0;
 		const data = own("data");
@@ -34601,8 +34870,10 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		if (auth) {
 			const username = utils$1.getSafeProp(auth, "username") || "";
 			const password = utils$1.getSafeProp(auth, "password") || "";
+			const transitional = own("transitional");
+			const encodeUsername = transitional && utils$1.hasOwnProp(transitional, "encodeBasicAuthUsername") && transitional.encodeBasicAuthUsername === true;
 			try {
-				headers.set("Authorization", "Basic " + btoa(username + ":" + (password ? encodeUTF8$1(password) : "")));
+				headers.set("Authorization", "Basic " + btoa((encodeUsername ? encodeUTF8$1(username) : username) + ":" + (password ? encodeUTF8$1(password) : "")));
 			} catch (e) {
 				throw AxiosError.from(e, AxiosError.ERR_BAD_OPTION_VALUE, config);
 			}
@@ -34615,7 +34886,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		if (platform.hasStandardBrowserEnv) {
 			if (utils$1.isFunction(withXSRFToken)) withXSRFToken = withXSRFToken(newConfig);
 			if (withXSRFToken === true || withXSRFToken == null && isURLSameOrigin(newConfig.url)) {
-				const xsrfValue = xsrfHeaderName && xsrfCookieName && cookies.read(xsrfCookieName);
+				const xsrfValue = xsrfHeaderName && xsrfCookieName && readXsrfCookie(xsrfCookieName);
 				if (xsrfValue) headers.set(xsrfHeaderName, xsrfValue);
 			}
 		}
@@ -34623,16 +34894,46 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}
 	var xhrAdapter = typeof XMLHttpRequest !== "undefined" && function(config) {
 		return new Promise(function dispatchXhrRequest(resolve, reject) {
-			const _config = resolveConfig(config);
+			let useAsyncXsrf;
+			try {
+				const store = platform.hasStandardBrowserEnv && typeof window !== "undefined" && window.cookieStore;
+				useAsyncXsrf = store && utils$1.isFunction(store.get);
+			} catch (e) {}
+			let xsrfCookieName;
+			const _config = resolveConfig(config, useAsyncXsrf ? (name) => {
+				xsrfCookieName = name;
+				return null;
+			} : void 0);
 			let requestData = _config.data;
 			const requestHeaders = AxiosHeaders.from(_config.headers).normalize();
 			let { responseType, onUploadProgress, onDownloadProgress } = _config;
 			let onCanceled;
+			let timeoutId;
 			let uploadThrottled, downloadThrottled;
 			let flushUpload, flushDownload, flushDownloadWithEvent;
 			function done() {
-				flushUpload && flushUpload();
-				flushDownload && flushDownload();
+				clearTimeout(timeoutId);
+				try {
+					flushUpload && flushUpload();
+				} catch (err) {
+					setTimeout(() => {
+						throw err;
+					});
+				}
+				try {
+					flushDownload && flushDownload();
+				} catch (err) {
+					setTimeout(() => {
+						throw err;
+					});
+				}
+				if (request) {
+					downloadThrottled && request.removeEventListener("progress", downloadThrottled);
+					if (request.upload) {
+						uploadThrottled && request.upload.removeEventListener("progress", uploadThrottled);
+						flushUpload && request.upload.removeEventListener("loadend", flushUpload);
+					}
+				}
 				_config.cancelToken && _config.cancelToken.unsubscribe(onCanceled);
 				_config.signal && _config.signal.removeEventListener("abort", onCanceled);
 			}
@@ -34693,6 +34994,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				request = null;
 			};
 			request.ontimeout = function handleTimeout() {
+				if (!request) return;
 				let timeoutErrorMessage = _config.timeout ? "timeout of " + _config.timeout + "ms exceeded" : "timeout exceeded";
 				const transitional = _config.transitional || transitionalDefaults;
 				if (_config.timeoutErrorMessage) timeoutErrorMessage = _config.timeoutErrorMessage;
@@ -34701,9 +35003,6 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				request = null;
 			};
 			requestData === void 0 && requestHeaders.setContentType(null);
-			if ("setRequestHeader" in request) utils$1.forEach(toByteStringHeaderObject(requestHeaders), function setRequestHeader(val, key) {
-				request.setRequestHeader(key, val);
-			});
 			if (!utils$1.isUndefined(_config.withCredentials)) request.withCredentials = !!_config.withCredentials;
 			if (responseType && responseType !== "json") request.responseType = _config.responseType;
 			if (onDownloadProgress) {
@@ -34719,20 +35018,64 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				onCanceled = (cancel) => {
 					if (!request) return;
 					reject(!cancel || cancel.type ? new CanceledError(null, config, request) : cancel);
-					request.abort();
+					const xhr = request;
 					done();
 					request = null;
+					xhr.abort();
 				};
 				_config.cancelToken && _config.cancelToken.subscribe(onCanceled);
+				if (!request) return;
 				if (_config.signal) _config.signal.aborted ? onCanceled() : _config.signal.addEventListener("abort", onCanceled);
 			}
+			if (!request) return;
 			const protocol = parseProtocol(_config.url);
 			if (protocol && !platform.protocols.includes(protocol)) {
 				reject(new AxiosError("Unsupported protocol " + protocol + ":", AxiosError.ERR_BAD_REQUEST, config));
 				done();
 				return;
 			}
-			request.send(requestData || null);
+			const sendRequest = () => {
+				if (!request) return;
+				if ("setRequestHeader" in request) utils$1.forEach(toByteStringHeaderObject(requestHeaders), function setRequestHeader(val, key) {
+					request.setRequestHeader(key, val);
+				});
+				request.send(requestData || null);
+			};
+			if (xsrfCookieName) {
+				const now = typeof performance !== "undefined" && utils$1.isFunction(performance.now) ? () => performance.now() : Date.now;
+				const deadline = request.timeout > 0 ? now() + Number(request.timeout) : void 0;
+				const abortOnTimeout = () => {
+					if (!request) return;
+					const xhr = request;
+					xhr.ontimeout();
+					xhr.abort();
+				};
+				if (deadline !== void 0) {
+					const scheduleTimeout = () => {
+						const remaining = deadline - now();
+						if (remaining > 0) timeoutId = setTimeout(scheduleTimeout, Math.min(remaining, 2147483647));
+						else abortOnTimeout();
+					};
+					scheduleTimeout();
+				}
+				cookies.readAsync(xsrfCookieName).then((value) => {
+					if (!request) return;
+					if (deadline !== void 0 && now() >= deadline) {
+						abortOnTimeout();
+						return;
+					}
+					if (value) {
+						const headerName = utils$1.hasOwnProp(_config, "xsrfHeaderName") && _config.xsrfHeaderName;
+						requestHeaders.set(headerName, value);
+					}
+					sendRequest();
+				}).catch((error) => {
+					if (!request) return;
+					reject(AxiosError.from(error, null, config, request));
+					done();
+					request = null;
+				});
+			} else sendRequest();
 		});
 	};
 	const composeSignals = (signals, timeout) => {
@@ -34757,7 +35100,8 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			timer && clearTimeout(timer);
 			timer = null;
 			signals.forEach((signal) => {
-				signal.unsubscribe ? signal.unsubscribe(onabort) : signal.removeEventListener("abort", onabort);
+				const unsubscribeSignal = utils$1.getSafeProp(signal, "unsubscribe");
+				utils$1.isFunction(unsubscribeSignal) ? unsubscribeSignal.call(signal, onabort) : signal.removeEventListener("abort", onabort);
 			});
 			signals = null;
 		};
@@ -34839,6 +35183,86 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 		}, { highWaterMark: 2 });
 	};
+	const CRLF = "\r\n";
+	const normalizeLines = (value) => String(value).replace(/\r\n|\r|\n/g, CRLF);
+	const escapeName = (value) => String(value).replace(/[\r\n"]/g, (char) => char === "\r" ? "%0D" : char === "\n" ? "%0A" : "%22");
+	const stringBytes = (value, normalize) => {
+		let length = 0;
+		for (let i = 0; i < value.length; i++) {
+			const code = value.charCodeAt(i);
+			if (normalize && (code === 13 || code === 10)) {
+				if (code === 13 && value.charCodeAt(i + 1) === 10) i++;
+				length += 2;
+			} else if (code < 128) length++;
+			else if (code < 2048) length += 2;
+			else if (code >= 55296 && code <= 56319 && value.charCodeAt(i + 1) >= 56320 && value.charCodeAt(i + 1) <= 57343) {
+				length += 4;
+				i++;
+			} else length += 3;
+		}
+		return length;
+	};
+	var FormDataError = class extends TypeError {
+		constructor(message, reason) {
+			super(message);
+			this.name = "FormDataError";
+			this.reason = reason;
+		}
+	};
+	function formDataToBlob(form, Blob, limit, limitError, boundary) {
+		if (!utils$1.isFunction(Blob)) throw new FormDataError("Blob is not supported", "blob");
+		if (!utils$1.isString(boundary) || !/^[A-Za-z0-9'()+_,./:=? -]{1,70}$/.test(boundary) || / $/.test(boundary)) throw new FormDataError("Invalid multipart boundary", "boundary");
+		const footer = "--" + boundary + "--\r\n";
+		let length = footer.length;
+		const parts = [];
+		const checkLength = (extra) => {
+			if (length + extra > limit) throw limitError();
+		};
+		checkLength(0);
+		for (const [name, value] of form) {
+			const isString = utils$1.isString(value);
+			const valueLength = isString ? stringBytes(value, true) : value.size;
+			if (!Number.isFinite(valueLength) || valueLength < 0) throw new FormDataError("Unsupported FormData part size", "part");
+			checkLength(valueLength + stringBytes(name, true) + (!isString && value.name ? stringBytes(value.name, false) : 0) + (!isString && value.type ? stringBytes(value.type, false) : 0));
+			let header = "--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + escapeName(normalizeLines(name)) + "\"";
+			if (!isString) header += "; filename=\"" + escapeName(utils$1.isString(value.name) ? value.name : "blob") + "\"\r\nContent-Type: " + String(value.type || "application/octet-stream").replace(/[\r\n]/g, "");
+			header += "\r\n\r\n";
+			const partLength = stringBytes(header, false) + valueLength + 2;
+			checkLength(partLength);
+			length += partLength;
+			parts.push({
+				header,
+				value,
+				isString
+			});
+		}
+		const blobParts = [];
+		for (const part of parts) blobParts.push(part.header, part.isString ? normalizeLines(part.value) : part.value, CRLF);
+		blobParts.push(footer);
+		return new Blob(blobParts, { type: "multipart/form-data; boundary=" + boundary });
+	}
+	function createMultipartBody(form, Blob, limit, limitError, boundary) {
+		if (!utils$1.isFunction(Blob)) throw new AxiosError("Blob is not supported", AxiosError.ERR_NOT_SUPPORT);
+		if (boundary === void 0) {
+			if (utils$1.isFunction(platform.generateString)) boundary = "axios-" + platform.generateString(36, "0123456789abcdef");
+			else {
+				const crypto = utils$1.global.crypto;
+				if (!crypto || !utils$1.isFunction(crypto.getRandomValues)) throw new AxiosError("Random byte generation is not supported", AxiosError.ERR_NOT_SUPPORT);
+				const random = /* @__PURE__ */ new Uint8Array(18);
+				crypto.getRandomValues(random);
+				boundary = "axios-" + Array.from(random, (value) => ("0" + value.toString(16)).slice(-2)).join("");
+			}
+		}
+		try {
+			return formDataToBlob(form, Blob, limit, limitError, boundary);
+		} catch (error) {
+			if (error instanceof FormDataError) {
+				const code = error.reason === "boundary" ? AxiosError.ERR_BAD_OPTION_VALUE : AxiosError.ERR_BAD_REQUEST;
+				throw new AxiosError(error.message, code);
+			}
+			throw error;
+		}
+	}
 	const DEFAULT_CHUNK_SIZE = 65536;
 	const DEFAULT_REQUEST_OPTIONS = {
 		cache: "default",
@@ -34887,9 +35311,11 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		const { ReadableStream, TextEncoder } = globalObject;
 		env = utils$1.merge.call({ skipUndefined: true }, {
 			Request: globalObject.Request,
-			Response: globalObject.Response
+			Response: globalObject.Response,
+			Blob: globalObject.Blob
 		}, env);
-		const { fetch: envFetch, Request, Response } = env;
+		const envFetch = utils$1.hasOwnProp(env, "fetch") ? env.fetch : void 0;
+		const { Request, Response, Blob } = env;
 		const isFetchSupported = envFetch ? isFunction(envFetch) : typeof fetch === "function";
 		const isRequestSupported = isFunction(Request);
 		const isResponseSupported = isFunction(Response);
@@ -34911,6 +35337,11 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			return duplexAccessed && !hasContentType;
 		});
 		const supportsResponseStream = isResponseSupported && isReadableStreamSupported && test(() => utils$1.isReadableStream(new Response("").body));
+		const requestDefaults = Object.assign(Object.create(null), DEFAULT_REQUEST_OPTIONS);
+		if (isRequestSupported && !test(() => new Request(platform.origin, requestDefaults))) {
+			delete requestDefaults.cache;
+			if (!test(() => new Request(platform.origin, requestDefaults))) requestDefaults.cache = DEFAULT_REQUEST_OPTIONS.cache;
+		}
 		const resolvers = { stream: supportsResponseStream && ((res) => res.body) };
 		isFetchSupported && (() => {
 			[
@@ -34930,10 +35361,6 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		const getBodyLength = async (body) => {
 			if (body == null) return 0;
 			if (utils$1.isBlob(body)) return body.size;
-			if (utils$1.isSpecCompliantForm(body)) return (await new Request(platform.origin, {
-				method: "POST",
-				body
-			}).arrayBuffer()).byteLength;
 			if (utils$1.isArrayBufferView(body) || utils$1.isArrayBuffer(body)) return body.byteLength;
 			if (utils$1.isURLSearchParams(body)) body = body + "";
 			if (utils$1.isString(body)) return (await encodeText(body)).byteLength;
@@ -34956,6 +35383,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			});
 			let requestContentLength;
 			let pendingBodyError = null;
+			let pendingResponseError = null;
 			const maxBodyLengthError = () => new AxiosError("Request body larger than maxBodyLength limit", AxiosError.ERR_BAD_REQUEST, config, request);
 			try {
 				let auth = void 0;
@@ -34964,8 +35392,9 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					username: utils$1.getSafeProp(configAuth, "username") || "",
 					password: utils$1.getSafeProp(configAuth, "password") || ""
 				};
+				let parsedURL;
 				if (maybeWithAuthCredentials(url)) {
-					const parsedURL = new URL(url, platform.origin);
+					parsedURL = new URL(url, platform.origin);
 					if (!auth && (parsedURL.username || parsedURL.password)) auth = {
 						username: decodeURIComponentSafe(parsedURL.username),
 						password: decodeURIComponentSafe(parsedURL.password)
@@ -34980,8 +35409,19 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					headers.delete("authorization");
 					headers.set("Authorization", "Basic " + btoa(encodeUTF8((auth.username || "") + ":" + (auth.password || ""))));
 				}
-				if (hasMaxContentLength && typeof url === "string" && url.startsWith("data:")) {
-					if (estimateDataURLDecodedBytes(url) > maxContentLength) throw new AxiosError("maxContentLength size of " + maxContentLength + " exceeded", AxiosError.ERR_BAD_RESPONSE, config, request);
+				if (hasMaxContentLength && parsedURL && parsedURL.protocol === "data:") {
+					if (estimateDataURLDecodedBytes(parsedURL.href) > maxContentLength) throw new AxiosError("maxContentLength size of " + maxContentLength + " exceeded", AxiosError.ERR_BAD_RESPONSE, config, request);
+				}
+				const formContentType = utils$1.isSpecCompliantForm(data) && AxiosHeaders.from(own("headers")).getContentType();
+				let formBoundary;
+				if (utils$1.isString(formContentType) && /^multipart\/form-data(?:\s*;|$)/i.test(formContentType.trim())) {
+					const parameters = AxiosHeaders.parseParameters(formContentType);
+					if (utils$1.hasOwnProp(parameters, "boundary")) formBoundary = parameters.boundary;
+				}
+				if (utils$1.isSpecCompliantForm(data) && method !== "get" && method !== "head" && (hasMaxBodyLength || onUploadProgress && supportsRequestStream || formBoundary !== void 0)) {
+					data = createMultipartBody(data, Blob, hasMaxBodyLength ? maxBodyLength : Infinity, maxBodyLengthError, formBoundary);
+					headers.setContentType(formBoundary === void 0 ? data.type : formContentType);
+					requestContentLength = data.size;
 				}
 				if (hasMaxBodyLength && method !== "get" && method !== "head") {
 					const outboundLength = await getBodyLength(data);
@@ -35018,7 +35458,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					const contentType = headers.getContentType();
 					if (contentType && /^multipart\/form-data/i.test(contentType) && !/boundary=/i.test(contentType)) headers.delete("content-type");
 				}
-				headers.set("User-Agent", "axios/1.20.0", false);
+				headers.set("User-Agent", "axios/1.21.0", false);
 				const safeFetchOptions = fetchOptions == null ? fetchOptions : Object.assign(Object.create(null), fetchOptions);
 				if (safeFetchOptions) {
 					delete safeFetchOptions.body;
@@ -35037,7 +35477,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					credentials: isCredentialsSupported ? withCredentials : void 0
 				});
 				if (isRequestSupported) {
-					utils$1.forEach(DEFAULT_REQUEST_OPTIONS, (value, key) => {
+					utils$1.forEach(requestDefaults, (value, key) => {
 						if (resolvedOptions[key] === void 0) resolvedOptions[key] = value;
 					});
 					if (resolvedOptions.signal === void 0) resolvedOptions.signal = null;
@@ -35070,7 +35510,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					const onChunkProgress = (loadedBytes) => {
 						if (hasMaxContentLength) {
 							bytesRead = loadedBytes;
-							if (bytesRead > maxContentLength) throw new AxiosError("maxContentLength size of " + maxContentLength + " exceeded", AxiosError.ERR_BAD_RESPONSE, config, request);
+							if (bytesRead > maxContentLength) throw pendingResponseError = new AxiosError("maxContentLength size of " + maxContentLength + " exceeded", AxiosError.ERR_BAD_RESPONSE, config, request);
 						}
 						onProgress && onProgress(loadedBytes);
 					};
@@ -35120,6 +35560,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					request && !pendingBodyError.request && (pendingBodyError.request = request);
 					throw pendingBodyError;
 				}
+				if (pendingResponseError) throw pendingResponseError;
 				if (err instanceof AxiosError) {
 					request && !err.request && (err.request = request);
 					throw err;
@@ -35141,12 +35582,22 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 	const seedCache = /* @__PURE__ */ new Map();
 	const getFetch = (config) => {
-		let env = config && config.env || {};
-		const { fetch, Request, Response } = env;
+		const env = Object.create(null);
+		const configuredEnv = config && utils$1.hasOwnProp(config, "env") && config.env;
+		[
+			"fetch",
+			"Request",
+			"Response",
+			"Blob"
+		].forEach((key) => {
+			if (configuredEnv && utils$1.hasOwnProp(configuredEnv, key)) env[key] = configuredEnv[key];
+		});
+		const { fetch, Request, Response, Blob } = env;
 		const seeds = [
 			Request,
 			Response,
-			fetch
+			fetch,
+			Blob
 		];
 		let i = seeds.length, seed, target, map = seedCache;
 		while (i--) {
@@ -35260,6 +35711,20 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		if (config.signal && config.signal.aborted) throw new CanceledError(null, config);
 	}
 	/**
+	* Milliseconds elapsed since `start`, floored at zero.
+	*
+	* Wall-clock, to match the rest of the codebase (speedometer, throttle,
+	* AxiosTransformStream). A backwards clock adjustment mid-request would
+	* otherwise produce a negative duration, so the result is clamped.
+	*
+	* @param {number} start Timestamp from `Date.now()`
+	*
+	* @returns {number} Non-negative elapsed milliseconds
+	*/
+	function elapsedSince(start) {
+		return Math.max(0, Date.now() - start);
+	}
+	/**
 	* Dispatch a request to the server using the configured adapter.
 	*
 	* @param {object} config The config that is to be used for the request
@@ -35276,8 +35741,11 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			"put",
 			"patch"
 		].indexOf(config.method) !== -1) config.headers.setContentType("application/x-www-form-urlencoded", false);
-		return adapters.getAdapter(config.adapter || defaults.adapter, config)(config).then(function onAdapterResolution(response) {
+		const adapter = adapters.getAdapter(config.adapter || defaults.adapter, config);
+		const start = Date.now();
+		return adapter(config).then(function onAdapterResolution(response) {
 			throwIfCancellationRequested(config);
+			response.duration = elapsedSince(start);
 			config.response = response;
 			try {
 				response.data = transformData.call(config, config.transformResponse, response);
@@ -35290,6 +35758,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (!isCancel(reason)) {
 				throwIfCancellationRequested(config);
 				if (reason && reason.response) {
+					reason.response.duration = elapsedSince(start);
 					config.response = reason.response;
 					try {
 						reason.response.data = transformData.call(config, config.transformResponse, reason.response);
@@ -35327,7 +35796,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	*/
 	validators$1.transitional = function transitional(validator, version, message) {
 		function formatMessage(opt, desc) {
-			return "[Axios v1.20.0] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "");
+			return "[Axios v1.21.0] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "");
 		}
 		return (value, opt, opts) => {
 			if (validator === false) throw new AxiosError(formatMessage(opt, " has been removed" + (version ? " in " + version : "")), AxiosError.ERR_DEPRECATED);
@@ -35374,6 +35843,25 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		validators: validators$1
 	};
 	const validators = validator.validators;
+	const isHeadersBucket = (value) => {
+		if (value == null || utils$1.isPlainObject(value) || value instanceof AxiosHeaders) return true;
+		try {
+			return utils$1.isObject(value) && utils$1.getSafeProp(value, Symbol.toStringTag) === "AxiosHeaders" && [
+				"toJSON",
+				"set",
+				"get",
+				"has",
+				"delete",
+				"clear",
+				"normalize",
+				"concat",
+				"toString",
+				Symbol.iterator
+			].every((method) => utils$1.isFunction(utils$1.getSafeProp(value, method)));
+		} catch (e) {
+			return false;
+		}
+	};
 	/**
 	* Create a new instance of Axios
 	*
@@ -35414,8 +35902,12 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					else if (stack) {
 						const firstNewlineIndex = stack.indexOf("\n");
 						const secondNewlineIndex = firstNewlineIndex === -1 ? -1 : stack.indexOf("\n", firstNewlineIndex + 1);
-						const stackWithoutTwoTopLines = secondNewlineIndex === -1 ? "" : stack.slice(secondNewlineIndex + 1);
-						if (!String(err.stack).endsWith(stackWithoutTwoTopLines)) err.stack += "\n" + stack;
+						const duplicateCheckSuffix = secondNewlineIndex === -1 ? stack : stack.slice(secondNewlineIndex + 1);
+						const currentStack = String(err.stack);
+						const causeIndex = getCauseStackIndex(err, currentStack);
+						const stackHead = causeIndex === -1 ? currentStack : currentStack.slice(0, causeIndex);
+						const causeSection = causeIndex === -1 ? "" : currentStack.slice(causeIndex);
+						if (!stackHead.endsWith(duplicateCheckSuffix)) err.stack = stackHead + "\n" + stack + causeSection;
 					}
 				} catch (e) {}
 				throw err;
@@ -35434,7 +35926,8 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				clarifyTimeoutError: validators.transitional(validators.boolean),
 				legacyInterceptorReqResOrdering: validators.transitional(validators.boolean),
 				advertiseZstdAcceptEncoding: validators.transitional(validators.boolean),
-				validateStatusUndefinedResolves: validators.transitional(validators.boolean)
+				validateStatusUndefinedResolves: validators.transitional(validators.boolean),
+				encodeBasicAuthUsername: validators.transitional(validators.boolean)
 			}, false);
 			if (paramsSerializer != null) {
 				if (utils$1.isFunction(paramsSerializer)) config.paramsSerializer = { serialize: paramsSerializer };
@@ -35444,16 +35937,18 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				}, true);
 			}
 			if (config.allowAbsoluteUrls !== void 0);
-			else if (this.defaults.allowAbsoluteUrls !== void 0) config.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
+			else if (utils$1.hasOwnProp(this.defaults, "allowAbsoluteUrls") && this.defaults.allowAbsoluteUrls !== void 0) config.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
 			else config.allowAbsoluteUrls = true;
 			validator.assertOptions(config, {
 				baseUrl: validators.spelling("baseURL"),
 				withXsrfToken: validators.spelling("withXSRFToken")
 			}, true);
 			config.method = (utils$1.getSafeProp(config, "method") || utils$1.getSafeProp(this.defaults, "method") || "get").toLowerCase();
-			let contextHeaders = headers && utils$1.merge(headers.common, headers[config.method]);
+			const commonHeaders = utils$1.getSafeProp(headers, "common");
+			const methodHeaders = utils$1.getSafeProp(headers, config.method);
+			const contextHeaders = headers && utils$1.merge(isHeadersBucket(commonHeaders) ? commonHeaders : void 0, isHeadersBucket(methodHeaders) ? methodHeaders : void 0);
 			headers && utils$1.forEach(methodList.concat("common"), (method) => {
-				delete headers[method];
+				if (isHeadersBucket(utils$1.getSafeProp(headers, method))) delete headers[method];
 			});
 			config.headers = AxiosHeaders.concat(contextHeaders, headers);
 			const requestInterceptorChain = [];
@@ -35523,7 +36018,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		"head",
 		"options"
 	], function forEachMethodNoData(method) {
-		Axios.prototype[method] = function(url, config) {
+		Axios.prototype[method] = async function(url, config) {
 			return this.request(mergeConfig(config || {}, {
 				method,
 				url,
@@ -35538,7 +36033,7 @@ var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		"query"
 	], function forEachMethodWithData(method) {
 		function generateHTTPMethod(isForm) {
-			return function httpMethod(url, data, config) {
+			return async function httpMethod(url, data, config) {
 				return this.request(mergeConfig(config || {}, {
 					method,
 					headers: isForm ? { "Content-Type": "multipart/form-data" } : {},
