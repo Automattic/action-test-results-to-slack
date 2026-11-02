@@ -1944,7 +1944,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ---
 
 Name: glob
-Version: 13.0.6
+Version: 14.0.2
 License: BlueOak-1.0.0
 Private: false
 Description: the most correct and second fastest glob implementation in JavaScript
