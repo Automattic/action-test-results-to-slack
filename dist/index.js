@@ -44751,37 +44751,30 @@ function expand_(str, max, maxLength, maxDepth, depth, maxRewrites, isTop) {
 	}
 	return acc;
 }
-// ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/assert-valid-pattern.js
-const MAX_PATTERN_LENGTH = 65536;
-const assertValidPattern = (pattern) => {
-	if (typeof pattern !== "string") throw new TypeError("invalid pattern");
-	if (pattern.length > MAX_PATTERN_LENGTH) throw new TypeError("pattern is too long");
-};
-// ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/brace-expressions.js
+// ../../../node_modules/.pnpm/@isaacs+nonrecursive-glob-match@1.0.3/node_modules/@isaacs/nonrecursive-glob-match/dist/esm/parse-class.js
 const posixClasses = {
-	"[:alnum:]": ["\\p{L}\\p{Nl}\\p{Nd}", true],
-	"[:alpha:]": ["\\p{L}\\p{Nl}", true],
-	"[:ascii:]": ["\\x00-\\x7f", false],
-	"[:blank:]": ["\\p{Zs}\\t", true],
-	"[:cntrl:]": ["\\p{Cc}", true],
-	"[:digit:]": ["\\p{Nd}", true],
-	"[:graph:]": [
-		"\\p{Z}\\p{C}",
-		true,
-		true
-	],
-	"[:lower:]": ["\\p{Ll}", true],
+	"[:alnum:]": ["\\p{L}\\p{Nl}\\p{Nd}"],
+	"[:alpha:]": ["\\p{L}\\p{Nl}"],
+	"[:ascii:]": ["\\x00-\\x7f"],
+	"[:blank:]": ["\\p{Zs}\\t"],
+	"[:cntrl:]": ["\\p{Cc}"],
+	"[:digit:]": ["\\p{Nd}"],
+	"[:graph:]": ["\\p{Z}\\p{C}", true],
+	"[:lower:]": ["\\p{Ll}"],
 	"[:print:]": ["\\p{C}", true],
-	"[:punct:]": ["\\p{P}", true],
-	"[:space:]": ["\\p{Z}\\t\\r\\n\\v\\f", true],
-	"[:upper:]": ["\\p{Lu}", true],
-	"[:word:]": ["\\p{L}\\p{Nl}\\p{Nd}\\p{Pc}", true],
-	"[:xdigit:]": ["A-Fa-f0-9", false]
+	"[:punct:]": ["\\p{P}\\p{S}"],
+	"[:space:]": ["\\p{Z}\\t\\r\\n\\v\\f"],
+	"[:upper:]": ["\\p{Lu}"],
+	"[:word:]": ["\\p{L}\\p{Nl}\\p{Nd}\\p{Pc}"],
+	"[:xdigit:]": ["A-Fa-f0-9"]
 };
 const braceEscape = (s) => s.replace(/[[\]\\-]/g, "\\$&");
-const regexpEscape = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-const rangesToString = (ranges) => ranges.join("");
-const parseClass = (glob, position) => {
+const noMatch = /$./;
+const parseClass = (glob, position, nocase = false, form) => {
+	const norm = (c) => {
+		const n = form ? c.normalize(form) : c;
+		return [...n].length === 1 ? n : c;
+	};
 	const pos = position;
 	/* c8 ignore start */
 	if (glob.charAt(pos) !== "[") throw new Error("not in a brace expression");
@@ -44790,13 +44783,12 @@ const parseClass = (glob, position) => {
 	const negs = [];
 	let i = pos + 1;
 	let sawStart = false;
-	let uflag = false;
 	let escaping = false;
 	let negate = false;
 	let endPos = pos;
 	let rangeStart = "";
 	WHILE: while (i < glob.length) {
-		const c = glob.charAt(i);
+		const c = String.fromCodePoint(glob.codePointAt(i));
 		if ((c === "!" || c === "^") && i === pos + 1) {
 			negate = true;
 			i++;
@@ -44815,72 +44807,658 @@ const parseClass = (glob, position) => {
 			}
 		}
 		if (c === "[" && !escaping) {
-			for (const [cls, [unip, u, neg]] of Object.entries(posixClasses)) if (glob.startsWith(cls, i)) {
-				if (rangeStart) return [
-					"$.",
-					false,
-					glob.length - pos,
-					true
-				];
+			for (const [cls, [unip, neg]] of Object.entries(posixClasses)) if (glob.startsWith(cls, i)) {
+				if (rangeStart) return [noMatch, glob.length - pos];
 				i += cls.length;
 				if (neg) negs.push(unip);
 				else ranges.push(unip);
-				uflag = uflag || u;
 				continue WHILE;
 			}
 		}
 		escaping = false;
+		const n = norm(c);
 		if (rangeStart) {
-			if (c > rangeStart) ranges.push(braceEscape(rangeStart) + "-" + braceEscape(c));
-			else if (c === rangeStart) ranges.push(braceEscape(c));
+			if (n.codePointAt(0) > rangeStart.codePointAt(0)) ranges.push(braceEscape(rangeStart) + "-" + braceEscape(n));
+			else if (n === rangeStart) ranges.push(braceEscape(n));
 			rangeStart = "";
-			i++;
+			i += c.length;
 			continue;
 		}
-		if (glob.startsWith("-]", i + 1)) {
-			ranges.push(braceEscape(c + "-"));
-			i += 2;
+		if (glob.startsWith("-]", i + c.length)) {
+			ranges.push(braceEscape(n + "-"));
+			i += c.length + 1;
 			continue;
 		}
-		if (glob.startsWith("-", i + 1)) {
-			rangeStart = c;
-			i += 2;
+		if (glob.startsWith("-", i + c.length)) {
+			rangeStart = n;
+			i += c.length + 1;
 			continue;
 		}
-		ranges.push(braceEscape(c));
-		i++;
+		ranges.push(braceEscape(n));
+		i += c.length;
 	}
-	if (endPos < i) return [
-		"",
-		false,
-		0,
-		false
-	];
-	if (!ranges.length && !negs.length) return [
-		"$.",
-		false,
-		glob.length - pos,
-		true
-	];
-	if (negs.length === 0 && ranges.length === 1 && /^\\?.$/.test(ranges[0]) && !negate) {
-		const r = ranges[0].length === 2 ? ranges[0].slice(-1) : ranges[0];
-		return [
-			regexpEscape(r),
-			false,
-			endPos - pos,
-			false
-		];
-	}
-	const sranges = "[" + (negate ? "^" : "") + rangesToString(ranges) + "]";
-	const snegs = "[" + (negate ? "" : "^") + rangesToString(negs) + "]";
-	return [
-		ranges.length && negs.length ? "(" + sranges + "|" + snegs + ")" : ranges.length ? sranges : snegs,
-		uflag,
-		endPos - pos,
-		true
-	];
+	if (endPos < i) return [noMatch, 0];
+	if (!ranges.length && !negs.length) return [noMatch, glob.length - pos];
+	const sranges = "[" + (negate ? "^" : "") + ranges.join("") + "]";
+	const snegs = "[" + (negate ? "" : "^") + negs.join("") + "]";
+	const comb = "^" + (ranges.length && negs.length ? "(" + sranges + "|" + snegs + ")" : ranges.length ? sranges : snegs);
+	return [new RegExp(comb, nocase ? "iu" : "u"), endPos - pos];
 };
-// ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/unescape.js
+// ../../../node_modules/.pnpm/@isaacs+nonrecursive-glob-match@1.0.3/node_modules/@isaacs/nonrecursive-glob-match/dist/esm/index.js
+const MATCH = {
+	t: "match",
+	id: 0
+};
+const extTypes = "!?+*@";
+const lit = (ch) => ({
+	t: "lit",
+	ch
+});
+const reEscape = (s) => s.replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&");
+const newFoldRe = (s) => new RegExp(`^${reEscape(s)}$`, "iu");
+const foldCache = /* @__PURE__ */ new Map();
+const foldRe = (ch) => {
+	let re = foldCache.get(ch);
+	if (!re) {
+		re = newFoldRe(ch);
+		if (foldCache.size >= 1e3) foldCache.clear();
+		foldCache.set(ch, re);
+	}
+	return re;
+};
+const litMatch = (l, c) => {
+	if (c === l.ch) return true;
+	if (!l.re) return false;
+	const code = c.charCodeAt(0);
+	if (code >= 128) return l.re.test(c);
+	const ascii = l.ascii ??= /* @__PURE__ */ new Uint8Array(128);
+	ascii[code] ||= l.re.test(c) ? 1 : 2;
+	return ascii[code] === 1;
+};
+const tokenize = (p, nocase, noext, form) => {
+	const toks = [];
+	for (let i = 0; i < p.length;) {
+		const c = String.fromCodePoint(p.codePointAt(i));
+		if (c === "\\") {
+			const e = p.codePointAt(i + 1);
+			const ch = e === void 0 ? c : String.fromCodePoint(e);
+			toks.push(lit(ch));
+			i += 1 + ch.length;
+			continue;
+		}
+		if (c === "[") {
+			const [re, consumed] = parseClass(p, i, nocase, form);
+			if (consumed) {
+				toks.push({
+					t: "class",
+					re
+				});
+				i += consumed;
+				continue;
+			}
+		}
+		if (!noext && extTypes.includes(c) && p[i + 1] === "(") {
+			toks.push({
+				t: "open",
+				type: c
+			});
+			i += 2;
+			continue;
+		}
+		toks.push(!noext && c === "|" ? { t: "bar" } : !noext && c === ")" ? { t: "close" } : c === "*" ? { t: "star" } : c === "?" ? { t: "any" } : lit(c));
+		i += c.length;
+	}
+	return toks;
+};
+const pair = (toks) => {
+	const pairs = /* @__PURE__ */ new Map();
+	const stack = [];
+	toks.forEach((tok, i) => {
+		if (tok.t === "open") stack.push(i);
+		else if (tok.t === "close" && stack.length) pairs.set(stack.pop(), i);
+	});
+	return pairs;
+};
+const build = (toks, pairs, start, end, top) => {
+	let seq = [];
+	const alts = [seq];
+	for (let i = start; i < end; i++) {
+		const tok = toks[i];
+		const close = pairs.get(i);
+		if (tok.t === "open" && close !== void 0) {
+			const sub = build(toks, pairs, i + 1, close, false);
+			seq.push({
+				t: "ext",
+				type: tok.type,
+				alts: sub
+			});
+			i = close;
+		} else if (tok.t === "bar" && !top) alts.push(seq = []);
+		else if (tok.t === "open") seq.push(lit(tok.type), lit("("));
+		else if (tok.t === "bar") seq.push(lit("|"));
+		else if (tok.t === "close") seq.push(lit(")"));
+		else seq.push(tok);
+	}
+	return alts;
+};
+const normalize = (items, form) => {
+	const out = [];
+	let run = "";
+	const flush = () => {
+		for (const ch of run.normalize(form)) out.push(lit(ch));
+		run = "";
+	};
+	for (const it of items) {
+		if (it.t === "lit") {
+			run += it.ch;
+			continue;
+		}
+		flush();
+		out.push(it.t === "ext" ? {
+			...it,
+			alts: it.alts.map((a) => normalize(a, form))
+		} : it);
+	}
+	flush();
+	return out;
+};
+const compile = (items, nocase) => {
+	let id = 1;
+	const split = (out) => ({
+		t: "split",
+		id: id++,
+		out
+	});
+	const seq = (items, next) => items.reduceRight((next, it) => item(it, next), next);
+	const item = (it, next) => {
+		switch (it.t) {
+			case "lit":
+				const re = nocase ? foldRe(it.ch) : void 0;
+				return {
+					t: "lit",
+					id: id++,
+					ch: it.ch,
+					re,
+					next
+				};
+			case "any":
+			case "star": return {
+				t: it.t,
+				id: id++,
+				next
+			};
+			case "class": return {
+				t: "class",
+				id: id++,
+				re: it.re,
+				next
+			};
+		}
+		const alts = (next) => it.alts.map((a) => seq(a, next));
+		switch (it.type) {
+			case "@": return split(alts(next));
+			case "?": return split([next, ...alts(next)]);
+			case "!": return {
+				t: "neg",
+				id: id++,
+				sub: split(alts(MATCH)),
+				next
+			};
+		}
+		const after = split([]);
+		const entry = split(alts(after));
+		after.out.push(next, entry);
+		return it.type === "*" ? after : entry;
+	};
+	return [seq(items, MATCH), id];
+};
+const show = (start) => {
+	const lines = [];
+	const seen = /* @__PURE__ */ new Set();
+	const ref = (n) => n.t === "match" ? "match" : String(n.id);
+	const walk = (n, indent) => {
+		if (n.t === "match" || seen.has(n)) return;
+		seen.add(n);
+		const line = (desc) => lines.push(`${indent}${n.id}: ${desc}`);
+		switch (n.t) {
+			case "split":
+				line(`split -> ${n.out.map(ref).join(", ")}`);
+				for (const o of n.out) walk(o, indent);
+				return;
+			case "neg":
+				line(`!(${ref(n.sub)}) -> ${ref(n.next)}`);
+				walk(n.sub, indent + "  ");
+				return walk(n.next, indent);
+			case "lit":
+				line(`${JSON.stringify(n.ch)} -> ${ref(n.next)}`);
+				break;
+			case "class":
+				line(`${n.re} -> ${ref(n.next)}`);
+				break;
+			default: line(`${n.t === "any" ? "?" : "*"} -> ${ref(n.next)}`);
+		}
+		walk(n.next, indent);
+	};
+	walk(start, "");
+	return [`start -> ${ref(start)}`, ...lines].join("\n");
+};
+var State = class {
+	gen;
+	threads = [];
+	match = false;
+	runs = [];
+	ids = [];
+	constructor(gen) {
+		this.gen = gen;
+	}
+	get dead() {
+		return !this.threads.length && !this.match && !this.runs.length;
+	}
+};
+const sameState = (a, b) => {
+	if (a.ids.length !== b.ids.length) return false;
+	if (a.runs.length !== b.runs.length) return false;
+	if (a.ids.some((id, i) => id !== b.ids[i])) return false;
+	return a.runs.every((r) => b.runs.some((o) => o.neg === r.neg && sameState(o.state, r.state)));
+};
+const marks = (size) => ({
+	has: new Float64Array(size),
+	seen: new Float64Array(size),
+	gen: 0
+});
+var Sim = class {
+	dots;
+	dotStart;
+	#marks;
+	constructor(dots, dotStart, marks) {
+		this.dots = dots;
+		this.dotStart = dotStart;
+		this.#marks = marks;
+	}
+	state() {
+		return new State(++this.#marks.gen);
+	}
+	done(state) {
+		state.ids = state.threads.map((n) => n.id).sort((a, b) => a - b);
+		if (state.match) state.ids.unshift(MATCH.id);
+		return state;
+	}
+	#visit(state, node) {
+		const { seen } = this.#marks;
+		if (seen[node.id] === state.gen) return false;
+		seen[node.id] = state.gen;
+		return true;
+	}
+	#addThread(state, node) {
+		const { has } = this.#marks;
+		if (has[node.id] === state.gen) return false;
+		has[node.id] = state.gen;
+		state.threads.push(node);
+		return true;
+	}
+	restricted(i, top) {
+		return top && (this.dots || this.dotStart && i === 0);
+	}
+	add(state, node, i, top) {
+		switch (node.t) {
+			case "split":
+				if (!this.#visit(state, node)) return;
+				for (const o of node.out) this.add(state, o, i, top);
+				return;
+			case "neg":
+				if (!this.#visit(state, node)) return;
+				const sub = this.state();
+				this.add(sub, node.sub, i, false);
+				this.done(sub);
+				return this.addRun(state, {
+					t: "run",
+					neg: node,
+					state: sub
+				}, i, top);
+			case "star":
+				if (this.restricted(i, top)) return;
+				if (this.#addThread(state, node)) this.add(state, node.next, i, top);
+				return;
+			case "match":
+				state.match = true;
+				return;
+			default: this.#addThread(state, node);
+		}
+	}
+	addRun(state, run, i, top) {
+		for (const r of state.runs) if (r.neg === run.neg && sameState(r.state, run.state)) return;
+		state.runs.push(run);
+		if (!run.state.match) this.add(state, run.neg.next, i, top);
+	}
+	step(state, c, i, top) {
+		const next = this.state();
+		for (const th of state.threads) switch (th.t) {
+			case "lit":
+				if (litMatch(th, c)) this.add(next, th.next, i + 1, top);
+				break;
+			case "any":
+				if (!this.restricted(i, top)) this.add(next, th.next, i + 1, top);
+				break;
+			case "class":
+				if (!this.restricted(i, top) && th.re.test(c)) this.add(next, th.next, i + 1, top);
+				break;
+			case "star": if (!this.restricted(i, top)) this.add(next, th, i + 1, top);
+		}
+		if (!this.restricted(i, top)) for (const run of state.runs) {
+			if (run.state.dead) {
+				this.addRun(next, run, i + 1, top);
+				continue;
+			}
+			const sub = this.step(run.state, c, i, false);
+			this.addRun(next, {
+				t: "run",
+				neg: run.neg,
+				state: sub
+			}, i + 1, top);
+		}
+		return this.done(next);
+	}
+};
+const stateKey = (state) => {
+	const ids = state.ids.join();
+	if (!state.runs.length) return ids;
+	return `${ids}|${state.runs.map((r) => `${r.neg.id}(${stateKey(r.state)})`).sort().join("|")}`;
+};
+const DFA_BUDGET = 1 << 18;
+var Dfa = class {
+	#start;
+	#states = /* @__PURE__ */ new Map();
+	#size = 0;
+	#plain;
+	#dotStart;
+	#sim;
+	#dotSim;
+	constructor(start, marks) {
+		this.#start = start;
+		this.#sim = new Sim(false, false, marks);
+		this.#dotSim = new Sim(false, true, marks);
+	}
+	#make(state) {
+		return {
+			state,
+			match: state.match,
+			dead: state.dead,
+			next: /* @__PURE__ */ new Map()
+		};
+	}
+	#intern(state) {
+		const key = stateKey(state);
+		const found = this.#states.get(key);
+		if (found) return found;
+		if (this.#size > DFA_BUDGET) this.#clear();
+		const d = this.#make(state);
+		this.#states.set(key, d);
+		this.#size += key.length + 1;
+		return d;
+	}
+	#clear() {
+		this.#states.clear();
+		this.#size = 0;
+		this.#plain = void 0;
+		this.#dotStart = void 0;
+	}
+	start(dotStart) {
+		if (dotStart) {
+			if (this.#dotStart) return this.#dotStart;
+			const state = this.#dotSim.state();
+			this.#dotSim.add(state, this.#start, 0, true);
+			return this.#dotStart = this.#make(this.#dotSim.done(state));
+		}
+		if (this.#plain) return this.#plain;
+		const state = this.#sim.state();
+		this.#sim.add(state, this.#start, 0, true);
+		return this.#plain = this.#intern(this.#sim.done(state));
+	}
+	next(d, c) {
+		const code = c.charCodeAt(0);
+		const found = code < 128 ? void 0 : d.next.get(c);
+		if (found) return found;
+		const n = d === this.#dotStart ? this.#intern(this.#dotSim.step(d.state, c, 0, true)) : this.#intern(this.#sim.step(d.state, c, 1, true));
+		if (code < 128) {
+			if (!d.ascii) {
+				d.ascii = new Array(128);
+				this.#size += 128;
+			}
+			d.ascii[code] = n;
+		} else d.next.set(c, n);
+		this.#size++;
+		return n;
+	}
+};
+const linear = (start) => {
+	const nodes = [];
+	for (let n = start; n.t !== "match"; n = n.next) {
+		if (n.t === "split" || n.t === "neg") return void 0;
+		nodes.push(n);
+	}
+	return nodes;
+};
+const testLinear = (nodes, chars, start, end) => {
+	let ni = 0;
+	let ci = start;
+	let starNi = -1;
+	let starCi = 0;
+	while (ci < end) {
+		const n = nodes[ni];
+		if (n?.t === "star") {
+			starNi = ni++;
+			starCi = ci;
+			continue;
+		}
+		const c = chars[ci];
+		if (n && (n.t === "any" || n.t === "lit" && litMatch(n, c) || n.t === "class" && n.re.test(c))) {
+			ni++;
+			ci++;
+			continue;
+		}
+		if (starNi === -1) return false;
+		ni = starNi + 1;
+		ci = ++starCi;
+	}
+	while (nodes[ni]?.t === "star") ni++;
+	return ni === nodes.length;
+};
+const lengths = (items) => {
+	let min = 0;
+	let max = 0;
+	for (const it of items) {
+		const [lo, hi] = itemLengths(it);
+		min += lo;
+		max += hi;
+	}
+	return [min, max];
+};
+const itemLengths = (it) => {
+	if (it.t === "star") return [0, Infinity];
+	if (it.t !== "ext") return [1, 1];
+	if (it.type === "!") return [0, Infinity];
+	const alts = it.alts.map(lengths);
+	const min = Math.min(...alts.map((a) => a[0]));
+	const max = Math.max(...alts.map((a) => a[1]));
+	const loop = max === 0 ? 0 : Infinity;
+	return it.type === "@" ? [min, max] : it.type === "?" ? [0, max] : it.type === "*" ? [0, loop] : [min, loop];
+};
+const hasAffix = (lits, chars, start) => {
+	for (let j = 0; j < lits.length; j++) if (!litMatch(lits[j], chars[start + j])) return false;
+	return true;
+};
+const slashOrSurrogate = /[/\ud800-\udfff]/;
+const surrogate = /[\ud800-\udfff]/;
+const codePoints = (s) => surrogate.test(s) ? [...s] : s;
+const noSlash = (s) => {
+	if (s.includes("/")) throw new Error("can only match a single path portion, got: " + s);
+};
+var Matcher = class {
+	pattern;
+	options;
+	#start;
+	#size;
+	#marks;
+	#dotsSim;
+	#literal;
+	#literalFold = false;
+	#literalRe;
+	#linear;
+	#wild = false;
+	#min = 0;
+	#max = Infinity;
+	#prefix = [];
+	#suffix = [];
+	#prefixStr;
+	#suffixStr;
+	#affix = false;
+	#dfa;
+	#form;
+	constructor(pattern, options = {}) {
+		if (pattern.includes("/")) throw new Error("can only match a single path portion, got pattern: " + pattern);
+		this.pattern = pattern;
+		this.options = options;
+		const { nocase = false, noext = false, normalize: n } = options;
+		this.#form = n === true ? "NFC" : n || void 0;
+		const literal = /^[?*+@]\(\)$/.test(pattern);
+		const toks = tokenize(pattern, nocase, noext || literal, this.#form);
+		let [items] = build(toks, pair(toks), 0, toks.length, true);
+		if (this.#form) items = normalize(items, this.#form);
+		const [start, size] = compile(items, nocase);
+		this.#start = start;
+		this.#size = size;
+		if (items.every((it) => it.t === "lit")) {
+			this.#literal = items.map((it) => it.ch).join("");
+			this.#literalFold = nocase;
+		} else {
+			const lit = (it) => it.t !== "lit" ? void 0 : nocase ? {
+				ch: it.ch,
+				re: foldRe(it.ch)
+			} : { ch: it.ch };
+			for (const it of items) {
+				const l = lit(it);
+				if (!l) break;
+				this.#prefix.push(l);
+			}
+			for (let j = items.length - 1; j >= 0; j--) {
+				const l = lit(items[j]);
+				if (!l) break;
+				this.#suffix.unshift(l);
+			}
+			this.#affix = !!(this.#prefix.length || this.#suffix.length);
+			if (!nocase) {
+				this.#prefixStr = this.#prefix.map((l) => l.ch).join("");
+				this.#suffixStr = this.#suffix.map((l) => l.ch).join("");
+			}
+			this.#linear = linear(this.#start)?.slice(this.#prefix.length, -this.#suffix.length || void 0);
+			this.#wild = !!this.#linear?.every((n) => n.t === "star" || n.t === "any");
+			const [min, max] = lengths(items);
+			this.#min = min;
+			this.#max = max;
+		}
+	}
+	test(s) {
+		if (this.#form) {
+			noSlash(s);
+			return this.#test(s.normalize(this.#form));
+		}
+		if (slashOrSurrogate.test(s)) {
+			noSlash(s);
+			return this.#test(s, [...s]);
+		}
+		return this.#test(s, s);
+	}
+	/**
+	* The same as {@link Matcher#test}, but the string is not checked
+	* for `/` chars, so the result for a string that has one is not
+	* defined. Only use it for a string that is known to be one path
+	* portion, such as a part of a path that was split on `/`. It can
+	* be faster, because some patterns do not need to look at each char
+	* of the string.
+	*/
+	testUnchecked(s) {
+		return this.#test(this.#form ? s.normalize(this.#form) : s);
+	}
+	#test(s, chars) {
+		if (this.#literal !== void 0) return this.#literalFold ? (this.#literalRe ??= newFoldRe(this.#literal)).test(s) : s === this.#literal;
+		const min = this.#min;
+		const max = this.#max;
+		if (chars === void 0) {
+			const most = s.length;
+			const least = most + 1 >> 1;
+			if (most < min || least > max) return false;
+			if (least < min || most > max) chars = codePoints(s);
+		}
+		if (chars !== void 0 && (chars.length < min || chars.length > max)) return false;
+		const prefix = this.#prefix.length;
+		if (this.#affix) {
+			if (this.#prefixStr !== void 0 && this.#suffixStr !== void 0) {
+				if (!s.startsWith(this.#prefixStr) || !s.endsWith(this.#suffixStr)) return false;
+			} else {
+				chars ??= codePoints(s);
+				const end = chars.length - this.#suffix.length;
+				if (!hasAffix(this.#prefix, chars, 0) || !hasAffix(this.#suffix, chars, end)) return false;
+			}
+		}
+		const dotStart = !this.options.dot && s.startsWith(".");
+		if (this.#linear) {
+			if (s === "." || s === "..") return false;
+			if (dotStart && !prefix) return false;
+			if (this.#wild) return true;
+			chars ??= codePoints(s);
+			const end = chars.length - this.#suffix.length;
+			return testLinear(this.#linear, chars, prefix, end);
+		}
+		chars ??= codePoints(s);
+		if (s === "." || s === "..") {
+			this.#marks ??= marks(this.#size);
+			const sim = this.#dotsSim ??= new Sim(true, false, this.#marks);
+			const start = sim.state();
+			sim.add(start, this.#start, 0, true);
+			let state = sim.done(start);
+			for (let i = 0; i < chars.length; i++) state = sim.step(state, chars[i], i, true);
+			return state.match;
+		}
+		this.#marks ??= marks(this.#size);
+		const dfa = this.#dfa ??= new Dfa(this.#start, this.#marks);
+		let d = dfa.start(dotStart);
+		const str = chars === s;
+		for (let i = 0; i < chars.length; i++) {
+			if (d.dead) return false;
+			const code = str ? s.charCodeAt(i) : chars[i].charCodeAt(0);
+			d = d.ascii?.[code] ?? dfa.next(d, chars[i]);
+		}
+		return d.match;
+	}
+	/** a readable listing of the state machine */
+	toString() {
+		return show(this.#start);
+	}
+};
+// ../../../node_modules/.pnpm/minimatch@11.0.3/node_modules/minimatch/dist/esm/assert-valid-pattern.js
+const MAX_PATTERN_LENGTH = 65536;
+const assertValidPattern = (pattern) => {
+	if (typeof pattern !== "string") throw new TypeError("invalid pattern");
+	if (pattern.length > MAX_PATTERN_LENGTH) throw new TypeError("pattern is too long");
+};
+// ../../../node_modules/.pnpm/minimatch@11.0.3/node_modules/minimatch/dist/esm/escape.js
+/**
+* Escape all magic characters in a glob pattern.
+*
+* If the {@link MinimatchOptions.windowsPathsNoEscape}
+* option is used, then characters are escaped by wrapping in `[]`, because
+* a magic character wrapped in a character class can only be satisfied by
+* that exact character.  In this mode, `\` is _not_ escaped, because it is
+* not interpreted as a magic character, but instead as a path separator.
+*
+* If the {@link MinimatchOptions.magicalBraces} option is used,
+* then braces (`{` and `}`) will be escaped.
+*/
+const escape = (s, { windowsPathsNoEscape = false, magicalBraces = false } = {}) => {
+	if (magicalBraces) return windowsPathsNoEscape ? s.replace(/[?*()[\]{}]/g, "[$&]") : s.replace(/[?*()[\]\\{}]/g, "\\$&");
+	return windowsPathsNoEscape ? s.replace(/[?*()[\]]/g, "[$&]") : s.replace(/[?*()[\]\\]/g, "\\$&");
+};
+// ../../../node_modules/.pnpm/minimatch@11.0.3/node_modules/minimatch/dist/esm/unescape.js
 /**
 * Un-escape a string that has been escaped with {@link escape}.
 *
@@ -44904,587 +45482,27 @@ const unescape = (s, { windowsPathsNoEscape = false, magicalBraces = true } = {}
 	if (magicalBraces) return windowsPathsNoEscape ? s.replace(/\[([^/\\])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^/\\])\]/g, "$1$2").replace(/\\([^/])/g, "$1");
 	return windowsPathsNoEscape ? s.replace(/\[([^/\\{}])\]/g, "$1") : s.replace(/((?!\\).|^)\[([^/\\{}])\]/g, "$1$2").replace(/\\([^/{}])/g, "$1");
 };
-// ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/ast.js
-var _a;
-const types = /* @__PURE__ */ new Set([
-	"!",
-	"?",
-	"+",
-	"*",
-	"@"
-]);
-const isExtglobType = (c) => types.has(c);
-const isExtglobAST = (c) => isExtglobType(c.type);
-const adoptionMap = /* @__PURE__ */ new Map([
-	["!", ["@"]],
-	["?", ["?", "@"]],
-	["@", ["@"]],
-	["*", [
-		"*",
-		"+",
-		"?",
-		"@"
-	]],
-	["+", ["+", "@"]]
-]);
-const adoptionWithSpaceMap = /* @__PURE__ */ new Map([
-	["!", ["?"]],
-	["@", ["?"]],
-	["+", ["?", "*"]]
-]);
-const adoptionAnyMap = /* @__PURE__ */ new Map([
-	["!", ["?", "@"]],
-	["?", ["?", "@"]],
-	["@", ["?", "@"]],
-	["*", [
-		"*",
-		"+",
-		"?",
-		"@"
-	]],
-	["+", [
-		"+",
-		"@",
-		"?",
-		"*"
-	]]
-]);
-const usurpMap = /* @__PURE__ */ new Map([
-	["!", /* @__PURE__ */ new Map([["!", "@"]])],
-	["?", /* @__PURE__ */ new Map([["*", "*"], ["+", "*"]])],
-	["@", /* @__PURE__ */ new Map([
-		["!", "!"],
-		["?", "?"],
-		["@", "@"],
-		["*", "*"],
-		["+", "+"]
-	])],
-	["+", /* @__PURE__ */ new Map([["?", "*"], ["*", "*"]])]
-]);
-const startNoTraversal = "(?!(?:^|/)\\.\\.?(?:$|/))";
-const startNoDot = "(?!\\.)";
-const addPatternStart = /* @__PURE__ */ new Set(["[", "."]);
-const justDots = /* @__PURE__ */ new Set(["..", "."]);
-const reSpecials = /* @__PURE__ */ new Set("().*{}+?[]^$\\!");
-const regExpEscape$1 = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-const qmark = "[^/]";
-const star$1 = "[^/]*?";
-const starNoEmpty = "[^/]+?";
-let ID = 0;
-var AST = class {
-	type;
-	#root;
-	#hasMagic;
-	#uflag = false;
-	#parts = [];
-	#parent;
-	#parentIndex;
-	#negs;
-	#filledNegs = false;
-	#options;
-	#toString;
-	#emptyExt = false;
-	id = ++ID;
-	get depth() {
-		return (this.#parent?.depth ?? -1) + 1;
-	}
-	[Symbol.for("nodejs.util.inspect.custom")]() {
-		return {
-			"@@type": "AST",
-			id: this.id,
-			type: this.type,
-			root: this.#root.id,
-			parent: this.#parent?.id,
-			depth: this.depth,
-			partsLength: this.#parts.length,
-			parts: this.#parts
-		};
-	}
-	constructor(type, parent, options = {}) {
-		this.type = type;
-		if (type) this.#hasMagic = true;
-		this.#parent = parent;
-		this.#root = this.#parent ? this.#parent.#root : this;
-		this.#options = this.#root === this ? options : this.#root.#options;
-		this.#negs = this.#root === this ? [] : this.#root.#negs;
-		if (type === "!" && !this.#root.#filledNegs) this.#negs.push(this);
-		this.#parentIndex = this.#parent ? this.#parent.#parts.length : 0;
-	}
-	get hasMagic() {
-		/* c8 ignore start */
-		if (this.#hasMagic !== void 0) return this.#hasMagic;
-		/* c8 ignore stop */
-		for (const p of this.#parts) {
-			if (typeof p === "string") continue;
-			if (p.type || p.hasMagic) return this.#hasMagic = true;
-		}
-		return this.#hasMagic;
-	}
-	toString() {
-		return this.#toString !== void 0 ? this.#toString : !this.type ? this.#toString = this.#parts.map((p) => String(p)).join("") : this.#toString = this.type + "(" + this.#parts.map((p) => String(p)).join("|") + ")";
-	}
-	#fillNegs() {
-		/* c8 ignore start */
-		if (this !== this.#root) throw new Error("should only call on root");
-		if (this.#filledNegs) return this;
-		/* c8 ignore stop */
-		this.toString();
-		this.#filledNegs = true;
-		let n;
-		while (n = this.#negs.pop()) {
-			if (n.type !== "!") continue;
-			let p = n;
-			let pp = p.#parent;
-			while (pp) {
-				for (let i = p.#parentIndex + 1; !pp.type && i < pp.#parts.length; i++) for (const part of n.#parts) {
-					/* c8 ignore start */
-					if (typeof part === "string") throw new Error("string part in extglob AST??");
-					/* c8 ignore stop */
-					part.copyIn(pp.#parts[i]);
-				}
-				p = pp;
-				pp = p.#parent;
-			}
-		}
-		return this;
-	}
-	push(...parts) {
-		for (const p of parts) {
-			if (p === "") continue;
-			/* c8 ignore start */
-			if (typeof p !== "string" && !(p instanceof _a && p.#parent === this)) throw new Error("invalid part: " + p);
-			/* c8 ignore stop */
-			this.#parts.push(p);
-		}
-	}
-	toJSON() {
-		const ret = this.type === null ? this.#parts.slice().map((p) => typeof p === "string" ? p : p.toJSON()) : [this.type, ...this.#parts.map((p) => p.toJSON())];
-		if (this.isStart() && !this.type) ret.unshift([]);
-		if (this.isEnd() && (this === this.#root || this.#root.#filledNegs && this.#parent?.type === "!")) ret.push({});
-		return ret;
-	}
-	isStart() {
-		if (this.#root === this) return true;
-		if (!this.#parent?.isStart()) return false;
-		if (this.#parentIndex === 0) return true;
-		const p = this.#parent;
-		for (let i = 0; i < this.#parentIndex; i++) {
-			const pp = p.#parts[i];
-			if (!(pp instanceof _a && pp.type === "!")) return false;
-		}
-		return true;
-	}
-	isEnd() {
-		if (this.#root === this) return true;
-		if (this.#parent?.type === "!") return true;
-		if (!this.#parent?.isEnd()) return false;
-		if (!this.type) return this.#parent?.isEnd();
-		/* c8 ignore start */
-		const pl = this.#parent ? this.#parent.#parts.length : 0;
-		/* c8 ignore stop */
-		return this.#parentIndex === pl - 1;
-	}
-	copyIn(part) {
-		if (typeof part === "string") this.push(part);
-		else this.push(part.clone(this));
-	}
-	clone(parent) {
-		const c = new _a(this.type, parent);
-		for (const p of this.#parts) c.copyIn(p);
-		return c;
-	}
-	static #parseAST(str, ast, pos, opt, extDepth) {
-		const maxDepth = opt.maxExtglobRecursion ?? 2;
-		let escaping = false;
-		let inBrace = false;
-		let braceStart = -1;
-		let braceNeg = false;
-		if (ast.type === null) {
-			let i = pos;
-			let acc = "";
-			while (i < str.length) {
-				const c = str.charAt(i++);
-				if (escaping || c === "\\") {
-					escaping = !escaping;
-					acc += c;
-					continue;
-				}
-				if (inBrace) {
-					if (i === braceStart + 1) {
-						if (c === "^" || c === "!") braceNeg = true;
-					} else if (c === "]" && !(i === braceStart + 2 && braceNeg)) inBrace = false;
-					acc += c;
-					continue;
-				} else if (c === "[") {
-					inBrace = true;
-					braceStart = i;
-					braceNeg = false;
-					acc += c;
-					continue;
-				}
-				if (!opt.noext && isExtglobType(c) && str.charAt(i) === "(" && extDepth <= maxDepth) {
-					ast.push(acc);
-					acc = "";
-					const ext = new _a(c, ast);
-					i = _a.#parseAST(str, ext, i, opt, extDepth + 1);
-					ast.push(ext);
-					continue;
-				}
-				acc += c;
-			}
-			ast.push(acc);
-			return i;
-		}
-		let i = pos + 1;
-		let part = new _a(null, ast);
-		const parts = [];
-		let acc = "";
-		while (i < str.length) {
-			const c = str.charAt(i++);
-			if (escaping || c === "\\") {
-				escaping = !escaping;
-				acc += c;
-				continue;
-			}
-			if (inBrace) {
-				if (i === braceStart + 1) {
-					if (c === "^" || c === "!") braceNeg = true;
-				} else if (c === "]" && !(i === braceStart + 2 && braceNeg)) inBrace = false;
-				acc += c;
-				continue;
-			} else if (c === "[") {
-				inBrace = true;
-				braceStart = i;
-				braceNeg = false;
-				acc += c;
-				continue;
-			}
-			/* c8 ignore stop */
-			if (!opt.noext && isExtglobType(c) && str.charAt(i) === "(" && (extDepth <= maxDepth || ast && ast.#canAdoptType(c))) {
-				const depthAdd = ast && ast.#canAdoptType(c) ? 0 : 1;
-				part.push(acc);
-				acc = "";
-				const ext = new _a(c, part);
-				part.push(ext);
-				i = _a.#parseAST(str, ext, i, opt, extDepth + depthAdd);
-				continue;
-			}
-			if (c === "|") {
-				part.push(acc);
-				acc = "";
-				parts.push(part);
-				part = new _a(null, ast);
-				continue;
-			}
-			if (c === ")") {
-				if (acc === "" && ast.#parts.length === 0) ast.#emptyExt = true;
-				part.push(acc);
-				acc = "";
-				ast.push(...parts, part);
-				return i;
-			}
-			acc += c;
-		}
-		ast.type = null;
-		ast.#hasMagic = void 0;
-		ast.#parts = [str.substring(pos - 1)];
-		return i;
-	}
-	#canAdoptWithSpace(child) {
-		return this.#canAdopt(child, adoptionWithSpaceMap);
-	}
-	#canAdopt(child, map = adoptionMap) {
-		if (!child || typeof child !== "object" || child.type !== null || child.#parts.length !== 1 || this.type === null) return false;
-		const gc = child.#parts[0];
-		if (!gc || typeof gc !== "object" || gc.type === null) return false;
-		return this.#canAdoptType(gc.type, map);
-	}
-	#canAdoptType(c, map = adoptionAnyMap) {
-		return !!map.get(this.type)?.includes(c);
-	}
-	#adoptWithSpace(child, index) {
-		const gc = child.#parts[0];
-		const blank = new _a(null, gc, this.options);
-		blank.#parts.push("");
-		gc.push(blank);
-		this.#adopt(child, index);
-	}
-	#adopt(child, index) {
-		const gc = child.#parts[0];
-		this.#parts.splice(index, 1, ...gc.#parts);
-		for (const p of gc.#parts) if (typeof p === "object") p.#parent = this;
-		this.#toString = void 0;
-	}
-	#canUsurpType(c) {
-		return !!usurpMap.get(this.type)?.has(c);
-	}
-	#canUsurp(child) {
-		if (!child || typeof child !== "object" || child.type !== null || child.#parts.length !== 1 || this.type === null || this.#parts.length !== 1) return false;
-		const gc = child.#parts[0];
-		if (!gc || typeof gc !== "object" || gc.type === null) return false;
-		return this.#canUsurpType(gc.type);
-	}
-	#usurp(child) {
-		const m = usurpMap.get(this.type);
-		const gc = child.#parts[0];
-		const nt = m?.get(gc.type);
-		/* c8 ignore start - impossible */
-		if (!nt) return false;
-		/* c8 ignore stop */
-		this.#parts = gc.#parts;
-		for (const p of this.#parts) if (typeof p === "object") p.#parent = this;
-		this.type = nt;
-		this.#toString = void 0;
-		this.#emptyExt = false;
-	}
-	static fromGlob(pattern, options = {}) {
-		const ast = new _a(null, void 0, options);
-		_a.#parseAST(pattern, ast, 0, options, 0);
-		return ast;
-	}
-	toMMPattern() {
-		/* c8 ignore start */
-		if (this !== this.#root) return this.#root.toMMPattern();
-		/* c8 ignore stop */
-		const glob = this.toString();
-		const [re, body, hasMagic, uflag] = this.toRegExpSource();
-		if (!(hasMagic || this.#hasMagic || this.#options.nocase && !this.#options.nocaseMagicOnly && glob.toUpperCase() !== glob.toLowerCase())) return body;
-		const flags = (this.#options.nocase ? "i" : "") + (uflag ? "u" : "");
-		return Object.assign(new RegExp(`^${re}$`, flags), {
-			_src: re,
-			_glob: glob
-		});
-	}
-	get options() {
-		return this.#options;
-	}
-	toRegExpSource(allowDot) {
-		const dot = allowDot ?? !!this.#options.dot;
-		if (this.#root === this) {
-			this.#flatten();
-			this.#fillNegs();
-		}
-		if (!isExtglobAST(this)) {
-			const noEmpty = this.isStart() && this.isEnd() && !this.#parts.some((s) => typeof s !== "string");
-			const src = this.#parts.map((p) => {
-				const [re, _, hasMagic, uflag] = typeof p === "string" ? _a.#parseGlob(p, this.#hasMagic, noEmpty) : p.toRegExpSource(allowDot);
-				this.#hasMagic = this.#hasMagic || hasMagic;
-				this.#uflag = this.#uflag || uflag;
-				return re;
-			}).join("");
-			let start = "";
-			if (this.isStart()) {
-				if (typeof this.#parts[0] === "string") {
-					if (!(this.#parts.length === 1 && justDots.has(this.#parts[0]))) {
-						const aps = addPatternStart;
-						const needNoTrav = dot && aps.has(src.charAt(0)) || src.startsWith("\\.") && aps.has(src.charAt(2)) || src.startsWith("\\.\\.") && aps.has(src.charAt(4));
-						const needNoDot = !dot && !allowDot && aps.has(src.charAt(0));
-						start = needNoTrav ? startNoTraversal : needNoDot ? startNoDot : "";
-					}
-				}
-			}
-			let end = "";
-			if (this.isEnd() && this.#root.#filledNegs && this.#parent?.type === "!") end = "(?:$|\\/)";
-			return [
-				start + src + end,
-				unescape(src),
-				this.#hasMagic = !!this.#hasMagic,
-				this.#uflag
-			];
-		}
-		const repeated = this.type === "*" || this.type === "+";
-		const start = this.type === "!" ? "(?:(?!(?:" : "(?:";
-		let body = this.#partsToRegExp(dot);
-		if (this.isStart() && this.isEnd() && !body && this.type !== "!") {
-			const s = this.toString();
-			const me = this;
-			me.#parts = [s];
-			me.type = null;
-			me.#hasMagic = void 0;
-			return [
-				s,
-				unescape(this.toString()),
-				false,
-				false
-			];
-		}
-		let bodyDotAllowed = !repeated || allowDot || dot || false ? "" : this.#partsToRegExp(true);
-		if (bodyDotAllowed === body) bodyDotAllowed = "";
-		if (bodyDotAllowed) body = `(?:${body})(?:${bodyDotAllowed})*?`;
-		let final = "";
-		if (this.type === "!" && this.#emptyExt) final = (this.isStart() && !dot ? startNoDot : "") + starNoEmpty;
-		else {
-			const close = this.type === "!" ? "))" + (this.isStart() && !dot && !allowDot ? startNoDot : "") + "[^/]*?)" : this.type === "@" ? ")" : this.type === "?" ? ")?" : this.type === "+" && bodyDotAllowed ? ")" : this.type === "*" && bodyDotAllowed ? `)?` : `)${this.type}`;
-			final = start + body + close;
-		}
-		return [
-			final,
-			unescape(body),
-			this.#hasMagic = !!this.#hasMagic,
-			this.#uflag
-		];
-	}
-	#flatten() {
-		if (!isExtglobAST(this)) {
-			for (const p of this.#parts) if (typeof p === "object") p.#flatten();
-		} else {
-			let iterations = 0;
-			let done = false;
-			do {
-				done = true;
-				for (let i = 0; i < this.#parts.length; i++) {
-					const c = this.#parts[i];
-					if (typeof c === "object") {
-						c.#flatten();
-						if (this.#canAdopt(c)) {
-							done = false;
-							this.#adopt(c, i);
-						} else if (this.#canAdoptWithSpace(c)) {
-							done = false;
-							this.#adoptWithSpace(c, i);
-						} else if (this.#canUsurp(c)) {
-							done = false;
-							this.#usurp(c);
-						}
-					}
-				}
-			} while (!done && ++iterations < 10);
-		}
-		this.#toString = void 0;
-	}
-	#partsToRegExp(dot) {
-		return this.#parts.map((p) => {
-			/* c8 ignore start */
-			if (typeof p === "string") throw new Error("string type in extglob ast??");
-			/* c8 ignore stop */
-			const [re, _, _hasMagic, uflag] = p.toRegExpSource(dot);
-			this.#uflag = this.#uflag || uflag;
-			return re;
-		}).filter((p) => !(this.isStart() && this.isEnd()) || !!p).join("|");
-	}
-	static #parseGlob(glob, hasMagic, noEmpty = false) {
-		let escaping = false;
-		let re = "";
-		let uflag = false;
-		let inStar = false;
-		for (let i = 0; i < glob.length; i++) {
-			const c = glob.charAt(i);
-			if (escaping) {
-				escaping = false;
-				re += (reSpecials.has(c) ? "\\" : "") + c;
-				continue;
-			}
-			if (c === "*") {
-				if (inStar) continue;
-				inStar = true;
-				re += noEmpty && /^[*]+$/.test(glob) ? starNoEmpty : star$1;
-				hasMagic = true;
-				continue;
-			} else inStar = false;
-			if (c === "\\") {
-				if (i === glob.length - 1) re += "\\\\";
-				else escaping = true;
-				continue;
-			}
-			if (c === "[") {
-				const [src, needUflag, consumed, magic] = parseClass(glob, i);
-				if (consumed) {
-					re += src;
-					uflag = uflag || needUflag;
-					i += consumed - 1;
-					hasMagic = hasMagic || magic;
-					continue;
-				}
-			}
-			if (c === "?") {
-				re += qmark;
-				hasMagic = true;
-				continue;
-			}
-			re += regExpEscape$1(c);
-		}
-		return [
-			re,
-			unescape(glob),
-			!!hasMagic,
-			uflag
-		];
-	}
-};
-_a = AST;
-// ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/escape.js
-/**
-* Escape all magic characters in a glob pattern.
-*
-* If the {@link MinimatchOptions.windowsPathsNoEscape}
-* option is used, then characters are escaped by wrapping in `[]`, because
-* a magic character wrapped in a character class can only be satisfied by
-* that exact character.  In this mode, `\` is _not_ escaped, because it is
-* not interpreted as a magic character, but instead as a path separator.
-*
-* If the {@link MinimatchOptions.magicalBraces} option is used,
-* then braces (`{` and `}`) will be escaped.
-*/
-const escape = (s, { windowsPathsNoEscape = false, magicalBraces = false } = {}) => {
-	if (magicalBraces) return windowsPathsNoEscape ? s.replace(/[?*()[\]{}]/g, "[$&]") : s.replace(/[?*()[\]\\{}]/g, "\\$&");
-	return windowsPathsNoEscape ? s.replace(/[?*()[\]]/g, "[$&]") : s.replace(/[?*()[\]\\]/g, "\\$&");
-};
-// ../../../node_modules/.pnpm/minimatch@10.2.6/node_modules/minimatch/dist/esm/index.js
+// ../../../node_modules/.pnpm/minimatch@11.0.3/node_modules/minimatch/dist/esm/index.js
 const minimatch = (p, pattern, options = {}) => {
 	assertValidPattern(pattern);
 	if (!options.nocomment && pattern.charAt(0) === "#") return false;
-	return new Minimatch(pattern, options).match(p);
+	return cachedMinimatch(pattern, options).match(p);
 };
-const starDotExtRE = /^\*+([^+@!?*[(]*)$/;
-const starDotExtTest = (ext) => (f) => !f.startsWith(".") && f.endsWith(ext);
-const starDotExtTestDot = (ext) => (f) => f.endsWith(ext);
-const starDotExtTestNocase = (ext) => {
-	ext = ext.toLowerCase();
-	return (f) => !f.startsWith(".") && f.toLowerCase().endsWith(ext);
-};
-const starDotExtTestNocaseDot = (ext) => {
-	ext = ext.toLowerCase();
-	return (f) => f.toLowerCase().endsWith(ext);
-};
-const starDotStarRE = /^\*+\.\*+$/;
-const starDotStarTest = (f) => !f.startsWith(".") && f.includes(".");
-const starDotStarTestDot = (f) => f !== "." && f !== ".." && f.includes(".");
-const dotStarRE = /^\.\*+$/;
-const dotStarTest = (f) => f !== "." && f !== ".." && f.startsWith(".");
-const starRE = /^\*+$/;
-const starTest = (f) => f.length !== 0 && !f.startsWith(".");
-const starTestDot = (f) => f.length !== 0 && f !== "." && f !== "..";
-const qmarksRE = /^\?+([^+@!?*[(]*)?$/;
-const qmarksTestNocase = ([$0, ext = ""]) => {
-	const noext = qmarksTestNoExt([$0]);
-	if (!ext) return noext;
-	ext = ext.toLowerCase();
-	return (f) => noext(f) && f.toLowerCase().endsWith(ext);
-};
-const qmarksTestNocaseDot = ([$0, ext = ""]) => {
-	const noext = qmarksTestNoExtDot([$0]);
-	if (!ext) return noext;
-	ext = ext.toLowerCase();
-	return (f) => noext(f) && f.toLowerCase().endsWith(ext);
-};
-const qmarksTestDot = ([$0, ext = ""]) => {
-	const noext = qmarksTestNoExtDot([$0]);
-	return !ext ? noext : (f) => noext(f) && f.endsWith(ext);
-};
-const qmarksTest = ([$0, ext = ""]) => {
-	const noext = qmarksTestNoExt([$0]);
-	return !ext ? noext : (f) => noext(f) && f.endsWith(ext);
-};
-const qmarksTestNoExt = ([$0]) => {
-	const len = $0.length;
-	return (f) => f.length === len && !f.startsWith(".");
-};
-const qmarksTestNoExtDot = ([$0]) => {
-	const len = $0.length;
-	return (f) => f.length === len && f !== "." && f !== "..";
+const cache = /* @__PURE__ */ new Map();
+const cacheMax = 256;
+const cachedMinimatch = (pattern, options) => {
+	const key = pattern + "\0" + JSON.stringify(options);
+	let mm = cache.get(key);
+	if (mm) cache.delete(key);
+	else {
+		mm = new Minimatch(pattern, { ...options });
+		if (cache.size >= cacheMax) cache.delete(cache.keys().next().value);
+	}
+	cache.set(key, mm);
+	return mm;
 };
 /* c8 ignore start */
-const defaultPlatform = typeof process === "object" && process ? typeof process.env === "object" && process.env && process.env.__MINIMATCH_TESTING_PLATFORM__ || process.platform : "posix";
+const defaultPlatform = typeof process === "object" && process ? process.env?.__MINIMATCH_TESTING_PLATFORM__ || process.platform : "posix";
 const path$1 = {
 	win32: { sep: "\\" },
 	posix: { sep: "/" }
@@ -45492,9 +45510,6 @@ const path$1 = {
 minimatch.sep = defaultPlatform === "win32" ? path$1.win32.sep : path$1.posix.sep;
 const GLOBSTAR = Symbol("globstar **");
 minimatch.GLOBSTAR = GLOBSTAR;
-const star = "[^/]*?";
-const twoStarDot = "(?:(?!(?:\\/|^)(?:\\.{1,2})($|\\/)).)*?";
-const twoStarNoDot = "(?:(?!(?:\\/|^)\\.).)*?";
 const filter = (pattern, options = {}) => (p) => minimatch(p, pattern, options);
 minimatch.filter = filter;
 const ext = (a, b = {}) => Object.assign({}, a, b);
@@ -45511,21 +45526,10 @@ const defaults = (def) => {
 				return orig.defaults(ext(def, options)).Minimatch;
 			}
 		},
-		AST: class AST extends orig.AST {
-			/* c8 ignore start */
-			constructor(type, parent, options = {}) {
-				super(type, parent, ext(def, options));
-			}
-			/* c8 ignore stop */
-			static fromGlob(pattern, options = {}) {
-				return orig.AST.fromGlob(pattern, ext(def, options));
-			}
-		},
 		unescape: (s, options = {}) => orig.unescape(s, ext(def, options)),
 		escape: (s, options = {}) => orig.escape(s, ext(def, options)),
 		filter: (pattern, options = {}) => orig.filter(pattern, ext(def, options)),
 		defaults: (options) => orig.defaults(ext(def, options)),
-		makeRe: (pattern, options = {}) => orig.makeRe(pattern, ext(def, options)),
 		braceExpand: (pattern, options = {}) => orig.braceExpand(pattern, ext(def, options)),
 		match: (list, pattern, options = {}) => orig.match(list, pattern, ext(def, options)),
 		sep: orig.sep,
@@ -45539,8 +45543,6 @@ const braceExpand = (pattern, options = {}) => {
 	return expand(pattern, { max: options.braceExpandMax });
 };
 minimatch.braceExpand = braceExpand;
-const makeRe = (pattern, options = {}) => new Minimatch(pattern, options).makeRe();
-minimatch.makeRe = makeRe;
 const match = (list, pattern, options = {}) => {
 	const mm = new Minimatch(pattern, options);
 	list = list.filter((f) => mm.match(f));
@@ -45549,7 +45551,98 @@ const match = (list, pattern, options = {}) => {
 };
 minimatch.match = match;
 const globMagic = /[?*]|[+@!]\(.*?\)|\[|\]/;
-const regExpEscape = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+const classEnd = (pattern, start) => {
+	let i = start + 1;
+	if (pattern.charAt(i) === "!" || pattern.charAt(i) === "^") i++;
+	let sawStart = false;
+	for (; i < pattern.length; i++) {
+		const c = pattern.charAt(i);
+		if (c === "]" && sawStart) return i;
+		sawStart = true;
+		if (c === "\\") i++;
+	}
+	return -1;
+};
+const literal = (pattern, noext) => {
+	if (!noext && (pattern === "+()" || pattern === "@()")) return pattern;
+	let lit = "";
+	for (let i = 0; i < pattern.length; i++) {
+		const c = pattern.charAt(i);
+		if (c === "\\") lit += pattern.charAt(++i) || c;
+		else if (c === "*" || c === "?") return;
+		else if (c === "[") {
+			const close = classEnd(pattern, i);
+			if (close === -1) {
+				lit += c;
+				continue;
+			}
+			let body = pattern.slice(i + 1, close);
+			if (body.startsWith("\\")) body = body.slice(1);
+			if ([...body].length !== 1 || "!^".includes(pattern.charAt(i + 1))) return;
+			lit += body;
+			i = close;
+		} else if (!noext && "+@!".includes(c) && pattern.charAt(i + 1) === "(" && pattern.includes(")", i + 2)) return;
+		else lit += c;
+	}
+	return lit;
+};
+const extSafe = (pattern) => {
+	if (/^[?*+@]\(\)$/.test(pattern) || pattern.includes("[:")) return false;
+	let depth = 0;
+	for (let i = 0; i < pattern.length; i++) {
+		const c = pattern.charAt(i);
+		if (c === "\\") {
+			if (++i === pattern.length) return false;
+		} else if (c === "[") {
+			const close = classEnd(pattern, i);
+			if (close !== -1) i = close;
+		} else if ("+@!?*".includes(c) && pattern.charAt(i + 1) === "(") {
+			depth++;
+			i++;
+		} else if (c === ")") {
+			if (!depth--) return false;
+		} else if (c === "|" && !depth) return false;
+	}
+	return !depth;
+};
+let lastSplit;
+let lastChecked;
+const portionMatch = (p, f) => typeof p === "string" ? f === p : f !== "" && p.testUnchecked(f);
+const endIndex = (p, last, lastStart, prev, prevStart) => portionMatch(p, last) ? lastStart : prev !== void 0 && portionMatch(p, prev) ? prevStart : -1;
+const isDots = (p) => p === "." || p === "..";
+const isDrive = (p) => typeof p === "string" && /^[a-z]:$/i.test(p);
+const isLongUNC = (p) => typeof p === "string" && /^unc$/i.test(p);
+const uncHost = (p) => {
+	if (p[0] !== "" || p[1] !== "") return -1;
+	const h = p[2] !== "?" ? 2 : isLongUNC(p[3]) ? 4 : -1;
+	const host = p[h];
+	const share = p[h + 1];
+	return h !== -1 && host !== void 0 && host !== "" && host !== GLOBSTAR && share !== void 0 && share !== "" && share !== GLOBSTAR ? h : -1;
+};
+const walkable = (p, dot) => !isDots(p) && (dot || !p.startsWith("."));
+const dotPortion = (f, start, end, dot, sep) => {
+	for (let k = start; k < end;) {
+		if (f.charCodeAt(k) === 46) {
+			if (!dot) return true;
+			const n = f.charCodeAt(k + 1) === 46 ? k + 2 : k + 1;
+			if (n >= end || isSep(f.charCodeAt(n), sep)) return true;
+		}
+		const s = nextSep(f, k, sep);
+		if (s === -1) return false;
+		k = s + 1;
+		while (k < end && isSep(f.charCodeAt(k), sep)) k++;
+	}
+	return false;
+};
+const isSep = (c, sep) => sep === "/" ? c === 47 : sep === "\\" ? c === 92 : c === 47 || c === 92;
+const nextSep = (f, from, sep) => {
+	if (sep !== "both") return f.indexOf(sep, from);
+	const s = f.indexOf("/", from);
+	const b = f.indexOf("\\", from);
+	return s === -1 ? b : b === -1 ? s : Math.min(s, b);
+};
+const lastSep = (f, from, sep) => sep !== "both" ? f.lastIndexOf(sep, from) : Math.max(f.lastIndexOf("/", from), f.lastIndexOf("\\", from));
+const PENDING = {};
 var Minimatch = class {
 	options;
 	set;
@@ -45568,7 +45661,16 @@ var Minimatch = class {
 	platform;
 	windowsNoMagicRoot;
 	maxGlobstarRecursion;
-	regexp;
+	#endCheck;
+	#literalCheck;
+	#level2;
+	#form;
+	#literals = [];
+	#shapes = [];
+	#endRows = [];
+	#matchers = /* @__PURE__ */ new Map();
+	#pending = false;
+	#globstarParts = /* @__PURE__ */ new WeakMap();
 	constructor(pattern, options = {}) {
 		assertValidPattern(pattern);
 		options = options || {};
@@ -45581,7 +45683,6 @@ var Minimatch = class {
 		this.windowsPathsNoEscape = !!options.windowsPathsNoEscape || options[awe] === false;
 		if (this.windowsPathsNoEscape) this.pattern = this.pattern.replace(/\\/g, "/");
 		this.preserveMultipleSlashes = !!options.preserveMultipleSlashes;
-		this.regexp = null;
 		this.negate = false;
 		this.nonegate = !!options.nonegate;
 		this.comment = false;
@@ -45592,14 +45693,45 @@ var Minimatch = class {
 		this.globSet = [];
 		this.globParts = [];
 		this.set = [];
+		this.#endCheck = !this.preserveMultipleSlashes;
+		this.#level2 = (options.optimizationLevel ?? 1) >= 2;
+		const n = options.normalize;
+		this.#form = n === true ? "NFC" : n || void 0;
 		this.make();
+		const drives = this.set.map((row) => this.#rootIndex(row));
+		this.#endRows = this.set.map((row, r) => this.#endCheck && row.length - 1 > drives[r]);
+		this.#literals = this.set.map((row, r) => {
+			const end = this.#endRows[r] ? row.length - 1 : row.length;
+			const lits = row.slice(drives[r] + 1, end).filter((p) => typeof p === "string" && !!p);
+			return [...new Set(lits)];
+		});
+		this.#literalCheck = this.#literals.some((l) => l.length);
+		this.#shapes = this.set.map((row, r) => {
+			const [p0, p1, p2] = row;
+			if (this.#endRows[r] && row.length === 2) {
+				if (p0 === GLOBSTAR && p1 !== GLOBSTAR) return "tail";
+			}
+			if (this.#endRows[r] && options.matchBase && row.length === 1 && p0 !== GLOBSTAR && p0 !== "") return "base";
+			if (!this.#endCheck || drives[r] !== -1) return void 0;
+			if (row.length === 3 && p0 === GLOBSTAR && p2 === GLOBSTAR && p1 !== GLOBSTAR && p1 !== "" && this.maxGlobstarRecursion > 0) return "mid";
+			if (row.length === 2 && p1 === GLOBSTAR && p0 !== GLOBSTAR && p0 !== "") return "head";
+		});
+	}
+	#norm(p) {
+		return this.#form ? p.normalize(this.#form) : p;
+	}
+	#rootIndex(row) {
+		if (!this.isWindows) return -1;
+		if (isDrive(row[0])) return 0;
+		if (row[0] === "" && row[1] === "" && row[2] === "?" && isDrive(row[3])) return 3;
+		const h = uncHost(row);
+		return h === -1 ? -1 : h + 1;
 	}
 	hasMagic() {
 		if (this.options.magicalBraces && this.set.length > 1) return true;
 		for (const pattern of this.set) for (const part of pattern) if (typeof part !== "string") return true;
 		return false;
 	}
-	debug(..._) {}
 	make() {
 		const pattern = this.pattern;
 		const options = this.options;
@@ -45613,27 +45745,65 @@ var Minimatch = class {
 		}
 		this.parseNegate();
 		this.globSet = [...new Set(this.braceExpand())];
-		if (options.debug) this.debug = (...args) => console.error(...args);
-		this.debug(this.pattern, this.globSet);
-		const rawGlobParts = this.globSet.map((s) => this.slashSplit(s));
+		const rawGlobParts = this.globSet.map((s) => this.#slashSplit(s));
 		this.globParts = this.preprocess(rawGlobParts);
-		this.debug(this.pattern, this.globParts);
+		this.#pending = true;
 		let set = this.globParts.map((s, _, __) => {
 			if (this.isWindows && this.windowsNoMagicRoot) {
-				const isUNC = s[0] === "" && s[1] === "" && (s[2] === "?" || !globMagic.test(s[2])) && !globMagic.test(s[3]);
+				const n = s[2] === "?" && isLongUNC(s[3]) ? 6 : 4;
+				const isUNC = s[0] === "" && s[1] === "" && (s[2] === "?" || !globMagic.test(s[2])) && s.slice(3, n).every((p) => !globMagic.test(p));
 				const isDrive = /^[a-z]:/i.test(s[0]);
-				if (isUNC) return [...s.slice(0, 4), ...s.slice(4).map((ss) => this.parse(ss))];
-				else if (isDrive) return [s[0], ...s.slice(1).map((ss) => this.parse(ss))];
+				if (isUNC) return [...s.slice(0, n).map((p) => this.#norm(p)), ...s.slice(n).map((ss) => this.parse(ss))];
+				else if (isDrive) return [this.#norm(s[0]), ...s.slice(1).map((ss) => this.parse(ss))];
 			}
 			return s.map((ss) => this.parse(ss));
 		});
-		this.debug(this.pattern, set);
 		this.set = set.filter((s) => s.indexOf(false) === -1);
 		if (this.isWindows) for (let i = 0; i < this.set.length; i++) {
 			const p = this.set[i];
-			if (p[0] === "" && p[1] === "" && this.globParts[i][2] === "?" && typeof p[3] === "string" && /^[a-z]:$/i.test(p[3])) p[2] = "?";
+			if (p[0] === "" && p[1] === "" && this.globParts[i][2] === "?" && (isDrive(p[3]) || isLongUNC(this.globParts[i][3]))) {
+				if (isLongUNC(this.globParts[i][3])) p[3] = "UNC";
+				p[2] = "?";
+			}
 		}
-		this.debug(this.pattern, this.set);
+		if (!options.noext) this.mergeRows();
+		this.#pending = false;
+		this.set.forEach((row, i) => {
+			for (let k = 0; k < row.length; k++) if (row[k] === PENDING) row[k] = this.parse(this.globParts[i][k]);
+		});
+	}
+	mergeRows() {
+		let merged = true;
+		while (merged) {
+			merged = false;
+			const len = Math.max(0, ...this.set.map((r) => r.length));
+			for (let k = 0; k < len; k++) {
+				const groups = /* @__PURE__ */ new Map();
+				this.set.forEach((row, i) => {
+					if (!(row[k] instanceof Matcher || row[k] === PENDING) || !extSafe(this.globParts[i][k])) return;
+					const parts = [...this.globParts[i]];
+					parts[k] = "";
+					const key = `${row.length}/${parts.join("/")}`;
+					const g = groups.get(key);
+					if (g) g.push(i);
+					else groups.set(key, [i]);
+				});
+				const drop = /* @__PURE__ */ new Set();
+				for (const g of groups.values()) {
+					if (g.length < 2) continue;
+					const [first, ...rest] = g;
+					const glob = `@(${g.map((i) => this.globParts[i][k]).join("|")})`;
+					this.globParts[first][k] = glob;
+					this.set[first][k] = this.parse(glob);
+					for (const i of rest) drop.add(i);
+				}
+				if (drop.size) {
+					merged = true;
+					this.set = this.set.filter((_, i) => !drop.has(i));
+					this.globParts = this.globParts.filter((_, i) => !drop.has(i));
+				}
+			}
+		}
 	}
 	preprocess(globParts) {
 		if (this.options.noglobstar) {
@@ -45660,11 +45830,12 @@ var Minimatch = class {
 	}
 	levelOneOptimize(globParts) {
 		return globParts.map((parts) => {
+			const root = this.#rootIndex(parts) + 1;
 			parts = parts.reduce((set, part) => {
 				const prev = set[set.length - 1];
 				if (part === "**" && prev === "**") return set;
 				if (part === "..") {
-					if (prev && prev !== ".." && prev !== "." && prev !== "**") {
+					if (set.length > root && prev && prev !== ".." && prev !== "." && prev !== "**") {
 						set.pop();
 						return set;
 					}
@@ -45675,8 +45846,120 @@ var Minimatch = class {
 			return parts.length === 0 ? [""] : parts;
 		});
 	}
-	levelTwoFileOptimize(parts) {
-		if (!Array.isArray(parts)) parts = this.slashSplit(parts);
+	#canMatch(f) {
+		const sep = !this.isWindows || !f.includes("\\") ? "/" : f.includes("/") ? "both" : "\\";
+		let ends = this.#endCheck ? 0 : -1;
+		let last = "";
+		let lastStart = 0;
+		let prev;
+		let prevStart = 0;
+		const dot = !!this.options.dot;
+		ROWS: for (let r = 0; r < this.set.length; r++) {
+			const row = this.set[r];
+			const p = row[row.length - 1];
+			let end = ends !== -1 && this.#endRows[r] && p !== GLOBSTAR;
+			if (end && ends === 0) {
+				const i = lastSep(f, f.length, sep);
+				lastStart = i + 1;
+				last = f.slice(lastStart);
+				if (last === "" && i >= 0) {
+					let j = i;
+					while (j > 0 && isSep(f.charCodeAt(j - 1), sep)) j--;
+					prevStart = j === 0 ? 0 : lastSep(f, j - 1, sep) + 1;
+					prev = f.slice(prevStart, j);
+				}
+				const resolves = this.#level2 && (isDots(last) || last === "" && prev !== void 0 && isDots(prev));
+				ends = resolves ? -1 : 1;
+				end = !resolves;
+			}
+			let tailStart = -1;
+			if (end && typeof p === "string") {
+				tailStart = endIndex(p, last, lastStart, prev, prevStart);
+				if (tailStart === -1) continue;
+			}
+			if (this.#literalCheck) {
+				for (const l of this.#literals[r]) if (!f.includes(l)) continue ROWS;
+			}
+			if (end && typeof p === "object") {
+				tailStart = endIndex(p, last, lastStart, prev, prevStart);
+				if (tailStart === -1) continue;
+			}
+			const shape = this.#shapes[r];
+			if (shape === "base" && end) return "yes";
+			if (shape === "tail" && end) {
+				if (this.#level2 && dotPortion(f, 0, tailStart, true, sep)) return "maybe";
+				if (!dotPortion(f, 0, tailStart, dot, sep)) return "yes";
+				continue;
+			}
+			if (shape === "mid" || shape === "head") {
+				const m = this.#walk(f, row, shape === "head", dot, sep);
+				if (m !== "no") return m;
+				continue;
+			}
+			return "maybe";
+		}
+		return "no";
+	}
+	#matchShape(file, row, shape) {
+		const dot = !!this.options.dot;
+		const n = file.length;
+		if (shape === "head") {
+			if (n < 2 || !portionMatch(row[0], file[0])) return false;
+			for (let i = 1; i < n; i++) if (!walkable(file[i], dot)) return false;
+			return true;
+		}
+		const x = row[1];
+		if (shape === "tail") {
+			let t = n - 1;
+			if (!portionMatch(x, file[t])) {
+				if (file[t] !== "" || n === 1 || !portionMatch(x, file[--t])) return false;
+			}
+			for (let i = 0; i < t; i++) if (!walkable(file[i], dot)) return false;
+			return true;
+		}
+		for (let k = 0; k < n; k++) {
+			if (portionMatch(x, file[k]) && k + 1 < n) {
+				let i = k + 1;
+				while (i < n && walkable(file[i], dot)) i++;
+				if (i === n) return true;
+			}
+			if (!walkable(file[k], dot)) return false;
+		}
+		return false;
+	}
+	#walk(f, row, head, dot, sep) {
+		if (this.#level2 && dotPortion(f, 0, f.length, true, sep)) return "maybe";
+		const x = row[head ? 0 : 1];
+		let s = 0;
+		for (let e = nextSep(f, s, sep); e !== -1; e = nextSep(f, s, sep)) {
+			let next = e + 1;
+			while (next < f.length && isSep(f.charCodeAt(next), sep)) next++;
+			if ((typeof x === "string" ? e - s === x.length && f.startsWith(x, s) : e > s && x.testUnchecked(f.slice(s, e))) && !dotPortion(f, next, f.length, dot, sep)) return "yes";
+			if (head || dotPortion(f, s, next, dot, sep)) return "no";
+			s = next;
+		}
+		return "no";
+	}
+	#cachedSplit(f) {
+		const last = lastSplit;
+		return last?.f === f && last.isWindows === this.isWindows && last.preserveMultipleSlashes === this.preserveMultipleSlashes && last.normalize === this.#form ? last : void 0;
+	}
+	#split(f) {
+		const { isWindows, preserveMultipleSlashes } = this;
+		let parts = this.#slashSplit(isWindows ? f.split("\\").join("/") : f);
+		const normalize = this.#form;
+		if (normalize) parts = parts.map((p) => p.normalize(normalize));
+		lastSplit = {
+			f,
+			isWindows,
+			preserveMultipleSlashes,
+			normalize,
+			parts
+		};
+		return lastSplit;
+	}
+	#levelTwoFileOptimize(file) {
+		const parts = [...file];
 		let didSomething = false;
 		do {
 			didSomething = false;
@@ -45695,19 +45978,21 @@ var Minimatch = class {
 					parts.pop();
 				}
 			}
-			let dd = 0;
+			const root = this.#rootIndex(parts) + 1;
+			let dd = root;
 			while (-1 !== (dd = parts.indexOf("..", dd + 1))) {
 				const p = parts[dd - 1];
-				if (p && p !== "." && p !== ".." && p !== "**" && !(this.isWindows && /^[a-z]:$/i.test(p))) {
+				if (p && p !== "." && p !== ".." && p !== "**") {
 					didSomething = true;
 					parts.splice(dd - 1, 2);
-					dd -= 2;
+					dd = Math.max(dd - 2, root);
 				}
 			}
 		} while (didSomething);
 		return parts.length === 0 ? [""] : parts;
 	}
 	firstPhasePreProcess(globParts) {
+		const { braceExpandMax = 1e5 } = this.options;
 		let didSomething = false;
 		do {
 			didSomething = false;
@@ -45721,7 +46006,7 @@ var Minimatch = class {
 					const p = parts[gs + 2];
 					const p2 = parts[gs + 3];
 					if (next !== "..") continue;
-					if (!p || p === "." || p === ".." || !p2 || p2 === "." || p2 === "..") continue;
+					if (!p || p === "." || p === ".." || !p2 || p2 === "." || p2 === ".." || globParts.length >= braceExpandMax) continue;
 					didSomething = true;
 					parts.splice(gs, 1);
 					const other = parts.slice(0);
@@ -45744,7 +46029,8 @@ var Minimatch = class {
 						parts.pop();
 					}
 				}
-				let dd = 0;
+				const root = this.#rootIndex(parts) + 1;
+				let dd = root;
 				while (-1 !== (dd = parts.indexOf("..", dd + 1))) {
 					const p = parts[dd - 1];
 					if (p && p !== "." && p !== ".." && p !== "**") {
@@ -45752,7 +46038,7 @@ var Minimatch = class {
 						const splin = dd === 1 && parts[dd + 1] === "**" ? ["."] : [];
 						parts.splice(dd - 1, 2, ...splin);
 						if (parts.length === 0) parts.push("");
-						dd -= 2;
+						dd = Math.max(dd - 2, root);
 					}
 				}
 			}
@@ -45760,6 +46046,7 @@ var Minimatch = class {
 		return globParts;
 	}
 	secondPhasePreProcess(globParts) {
+		if (globParts.length > 1e3) return globParts;
 		for (let i = 0; i < globParts.length - 1; i++) for (let j = i + 1; j < globParts.length; j++) {
 			const matched = this.partsMatch(globParts[i], globParts[j], !this.preserveMultipleSlashes);
 			if (matched) {
@@ -45812,10 +46099,22 @@ var Minimatch = class {
 		if (negateOffset) this.pattern = pattern.slice(negateOffset);
 		this.negate = negate;
 	}
-	matchOne(file, pattern, partial = false) {
+	#matchRow(file, resolved, pattern, partial) {
 		let fileStartIndex = 0;
 		let patternStartIndex = 0;
-		if (this.isWindows) {
+		const fh = this.isWindows ? uncHost(resolved) : -1;
+		const ph = fh === -1 ? -1 : uncHost(pattern);
+		if (ph !== -1) {
+			const host = pattern[ph];
+			const share = pattern[ph + 1];
+			if (typeof host !== "string" || typeof share !== "string") {
+				fileStartIndex = fh;
+				patternStartIndex = ph;
+			} else if (resolved[fh].toLowerCase() === host.toLowerCase() && resolved[fh + 1].toLowerCase() === share.toLowerCase()) {
+				fileStartIndex = fh + 2;
+				patternStartIndex = ph + 2;
+			}
+		} else if (this.isWindows) {
 			const fileDrive = typeof file[0] === "string" && /^[a-z]:$/i.test(file[0]);
 			const fileUNC = !fileDrive && file[0] === "" && file[1] === "" && file[2] === "?" && /^[a-z]:$/i.test(file[3]);
 			const patternDrive = typeof pattern[0] === "string" && /^[a-z]:$/i.test(pattern[0]);
@@ -45825,32 +46124,20 @@ var Minimatch = class {
 			if (typeof fdi === "number" && typeof pdi === "number") {
 				const [fd, pd] = [file[fdi], pattern[pdi]];
 				if (fd.toLowerCase() === pd.toLowerCase()) {
-					pattern[pdi] = fd;
-					patternStartIndex = pdi;
-					fileStartIndex = fdi;
+					patternStartIndex = pdi + 1;
+					fileStartIndex = fdi + 1;
 				}
 			}
 		}
-		const { optimizationLevel = 1 } = this.options;
-		if (optimizationLevel >= 2) file = this.levelTwoFileOptimize(file);
+		file = resolved;
 		if (pattern.includes(GLOBSTAR)) return this.#matchGlobstar(file, pattern, partial, fileStartIndex, patternStartIndex);
 		return this.#matchOne(file, pattern, partial, fileStartIndex, patternStartIndex);
 	}
 	#matchGlobstar(file, pattern, partial, fileIndex, patternIndex) {
-		const firstgs = pattern.indexOf(GLOBSTAR, patternIndex);
-		const lastgs = pattern.lastIndexOf(GLOBSTAR);
-		const [head, body, tail] = partial ? [
-			pattern.slice(patternIndex, firstgs),
-			pattern.slice(firstgs + 1),
-			[]
-		] : [
-			pattern.slice(patternIndex, firstgs),
-			pattern.slice(firstgs + 1, lastgs),
-			pattern.slice(lastgs + 1)
-		];
+		const { head, body, tail, segments } = this.#getGlobstarParts(pattern, partial, patternIndex);
 		if (head.length) {
-			const fileHead = file.slice(fileIndex, fileIndex + head.length);
-			if (!this.#matchOne(fileHead, head, partial, 0, 0)) return false;
+			const headEnd = fileIndex + head.length;
+			if (!this.#matchOne(file, head, partial, fileIndex, 0, headEnd)) return false;
 			fileIndex += head.length;
 			patternIndex += head.length;
 		}
@@ -45875,67 +46162,86 @@ var Minimatch = class {
 			}
 			return partial || sawSome;
 		}
-		const bodySegments = [[[], 0]];
-		let currentBody = bodySegments[0];
+		return !!this.#matchGlobStarBodySections(file, segments, file.length - fileTailMatch, fileIndex, 0, partial, 0, !!fileTailMatch, /* @__PURE__ */ new Set());
+	}
+	#getGlobstarParts(pattern, partial, patternIndex) {
+		let byStart = this.#globstarParts.get(pattern);
+		if (!byStart) {
+			byStart = [];
+			this.#globstarParts.set(pattern, byStart);
+		}
+		const key = patternIndex * 2 + (partial ? 1 : 0);
+		const found = byStart[key];
+		if (found) return found;
+		const firstgs = pattern.indexOf(GLOBSTAR, patternIndex);
+		const lastgs = pattern.lastIndexOf(GLOBSTAR);
+		const head = pattern.slice(patternIndex, firstgs);
+		const body = pattern.slice(firstgs + 1, partial ? void 0 : lastgs);
+		const tail = partial ? [] : pattern.slice(lastgs + 1);
+		const segments = [[[], 0]];
+		let current = segments[0];
 		let nonGsParts = 0;
 		const nonGsPartsSums = [0];
 		for (const b of body) if (b === GLOBSTAR) {
 			nonGsPartsSums.push(nonGsParts);
-			currentBody = [[], 0];
-			bodySegments.push(currentBody);
+			current = [[], 0];
+			segments.push(current);
 		} else {
-			currentBody[0].push(b);
+			current[0].push(b);
 			nonGsParts++;
 		}
-		let i = bodySegments.length - 1;
-		const fileLength = file.length - fileTailMatch;
-		for (const b of bodySegments) b[1] = fileLength - (nonGsPartsSums[i--] + b[0].length);
-		return !!this.#matchGlobStarBodySections(file, bodySegments, fileIndex, 0, partial, 0, !!fileTailMatch);
+		segments.forEach((b, i) => {
+			b[1] = nonGsParts - nonGsPartsSums[i];
+		});
+		const parts = {
+			head,
+			body,
+			tail,
+			segments
+		};
+		byStart[key] = parts;
+		return parts;
 	}
-	#matchGlobStarBodySections(file, bodySegments, fileIndex, bodyIndex, partial, globStarDepth, sawTail) {
+	#matchGlobStarBodySections(file, bodySegments, fileLength, fileIndex, bodyIndex, partial, globStarDepth, sawTail, tried) {
 		const bs = bodySegments[bodyIndex];
 		if (!bs) {
-			for (let i = fileIndex; i < file.length; i++) {
+			if (partial) return fileIndex >= fileLength || fileIndex === fileLength - 1 && file[fileIndex] === "";
+			for (let i = fileIndex; i < fileLength; i++) {
 				sawTail = true;
 				const f = file[i];
 				if (f === "." || f === ".." || !this.options.dot && f.startsWith(".")) return false;
 			}
 			return sawTail;
 		}
-		const [body, after] = bs;
+		const [body, need] = bs;
+		const after = partial ? fileLength : fileLength - need;
 		while (fileIndex <= after) {
-			if (this.#matchOne(file.slice(0, fileIndex + body.length), body, partial, fileIndex, 0) && globStarDepth < this.maxGlobstarRecursion) {
-				const sub = this.#matchGlobStarBodySections(file, bodySegments, fileIndex + body.length, bodyIndex + 1, partial, globStarDepth + 1, sawTail);
+			const key = bodyIndex * (file.length + 1) + fileIndex;
+			if (tried.has(key)) return false;
+			tried.add(key);
+			if (this.#matchOne(file, body, partial, fileIndex, 0, fileIndex + body.length) && globStarDepth < this.maxGlobstarRecursion) {
+				const sub = this.#matchGlobStarBodySections(file, bodySegments, fileLength, fileIndex + body.length, bodyIndex + 1, partial, globStarDepth + 1, sawTail, tried);
 				if (sub !== false) return sub;
 			}
+			if (fileIndex === after) break;
 			const f = file[fileIndex];
 			if (f === "." || f === ".." || !this.options.dot && f.startsWith(".")) return false;
 			fileIndex++;
 		}
 		return partial || null;
 	}
-	#matchOne(file, pattern, partial, fileIndex, patternIndex) {
+	#matchOne(file, pattern, partial, fileIndex, patternIndex, fileEnd = file.length) {
 		let fi;
 		let pi;
 		let pl;
 		let fl;
-		for (fi = fileIndex, pi = patternIndex, fl = file.length, pl = pattern.length; fi < fl && pi < pl; fi++, pi++) {
-			this.debug("matchOne loop");
+		for (fi = fileIndex, pi = patternIndex, fl = Math.min(fileEnd, file.length), pl = pattern.length; fi < fl && pi < pl; fi++, pi++) {
 			let p = pattern[pi];
 			let f = file[fi];
-			this.debug(pattern, p, f);
 			/* c8 ignore start */
 			if (p === false || p === GLOBSTAR) return false;
 			/* c8 ignore stop */
-			let hit;
-			if (typeof p === "string") {
-				hit = f === p;
-				this.debug("string match", p, f, hit);
-			} else {
-				hit = p.test(f);
-				this.debug("pattern match", p, f, hit);
-			}
-			if (!hit) return false;
+			if (!portionMatch(p, f)) return false;
 		}
 		if (fi === fl && pi === pl) return true;
 		else if (fi === fl) return partial;
@@ -45951,87 +46257,51 @@ var Minimatch = class {
 		const options = this.options;
 		if (pattern === "**") return GLOBSTAR;
 		if (pattern === "") return "";
-		let m;
-		let fastTest = null;
-		if (m = pattern.match(starRE)) fastTest = options.dot ? starTestDot : starTest;
-		else if (m = pattern.match(starDotExtRE)) fastTest = (options.nocase ? options.dot ? starDotExtTestNocaseDot : starDotExtTestNocase : options.dot ? starDotExtTestDot : starDotExtTest)(m[1]);
-		else if (m = pattern.match(qmarksRE)) fastTest = (options.nocase ? options.dot ? qmarksTestNocaseDot : qmarksTestNocase : options.dot ? qmarksTestDot : qmarksTest)(m);
-		else if (m = pattern.match(starDotStarRE)) fastTest = options.dot ? starDotStarTestDot : starDotStarTest;
-		else if (m = pattern.match(dotStarRE)) fastTest = dotStarTest;
-		const re = AST.fromGlob(pattern, this.options).toMMPattern();
-		if (fastTest && typeof re === "object") Reflect.defineProperty(re, "test", { value: fastTest });
-		return re;
-	}
-	makeRe() {
-		if (this.regexp || this.regexp === false) return this.regexp;
-		const set = this.set;
-		if (!set.length) {
-			this.regexp = false;
-			return this.regexp;
-		}
-		const options = this.options;
-		const twoStar = options.noglobstar ? star : options.dot ? twoStarDot : twoStarNoDot;
-		const flags = new Set(options.nocase ? ["i"] : []);
-		let re = set.map((pattern) => {
-			const pp = pattern.map((p) => {
-				if (p instanceof RegExp) for (const f of p.flags.split("")) flags.add(f);
-				return typeof p === "string" ? regExpEscape(p) : p === GLOBSTAR ? GLOBSTAR : p._src;
+		const { nocase, nocaseMagicOnly, noext = false, dot, normalize } = options;
+		const lit = literal(pattern, noext);
+		if (lit !== void 0 && !(nocase && !nocaseMagicOnly && pattern.toUpperCase() !== pattern.toLowerCase())) return this.#norm(lit);
+		if (this.#pending) return PENDING;
+		let m = this.#matchers.get(pattern);
+		if (!m) {
+			m = new Matcher(pattern, {
+				nocase,
+				noext,
+				dot,
+				normalize
 			});
-			pp.forEach((p, i) => {
-				const next = pp[i + 1];
-				const prev = pp[i - 1];
-				if (p !== GLOBSTAR || prev === GLOBSTAR) return;
-				if (prev === void 0) {
-					if (next !== void 0 && next !== GLOBSTAR) pp[i + 1] = "(?:\\/|" + twoStar + "\\/)?" + next;
-					else pp[i] = twoStar;
-				} else if (next === void 0) pp[i - 1] = prev + "(?:\\/|\\/" + twoStar + ")?";
-				else if (next !== GLOBSTAR) {
-					pp[i - 1] = prev + "(?:\\/|\\/" + twoStar + "\\/)" + next;
-					pp[i + 1] = GLOBSTAR;
-				}
-			});
-			const filtered = pp.filter((p) => p !== GLOBSTAR);
-			if (this.partial && filtered.length >= 1) {
-				const prefixes = [];
-				for (let i = 1; i <= filtered.length; i++) prefixes.push(filtered.slice(0, i).join("/"));
-				return "(?:" + prefixes.join("|") + ")";
-			}
-			return filtered.join("/");
-		}).join("|");
-		const [open, close] = set.length > 1 ? ["(?:", ")"] : ["", ""];
-		re = "^" + open + re + close + "$";
-		if (this.partial) re = "^(?:\\/|" + open + re.slice(1, -1) + close + ")$";
-		if (this.negate) re = "^(?!" + re + ").+$";
-		try {
-			this.regexp = new RegExp(re, [...flags].join(""));
-		} catch {
-			this.regexp = false;
+			this.#matchers.set(pattern, m);
 		}
-		/* c8 ignore stop */
-		return this.regexp;
+		return m;
 	}
-	slashSplit(p) {
+	#slashSplit(p) {
 		if (this.preserveMultipleSlashes) return p.split("/");
 		else if (this.isWindows && /^\/\/[^/]+/.test(p)) return ["", ...p.split(/\/+/)];
 		else return p.split(/\/+/);
 	}
 	match(f, partial = this.partial) {
-		this.debug("match", f, this.pattern);
 		if (this.comment) return false;
 		if (this.empty) return f === "";
 		if (f === "/" && partial) return true;
 		const options = this.options;
-		if (this.isWindows) f = f.split("\\").join("/");
-		const ff = this.slashSplit(f);
-		this.debug(this.pattern, "split", ff);
+		let split = this.#cachedSplit(f);
+		if (!split) {
+			if (!partial && !this.#form && (this.#endCheck || this.#literalCheck) && lastChecked !== f) {
+				lastChecked = f;
+				const can = this.#canMatch(f);
+				if (can === "no") return options.flipNegate ? false : this.negate;
+				if (can === "yes") return options.flipNegate ? true : !this.negate;
+			}
+			split = this.#split(f);
+		}
+		const ff = split.parts;
+		const resolved = this.#level2 ? split.resolved ??= this.#levelTwoFileOptimize(ff) : ff;
 		const set = this.set;
-		this.debug(this.pattern, "set", set);
 		let filename = ff[ff.length - 1];
 		if (!filename) for (let i = ff.length - 2; !filename && i >= 0; i--) filename = ff[i];
-		for (const pattern of set) {
-			let file = ff;
-			if (options.matchBase && pattern.length === 1) file = [filename];
-			if (this.matchOne(file, pattern, partial)) {
+		for (let r = 0; r < set.length; r++) {
+			const pattern = set[r];
+			const shape = partial ? void 0 : this.#shapes[r];
+			if (shape === "base" ? portionMatch(pattern[0], filename) : shape ? this.#matchShape(resolved, pattern, shape) : options.matchBase && pattern.length === 1 ? this.#matchRow([filename], [filename], pattern, partial) : this.#matchRow(ff, resolved, pattern, partial)) {
 				if (options.flipNegate) return true;
 				return !this.negate;
 			}
@@ -46044,7 +46314,6 @@ var Minimatch = class {
 	}
 };
 /* c8 ignore stop */
-minimatch.AST = AST;
 minimatch.Minimatch = Minimatch;
 minimatch.escape = escape;
 minimatch.unescape = unescape;
