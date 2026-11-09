@@ -2090,7 +2090,7 @@ SOFTWARE.
 ---
 
 Name: @isaacs/nonrecursive-glob-match
-Version: 1.0.3
+Version: 1.1.0
 License: BlueOak-1.0.0
 Private: false
 Description: a single-path-portion glob matcher not subject to recursive backtracking ReDoS
