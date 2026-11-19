@@ -2019,6 +2019,189 @@ software or this license, under any kind of legal claim.***
 
 ---
 
+Name: xml2js
+Version: 0.6.2
+License: MIT
+Private: false
+Description: Simple XML to JavaScript object converter.
+Repository: https://github.com/Leonidas-from-XIV/node-xml2js.git
+Homepage: https://github.com/Leonidas-from-XIV/node-xml2js
+Author: Marek Kubica <marek@xivilization.net> (https://xivilization.net)
+Contributors:
+  maqr <maqr.lollerskates@gmail.com> (https://github.com/maqr)
+  Ben Weaver (http://benweaver.com/)
+  Jae Kwon (https://github.com/jaekwon)
+  Jim Robert
+  Ștefan Rusu (http://www.saltwaterc.eu/)
+  Carter Cole <carter.cole@cartercole.com> (http://cartercole.com/)
+  Kurt Raschke <kurt@kurtraschke.com> (http://www.kurtraschke.com/)
+  Contra <contra@australia.edu> (https://github.com/Contra)
+  Marcelo Diniz <marudiniz@gmail.com> (https://github.com/mdiniz)
+  Michael Hart (https://github.com/mhart)
+  Zachary Scott <zachary@zacharyscott.net> (http://zacharyscott.net/)
+  Raoul Millais (https://github.com/raoulmillais)
+  Salsita Software (http://www.salsitasoft.com/)
+  Mike Schilling <mike@emotive.com> (http://www.emotive.com/)
+  Jackson Tian <shyvo1987@gmail.com> (http://weibo.com/shyvo)
+  Mikhail Zyatin <mikhail.zyatin@gmail.com> (https://github.com/Sitin)
+  Chris Tavares <ctavares@microsoft.com> (https://github.com/christav)
+  Frank Xu <yyfrankyy@gmail.com> (http://f2e.us/)
+  Guido D'Albore <guido@bitstorm.it> (http://www.bitstorm.it/)
+  Jack Senechal (http://jacksenechal.com/)
+  Matthias Hölzl <tc@xantira.com> (https://github.com/hoelzl)
+  Camille Reynders <info@creynders.be> (http://www.creynders.be/)
+  Taylor Gautier (https://github.com/tsgautier)
+  Todd Bryan (https://github.com/toddrbryan)
+  Leore Avidar <leore.avidar@gmail.com> (http://leoreavidar.com/)
+  Dave Aitken <dave.aitken@gmail.com> (http://www.actionshrimp.com/)
+  Shaney Orrowe <shaney.orrowe@practiceweb.co.uk>
+  Candle <candle@candle.me.uk>
+  Jess Telford <hi@jes.st> (http://jes.st)
+  Tom Hughes <tom@compton.nu> (http://compton.nu/)
+  Piotr Rochala (http://rocha.la/)
+  Michael Avila (https://github.com/michaelavila)
+  Ryan Gahl (https://github.com/ryedin)
+  Eric Laberge <e.laberge@gmail.com> (https://github.com/elaberge)
+  Benjamin E. Coe <ben@npmjs.com> (https://twitter.com/benjamincoe)
+  Stephen Cresswell (https://github.com/cressie176)
+  Pascal Ehlert <pascal@hacksrus.net> (http://www.hacksrus.net/)
+  Tom Spencer <fiznool@gmail.com> (http://fiznool.com/)
+  Tristian Flanagan <tflanagan@datacollaborative.com> (https://github.com/tflanagan)
+  Tim Johns <timjohns@yahoo.com> (https://github.com/TimJohns)
+  Bogdan Chadkin <trysound@yandex.ru> (https://github.com/TrySound)
+  David Wood <david.p.wood@gmail.com> (http://codesleuth.co.uk/)
+  Nicolas Maquet (https://github.com/nmaquet)
+  Lovell Fuller (http://lovell.info/)
+  d3adc0d3 (https://github.com/d3adc0d3)
+  James Crosby (https://github.com/autopulated)
+License Text:
+===
+
+Copyright 2010, 2011, 2012, 2013. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+
+---
+
+Name: xmlbuilder
+Version: 11.0.1
+License: MIT
+Private: false
+Description: An XML builder for node.js
+Repository: git://github.com/oozcitak/xmlbuilder-js.git
+Homepage: http://github.com/oozcitak/xmlbuilder-js
+Author: Ozgur Ozcitak <oozcitak@gmail.com>
+License Text:
+===
+
+The MIT License (MIT)
+
+Copyright (c) 2013 Ozgur Ozcitak
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+---
+
+Name: sax
+Version: 1.6.1
+License: BlueOak-1.0.0
+Private: false
+Description: An evented streaming XML parser in JavaScript
+Repository: git+ssh://git@github.com/isaacs/sax-js.git
+Author: Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)
+License Text:
+===
+
+# Blue Oak Model License
+
+Version 1.0.0
+
+## Purpose
+
+This license gives everyone as much permission to work with
+this software as possible, while protecting contributors
+from liability.
+
+## Acceptance
+
+In order to receive this license, you must agree to its
+rules.  The rules of this license are both obligations
+under that agreement and conditions to your license.
+You must not do anything with this software that triggers
+a rule that you cannot or will not follow.
+
+## Copyright
+
+Each contributor licenses you to do everything with this
+software that would otherwise infringe that contributor's
+copyright in it.
+
+## Notices
+
+You must ensure that everyone who gets a copy of
+any part of this software from you, with or without
+changes, also gets the text of this license or a link to
+<https://blueoakcouncil.org/license/1.0.0>.
+
+## Excuse
+
+If anyone notifies you in writing that you have not
+complied with [Notices](#notices), you can keep your
+license by taking all practical steps to comply within 30
+days after the notice.  If you do not do so, your license
+ends immediately.
+
+## Patent
+
+Each contributor licenses you to do everything with this
+software that would otherwise infringe any patent claims
+they can license or become able to license.
+
+## Reliability
+
+No contributor can revoke this license.
+
+## No Liability
+
+***As far as the law allows, this software comes as is,
+without any warranty or condition, and no contributor
+will be liable to anyone for any damages related to this
+software or this license, under any kind of legal claim.***
+
+---
+
 Name: balanced-match
 Version: 4.0.4
 License: MIT
