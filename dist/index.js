@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import * as os$2 from "os";
+import * as os$3 from "os";
 import os, { EOL } from "os";
 import * as fs$2 from "fs";
 import fs, { constants, existsSync, lstatSync, promises, readFileSync, readdir, readdirSync, readlinkSync, realpathSync } from "fs";
@@ -11,7 +11,10 @@ import { channel, tracingChannel } from "node:diagnostics_channel";
 import { fileURLToPath } from "node:url";
 import "child_process";
 import "timers";
+import os$1 from "node:os";
 import { posix, win32 } from "node:path";
+import process$1 from "node:process";
+import tty from "node:tty";
 import * as $i from "node:fs";
 import { lstat, readdir as readdir$1, readlink, realpath } from "node:fs/promises";
 import { StringDecoder } from "node:string_decoder";
@@ -22,6 +25,14 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esmMin = (fn, res, err) => () => {
+	if (err) throw err[0];
+	try {
+		return fn && (res = fn(fn = 0)), res;
+	} catch (e) {
+		throw err = [e], e;
+	}
+};
 var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod, mod.exports), cb = null), mod.exports);
 var __exportAll = (all, flags) => {
 	let target = Object.setPrototypeOf({}, null);
@@ -46,6 +57,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 	value: mod,
 	enumerable: true
 }) : target, mod));
+var __toCommonJS = (mod) => __hasOwnProp.call(mod, "module.exports") ? mod["module.exports"] : __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __require = /* #__PURE__ */ (() => createRequire(import.meta.url))();
 // ../../../node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/utils.js
 /**
@@ -110,7 +122,7 @@ function toCommandProperties(annotationProperties) {
 */
 function issueCommand(command, properties, message) {
 	const cmd = new Command(command, properties, message);
-	process.stdout.write(cmd.toString() + os$2.EOL);
+	process.stdout.write(cmd.toString() + os$3.EOL);
 }
 function issue(name, message = "") {
 	issueCommand(name, {}, message);
@@ -20043,7 +20055,7 @@ const context = new Context();
 function getOctokit(token, options, ...additionalPlugins) {
 	return new (GitHub.plugin(...additionalPlugins))(getOctokitOptions(token, options));
 }
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/errors.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/errors.js
 var require_errors = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.ErrorCode = void 0;
@@ -20115,7 +20127,7 @@ var require_errors = /* @__PURE__ */ __commonJSMin(((exports) => {
 		return error;
 	}
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/package.json
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/package.json
 var require_package = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		"name": "@slack/web-api",
@@ -20186,7 +20198,7 @@ var require_package = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		"tsd": { "directory": "test/types" }
 	};
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/instrument.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/instrument.js
 var require_instrument = /* @__PURE__ */ __commonJSMin(((exports, module, this$51) => {
 	var __createBinding = this$51 && this$51.__createBinding || (Object.create ? (function(o, m, k, k2) {
 		if (k2 === void 0) k2 = k;
@@ -20351,7 +20363,7 @@ var require_dist$4 = /* @__PURE__ */ __commonJSMin(((exports) => {
 		[LogLevel.DEBUG]: 100
 	};
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/logger.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/logger.js
 var require_logger = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.LogLevel = void 0;
@@ -20380,7 +20392,7 @@ var require_logger = /* @__PURE__ */ __commonJSMin(((exports) => {
 		return logger;
 	}
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/retry-policies.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/retry-policies.js
 var require_retry_policies = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.rapidRetryPolicy = exports.fiveRetriesInFiveMinutes = exports.tenRetriesInAboutThirtyMinutes = void 0;
@@ -20414,15 +20426,15 @@ var require_retry_policies = /* @__PURE__ */ __commonJSMin(((exports) => {
 		rapidRetryPolicy: exports.rapidRetryPolicy
 	};
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/types/request/index.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/types/request/index.js
 var require_request = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/types/response/index.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/types/response/index.js
 var require_response = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/chat-stream.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/chat-stream.js
 var require_chat_stream = /* @__PURE__ */ __commonJSMin(((exports, module, this$50) => {
 	var __rest = this$50 && this$50.__rest || function(s, e) {
 		var t = {};
@@ -29252,7 +29264,7 @@ var require_ms = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		return Math.round(ms / n) + " " + name + (isPlural ? "s" : "");
 	}
 }));
-// ../../../node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/common.js
+// ../../../node_modules/.pnpm/debug@4.4.3_supports-color@10.2.2/node_modules/debug/src/common.js
 var require_common = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* This is the common logic for both the Node.js and web browser
@@ -29454,7 +29466,7 @@ var require_common = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}
 	module.exports = setup;
 }));
-// ../../../node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/browser.js
+// ../../../node_modules/.pnpm/debug@4.4.3_supports-color@10.2.2/node_modules/debug/src/browser.js
 var require_browser = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* This is the web browser implementation of `debug()`.
@@ -29649,7 +29661,107 @@ var require_browser = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		}
 	};
 }));
-// ../../../node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/node.js
+// ../../../node_modules/.pnpm/supports-color@10.2.2/node_modules/supports-color/index.js
+var supports_color_exports = /* @__PURE__ */ __exportAll({
+	createSupportsColor: () => createSupportsColor,
+	default: () => supportsColor
+});
+function hasFlag(flag, argv = globalThis.Deno ? globalThis.Deno.args : process$1.argv) {
+	const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
+	const position = argv.indexOf(prefix + flag);
+	const terminatorPosition = argv.indexOf("--");
+	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
+}
+function envForceColor() {
+	if (!("FORCE_COLOR" in env)) return;
+	if (env.FORCE_COLOR === "true") return 1;
+	if (env.FORCE_COLOR === "false") return 0;
+	if (env.FORCE_COLOR.length === 0) return 1;
+	const level = Math.min(Number.parseInt(env.FORCE_COLOR, 10), 3);
+	if (![
+		0,
+		1,
+		2,
+		3
+	].includes(level)) return;
+	return level;
+}
+function translateLevel(level) {
+	if (level === 0) return false;
+	return {
+		level,
+		hasBasic: true,
+		has256: level >= 2,
+		has16m: level >= 3
+	};
+}
+function _supportsColor(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
+	const noFlagForceColor = envForceColor();
+	if (noFlagForceColor !== void 0) flagForceColor = noFlagForceColor;
+	const forceColor = sniffFlags ? flagForceColor : noFlagForceColor;
+	if (forceColor === 0) return 0;
+	if (sniffFlags) {
+		if (hasFlag("color=16m") || hasFlag("color=full") || hasFlag("color=truecolor")) return 3;
+		if (hasFlag("color=256")) return 2;
+	}
+	if ("TF_BUILD" in env && "AGENT_NAME" in env) return 1;
+	if (haveStream && !streamIsTTY && forceColor === void 0) return 0;
+	const min = forceColor || 0;
+	if (env.TERM === "dumb") return min;
+	if (process$1.platform === "win32") {
+		const osRelease = os$1.release().split(".");
+		if (Number(osRelease[0]) >= 10 && Number(osRelease[2]) >= 10586) return Number(osRelease[2]) >= 14931 ? 3 : 2;
+		return 1;
+	}
+	if ("CI" in env) {
+		if ([
+			"GITHUB_ACTIONS",
+			"GITEA_ACTIONS",
+			"CIRCLECI"
+		].some((key) => key in env)) return 3;
+		if ([
+			"TRAVIS",
+			"APPVEYOR",
+			"GITLAB_CI",
+			"BUILDKITE",
+			"DRONE"
+		].some((sign) => sign in env) || env.CI_NAME === "codeship") return 1;
+		return min;
+	}
+	if ("TEAMCITY_VERSION" in env) return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env.TEAMCITY_VERSION) ? 1 : 0;
+	if (env.COLORTERM === "truecolor") return 3;
+	if (env.TERM === "xterm-kitty") return 3;
+	if (env.TERM === "xterm-ghostty") return 3;
+	if (env.TERM === "wezterm") return 3;
+	if ("TERM_PROGRAM" in env) {
+		const version = Number.parseInt((env.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+		switch (env.TERM_PROGRAM) {
+			case "iTerm.app": return version >= 3 ? 3 : 2;
+			case "Apple_Terminal": return 2;
+		}
+	}
+	if (/-256(color)?$/i.test(env.TERM)) return 2;
+	if (/^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(env.TERM)) return 1;
+	if ("COLORTERM" in env) return 1;
+	return min;
+}
+function createSupportsColor(stream, options = {}) {
+	return translateLevel(_supportsColor(stream, {
+		streamIsTTY: stream && stream.isTTY,
+		...options
+	}));
+}
+var env, flagForceColor, supportsColor;
+var init_supports_color = __esmMin((() => {
+	({env} = process$1);
+	if (hasFlag("no-color") || hasFlag("no-colors") || hasFlag("color=false") || hasFlag("color=never")) flagForceColor = 0;
+	else if (hasFlag("color") || hasFlag("colors") || hasFlag("color=true") || hasFlag("color=always")) flagForceColor = 1;
+	supportsColor = {
+		stdout: createSupportsColor({ isTTY: tty.isatty(1) }),
+		stderr: createSupportsColor({ isTTY: tty.isatty(2) })
+	};
+}));
+// ../../../node_modules/.pnpm/debug@4.4.3_supports-color@10.2.2/node_modules/debug/src/node.js
 var require_node = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* Module dependencies.
@@ -29678,7 +29790,7 @@ var require_node = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		1
 	];
 	try {
-		const supportsColor = __require("supports-color");
+		const supportsColor = (init_supports_color(), __toCommonJS(supports_color_exports));
 		if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) exports.colors = [
 			20,
 			21,
@@ -29855,7 +29967,7 @@ var require_node = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		return util.inspect(v, this.inspectOpts);
 	};
 }));
-// ../../../node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/index.js
+// ../../../node_modules/.pnpm/debug@4.4.3_supports-color@10.2.2/node_modules/debug/src/index.js
 var require_src$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* Detect Electron renderer / nwjs process, which is node, but we should
@@ -29864,7 +29976,7 @@ var require_src$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	if (typeof process === "undefined" || process.type === "renderer" || process.browser === true || process.__nwjs) module.exports = require_browser();
 	else module.exports = require_node();
 }));
-// ../../../node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base/dist/src/promisify.js
+// ../../../node_modules/.pnpm/agent-base@6.0.2_supports-color@10.2.2/node_modules/agent-base/dist/src/promisify.js
 var require_promisify = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	function promisify(fn) {
@@ -29879,7 +29991,7 @@ var require_promisify = /* @__PURE__ */ __commonJSMin(((exports) => {
 	}
 	exports.default = promisify;
 }));
-// ../../../node_modules/.pnpm/agent-base@6.0.2/node_modules/agent-base/dist/src/index.js
+// ../../../node_modules/.pnpm/agent-base@6.0.2_supports-color@10.2.2/node_modules/agent-base/dist/src/index.js
 var require_src = /* @__PURE__ */ __commonJSMin(((exports, module, this$49) => {
 	var __importDefault = this$49 && this$49.__importDefault || function(mod) {
 		return mod && mod.__esModule ? mod : { "default": mod };
@@ -30036,7 +30148,7 @@ var require_src = /* @__PURE__ */ __commonJSMin(((exports, module, this$49) => {
 	})(createAgent || (createAgent = {}));
 	module.exports = createAgent;
 }));
-// ../../../node_modules/.pnpm/https-proxy-agent@5.0.1/node_modules/https-proxy-agent/dist/parse-proxy-response.js
+// ../../../node_modules/.pnpm/https-proxy-agent@5.0.1_supports-color@10.2.2/node_modules/https-proxy-agent/dist/parse-proxy-response.js
 var require_parse_proxy_response = /* @__PURE__ */ __commonJSMin(((exports, module, this$48) => {
 	var __importDefault = this$48 && this$48.__importDefault || function(mod) {
 		return mod && mod.__esModule ? mod : { "default": mod };
@@ -30094,7 +30206,7 @@ var require_parse_proxy_response = /* @__PURE__ */ __commonJSMin(((exports, modu
 	}
 	exports.default = parseProxyResponse;
 }));
-// ../../../node_modules/.pnpm/https-proxy-agent@5.0.1/node_modules/https-proxy-agent/dist/agent.js
+// ../../../node_modules/.pnpm/https-proxy-agent@5.0.1_supports-color@10.2.2/node_modules/https-proxy-agent/dist/agent.js
 var require_agent = /* @__PURE__ */ __commonJSMin(((exports, module, this$47) => {
 	var __awaiter = this$47 && this$47.__awaiter || function(thisArg, _arguments, P, generator) {
 		function adopt(value) {
@@ -30239,7 +30351,7 @@ var require_agent = /* @__PURE__ */ __commonJSMin(((exports, module, this$47) =>
 		return ret;
 	}
 }));
-// ../../../node_modules/.pnpm/https-proxy-agent@5.0.1/node_modules/https-proxy-agent/dist/index.js
+// ../../../node_modules/.pnpm/https-proxy-agent@5.0.1_supports-color@10.2.2/node_modules/https-proxy-agent/dist/index.js
 var require_dist$3 = /* @__PURE__ */ __commonJSMin(((exports, module, this$46) => {
 	const agent_1 = (this$46 && this$46.__importDefault || function(mod) {
 		return mod && mod.__esModule ? mod : { "default": mod };
@@ -30253,20 +30365,20 @@ var require_dist$3 = /* @__PURE__ */ __commonJSMin(((exports, module, this$46) =
 	})(createHttpsProxyAgent || (createHttpsProxyAgent = {}));
 	module.exports = createHttpsProxyAgent;
 }));
-// ../../../node_modules/.pnpm/follow-redirects@1.16.2/node_modules/follow-redirects/debug.js
+// ../../../node_modules/.pnpm/follow-redirects@1.16.2_debug@4.4.3_supports-color@10.2.2_/node_modules/follow-redirects/debug.js
 var require_debug = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var debug;
 	module.exports = function() {
 		if (!debug) {
 			try {
-				debug = __require("debug")("follow-redirects");
+				debug = require_src$1()("follow-redirects");
 			} catch (error) {}
 			if (typeof debug !== "function") debug = function() {};
 		}
 		debug.apply(null, arguments);
 	};
 }));
-// ../../../node_modules/.pnpm/follow-redirects@1.16.2/node_modules/follow-redirects/index.js
+// ../../../node_modules/.pnpm/follow-redirects@1.16.2_debug@4.4.3_supports-color@10.2.2_/node_modules/follow-redirects/index.js
 var require_follow_redirects = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var url = __require("url");
 	var URL = url.URL;
@@ -30712,7 +30824,7 @@ var require_follow_redirects = /* @__PURE__ */ __commonJSMin(((exports, module) 
 	});
 	module.exports.wrap = wrap;
 }));
-// ../../../node_modules/.pnpm/axios@1.21.0/node_modules/axios/dist/node/axios.cjs
+// ../../../node_modules/.pnpm/axios@1.21.0_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/axios/dist/node/axios.cjs
 /*! Axios v1.21.0 Copyright (c) 2026 Matt Zabriskie and contributors */
 var require_axios = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var FormData$1 = require_form_data();
@@ -37136,7 +37248,7 @@ var require_p_retry = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports.default = pRetry;
 	module.exports.AbortError = AbortError;
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/file-upload.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/file-upload.js
 var require_file_upload = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getFileUploadJob = getFileUploadJob;
@@ -37416,7 +37528,7 @@ var require_file_upload = /* @__PURE__ */ __commonJSMin(((exports) => {
 		return "You may supply file_uploads only for a single channel, message, or thread respectively. Therefore, please supply any channel_id, initial_comment or blocks, or thread_ts in the top-layer.";
 	}
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/helpers.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/helpers.js
 var require_helpers = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = delay;
@@ -37913,7 +38025,7 @@ var require_dist$1 = /* @__PURE__ */ __commonJSMin(((exports, module, this$44) =
 	__exportStar(require_message_metadata(), exports);
 	__exportStar(require_views(), exports);
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/methods.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/methods.js
 var require_methods = /* @__PURE__ */ __commonJSMin(((exports, module, this$43) => {
 	var __createBinding = this$43 && this$43.__createBinding || (Object.create ? (function(o, m, k, k2) {
 		if (k2 === void 0) k2 = k;
@@ -39508,7 +39620,7 @@ lookup: bindApiCall(this, "users.discoverableContacts.lookup") },
 	exports.Methods = Methods;
 	__exportStar(require_dist$1(), exports);
 }));
-// ../../../node_modules/.pnpm/@slack+web-api@7.15.1/node_modules/@slack/web-api/dist/WebClient.js
+// ../../../node_modules/.pnpm/@slack+web-api@7.15.1_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2/node_modules/@slack/web-api/dist/WebClient.js
 var require_WebClient = /* @__PURE__ */ __commonJSMin(((exports, module, this$42) => {
 	var __createBinding = this$42 && this$42.__createBinding || (Object.create ? (function(o, m, k, k2) {
 		if (k2 === void 0) k2 = k;
@@ -42242,7 +42354,7 @@ var wt = class rs {
 		}
 	}
 };
-var os$1 = typeof process == "object" && process ? process : {
+var os$2 = typeof process == "object" && process ? process : {
 	stdout: null,
 	stderr: null
 };
@@ -42438,7 +42550,7 @@ var Z = class extends EventEmitter {
 		if (this[E]) return t;
 		this[_] = !1;
 		let s = this[Y];
-		return e = e || {}, t === os$1.stdout || t === os$1.stderr ? e.end = !1 : e.end = e.end !== !1, e.proxyErrors = !!e.proxyErrors, s ? e.end && t.end() : (this[F].push(e.proxyErrors ? new ke(this, t, e) : new Bt(this, t, e)), this[$] ? vt(() => this[nt]()) : this[nt]()), t;
+		return e = e || {}, t === os$2.stdout || t === os$2.stderr ? e.end = !1 : e.end = e.end !== !1, e.proxyErrors = !!e.proxyErrors, s ? e.end && t.end() : (this[F].push(e.proxyErrors ? new ke(this, t, e) : new Bt(this, t, e)), this[$] ? vt(() => this[nt]()) : this[nt]()), t;
 	}
 	unpipe(t) {
 		let e = this[F].find((s) => s.dest === t);
